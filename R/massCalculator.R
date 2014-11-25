@@ -13,6 +13,9 @@ MonoisotopicMass(formula = list(H=5, O=1, x1=1), isotopes=list(x1=isotopes$O18))
 # 2*H2o*H3O+
 MonoisotopicMass(formula = list(H=7, O=3)) - electron.mass
 
+# 3*H2o*H3O+
+MonoisotopicMass(formula = list(H=9, O=4)) - electron.mass
+
 # NO+
 MonoisotopicMass(formula = list(N=1, O=1)) - electron.mass
 
@@ -21,3 +24,7 @@ MonoisotopicMass(formula = list(C=3, H=7, O=1)) - electron.mass
 
 # Isopren+
 MonoisotopicMass(formula = list(C=5, H=9)) - electron.mass
+
+
+# Methacrolein+
+MonoisotopicMass(formula = list(C=4, H=7, O=1)) - electron.mass

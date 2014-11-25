@@ -3,13 +3,15 @@
 \name{ions}
 \alias{ions}
 \title{sample ions for TOF calibration}
-\format{\preformatted{List of 6
- $ h3o    : num 21
- $ no     : num 30
- $ aceton : num 59
- $ isopren: num 69.1
- $ h5o2   : num 39
- $ h7o3   : num 55
+\format{\preformatted{List of 8
+ $ h3o         : num 21
+ $ no          : num 30
+ $ o2          : num 32
+ $ aceton      : num 59
+ $ h5o2        : num 39
+ $ h7o3        : num 55
+ $ meth_formate: num 61
+ $ methacrolein: num 71
 }}
 \usage{
 ions

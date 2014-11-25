@@ -3,7 +3,7 @@
 \alias{find_ion_tof}
 \title{find location of ion maximum in TOF spectrum}
 \usage{
-find_ion_tof(ion.mass = 21.0220875, preliminary.mass, curr.spec.line)
+find_ion_tof(ion.mass = 21.0220875, preliminary.coeff, curr.spec.line)
 }
 \description{
 find location of ion maximum in TOF spectrum
