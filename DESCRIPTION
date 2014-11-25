@@ -5,8 +5,8 @@ Version: 0.1
 Date: 2014-11-24
 Author: Clemens Ager
 Maintainer: Clemens Ager <clemens.ager@uibk.ac.at>
-Description: Functions to work with the  h5 files produced by the device. 
-  WARNING in 0. versions many errors will not be caught
+Description: Functions to work with the  h5 files produced by the device.
+    WARNING in 0. versions many errors will not be caught
 License: Artistic-2.0
 Depends:
     rhdf5

@@ -8,13 +8,13 @@ mass <- MonoisotopicMass(formula = list(H=3, O=1), isotopes=list(O=isotopes$O18)
 mass
 
 # H2O*H3o+
-MonoisotopicMass(formula = list(H=5, O=1, x=1), isotopes=list(x=isotopes$O18)) - electron.mass
+MonoisotopicMass(formula = list(H=5, O=1, x1=1), isotopes=list(x1=isotopes$O18)) - electron.mass
 
 # 2*H2o*H3O+
 MonoisotopicMass(formula = list(H=7, O=3)) - electron.mass
 
 # NO+
- MonoisotopicMass(formula = list(N=1, O=1)) - electron.mass
+MonoisotopicMass(formula = list(N=1, O=1)) - electron.mass
 
 # Aceton+
 MonoisotopicMass(formula = list(C=3, H=7, O=1)) - electron.mass

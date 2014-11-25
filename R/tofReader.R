@@ -1,7 +1,7 @@
 library(rhdf5)
 # library(dplyr)
 
-#' reads integrated peaks as integrated by PTR-MS Viewer.
+#' reads integrated peaks as integrated by PTR-MS TOD-DAQ-Viewer.
 #' 
 #' WARNING: these must be first integrated in the software otherwise and error
 #' will be thrown.
