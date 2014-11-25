@@ -96,7 +96,7 @@ read.fullspectra.tof.h5 <- function (tof.h5) h5read(tof.h5,'FullSpectra/TofData'
 #'
 #' @export
 read.tof.fullspectra <- function(tof.h5){
-  raw.tof <- read.fullspectra.tof.h5(file.path('data',"uncal.h5"))
+  raw.tof <- read.fullspectra.tof.h5(tof.h5)
   to.flat.tof(raw.tof)
 }
 
@@ -111,7 +111,7 @@ read.tof.fullspectra <- function(tof.h5){
 mass.calib.tof <- function(flat.tof, 
                            preliminary.coeff=list(intercept = 900,square_mass = 17650 ), 
                            n.ions = unlist(ions)){
-  apply(flat.tof,2, function(x) mass.calib.coeff.single(n.ions = unlist(ions), 
+  ap.a <- apply(flat.tof,2, function(x) mass.calib.coeff.single(n.ions = unlist(ions), 
                                                         preliminary.coeff=preliminary.coeff, 
                                                         curr.spec.line = x))
   df.a <- as.data.frame(matrix(unlist(ap.a), ncol=2, byrow=TRUE))
