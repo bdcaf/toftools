@@ -118,3 +118,21 @@ mass.calib.tof <- function(flat.tof,
   colnames(df.a) <- c('intercept','square_mass')
   df.a
 }
+
+#' smoothes the mass calibration to avoid local jumps
+#' @param mc.table raw mass calibration
+#' @returns mass calibration table after smoothing
+#' @examples
+#' smooth.mc <- smooth.mass.cal(mc.table)
+smooth.mass.cal <- function (mc.table) {
+  mc.fit <- mc.table
+  mc.fit$ind <- 1:nrow(mc.fit)  
+  aa <- lm(intercept ~ ind, mc.fit)
+  bb <- lm(square_mass  ~ ind , mc.fit) 
+  
+  res <- data.frame(
+    ind = 1:nrow(mc.fit),
+    intercept = predict(aa,  data.frame(ind=1:nrow(mc.fit))),
+    square_mass  = predict(bb,  data.frame(ind=1:nrow(mc.fit)))
+  )
+}
