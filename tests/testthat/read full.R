@@ -11,6 +11,30 @@ class(fm)
 tof.h5 <- file.path('data',"Ac just exhale (2014-10-23T10h43m42_#).h5")
 h5ls(tof.h5)
 
+fid <-H5Fopen(tof.h5)
+tofblock <- get.raw.tofblock(fid)
+indexhelp <- tof.indexhelp(tofblock)
+curr.spec.line <- read.spec.ind(tofblock, indexhelp, 40)
+
+
+mass.calib.coeff.single(ions, preliminary.coeff=pars.approx, curr.spec.line)
+
+# indexhelp$N
+mass.calib <- data.frame(scan = (1:indexhelp$N) ) %>% rowwise() %>% do( {
+  curr.spec.line <- read.spec.ind(tofblock, indexhelp, .$scan)
+  mc <- mass.calib.coeff.single(ions, preliminary.coeff=pars.approx, curr.spec.line)
+  data.frame(scan=.$scan, intercept=mc[['intercept']], square_mass=mc[['square_mass']])
+} )
+
+# H5close(fid)
+
+plot(mass.calib$intercept, type='l')
+plot(mass.calib$square_mass, type='l')
+
+
+# old ---------------------------------------------------------------------
+
+
 flat.tof <- read.tof.fullspectra(file.path('data',"Ac just exhale (2014-10-23T10h43m42_#).h5"))
 mc.table <- mass.calib.tof(flat.tof)
 smooth.mc <- smooth.mass.cal(mc.table)
