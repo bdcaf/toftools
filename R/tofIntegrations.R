@@ -48,8 +48,9 @@ integrate.one.spec <- function(mass.list, spec){
     select(compound, center, area)
 }
 
-#' @export
+
 #' integrates the full spec
+#' @export
 #' @examples
 #' fid <-H5Fopen(tof.h5)
 #' tofblock <- get.raw.tofblock(fid)
@@ -76,8 +77,9 @@ integrate.full.spec <- function(curr.reader, indexhelp, mass.cal, mass.list){
   })
 }
 
-#' @export
+
 #' Processes full tofwerks H5 file
+#' @export
 #' @examples
 #' tof.h5 <- file.path('data',"Ac just breath after C (2014-10-23T11h34m53_#).h5")
 #' tof.h5 <- file.path('data',"uncal.h5")

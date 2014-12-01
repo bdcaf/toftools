@@ -104,7 +104,7 @@ mass.calib.tof <- function(tofblock, indexhelp,
 
 #' smoothes the mass calibration to avoid local jumps
 #' @param mc.table raw mass calibration
-#' @returns mass calibration table after smoothing
+#' @return mass calibration table after smoothing
 #' @examples
 #' mc.table <- mass.calib.tof(tofblock, indexhelp)
 #' smooth.mc <- smooth.mass.cal(mc.table)
