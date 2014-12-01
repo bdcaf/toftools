@@ -1,26 +1,78 @@
-#' helper function to create integration borders as in TofDAQ Viewer
-#' @export
-mass.to.range <- function(mass=21.022, res=1000) c(center=mass, lower=mass-mass/res, upper=mass+mass/res)
+library(dplyr)
 
-#' helper to convert a mass range into tof timing
-mass.range2tof.range <- function(curr.mass.cal, mass.range){
-  left <- floor(   curr.mass.cal[['intercept']] + curr.mass.cal[['square_mass']]*sqrt(mass.range[['lower']]))
-  right <- ceiling(curr.mass.cal[['intercept']] + curr.mass.cal[['square_mass']]*sqrt(mass.range[['upper']]))
-  c(lower=left, upper=right)
+#' adds mass bounds to mass list
+#' @export
+#' @examples
+#' mass.list <- read.table(text='
+#'  compound  center
+#'  H3O+  21.022
+#'  acetone   59.049
+#'  isoprene  69.0699',
+#' stringsAsFactor=FALSE, header=TRUE)
+#' create.mass.bounds(mass.list)
+create.mass.bounds <- function(mass.list, res=1500){
+  mass.list %>% mutate(lower = center-center/res, upper = center+center/res)
 }
 
-#' integrate single peak in single spec
-one.peak.integrate <- function (curr.mass.cal, mass.range, c.spec) {  
-  c.range <- mass.range2tof.range(curr.mass.cal, mass.range)
-  ran <- c.range[['lower']]:c.range[['upper']]
-  sum(c.spec[ran])
+#' adds mass indices to mass list
+#' @export
+#' @examples
+#' mass.list <- read.table(text='
+#'  compound  center
+#'  H3O+  21.022
+#'  acetone   59.049
+#'  isoprene  69.0699',
+#' stringsAsFactor=FALSE, header=TRUE)
+#' mass.list <- create.mass.bounds(mass.list)
+#' add.index.range(mass.list, curr.mass.cal)
+add.index.range <- function(mass.list, curr.mass.cal){
+  mutate(mass.list, 
+         lower.index = curr.mass.cal[['intercept']] + curr.mass.cal[['square_mass']] * sqrt(lower),
+         upper.index = curr.mass.cal[['intercept']] + curr.mass.cal[['square_mass']] * sqrt(upper)) %>%
+    mutate(upper.index = ceiling(upper.index), lower.index = floor(lower.index))
 }
 
-#' integrate one compound over tof dataset
+#' integrate single spec line
+#' @examples
+#' mass.list <- read.table(text='
+#'  compound  center
+#'  H3O+  21.022
+#'  acetone   59.049
+#'  isoprene  69.0699',
+#' stringsAsFactor=FALSE, header=TRUE)
+#' mass.list <- create.mass.bounds(mass.list)
+#' mass.list <- add.index.range(mass.list, curr.mass.cal)
+#' integrate.one.spec(mass.list2, spec)
+integrate.one.spec <- function(mass.list, spec){
+  rowwise(mass.list) %>% mutate(area = sum(spec[lower.index:upper.index]))%>%
+    select(compound, center, area)
+}
+
 #' @export
-integrate.peak.over.set <- function(mass.cal.list, mass.range, flat.tof){
-  apply(mass.cal.list,1, function(x){  
-    c.spec <- flat.tof[,x['ind']]
-    one.peak.integrate(curr.mass.cal = x, mass.range = mass.range, c.spec)
+#' integrates the full spec
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' curr.reader <- make.curr.tofreader(tofblock, indexhelp)
+#' mass.list <- read.table(text='
+#'  compound  center
+#'  H3O+  21.022
+#'  acetone   59.049
+#'  isoprene  69.0699',
+#' stringsAsFactor=FALSE, header=TRUE)
+#' mass.list <- create.mass.bounds(mass.list)
+#' int.res <- integrate.full.spec(curr.reader, indexhelp, smooth.mc, mass.list)
+#' library(ggplot2)
+#' ggplot(int.res) + geom_line(mapping=aes(x=index, y=area, color=compound)) + scale_y_log10()
+integrate.full.spec <- function(curr.reader, indexhelp, mass.cal, mass.list){
+  target <- data.frame(mass.cal) %>% mutate(index = 1:indexhelp$N)
+  
+  rowwise(target) %>% do({
+    mass.list2 <- add.index.range(mass.list2, .)
+    spec <- curr.reader(.$index)
+    res <- integreate.one.spec(mass.list2, spec)
+    res$index=.$index
+    return(res)
   })
 }

@@ -31,6 +31,7 @@ mass.calib <- data.frame(scan = (1:indexhelp$N) ) %>% rowwise() %>% do( {
 plot(mass.calib$intercept, type='l')
 plot(mass.calib$square_mass, type='l')
 
+cc <- lm(cbind(intercept, square_mass) ~ ind, mc.fit)
 
 # old ---------------------------------------------------------------------
 

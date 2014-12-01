@@ -107,7 +107,7 @@ read.tof.fullspectra <- function(tof.h5){
 #' @param n.ions ion list to be used for calibration
 #' @return data frame of calibration coefficients
 #' @examples
-#'  mc.table <- mass.calib.tof(tofblock, indexhelp,flat.tof)
+#' mc.table <- mass.calib.tof(tofblock, indexhelp,flat.tof)
 #' @export
 mass.calib.tof <- function(tofblock, indexhelp,
                            preliminary.coeff=list(intercept = 900,square_mass = 17650 ), 
@@ -127,14 +127,8 @@ mass.calib.tof <- function(tofblock, indexhelp,
 smooth.mass.cal <- function (mc.table) {
   mc.fit <- mc.table
   mc.fit$ind <- 1:nrow(mc.fit)  
-  aa <- lm(intercept ~ ind, mc.fit)
-  bb <- lm(square_mass  ~ ind , mc.fit) 
-  
-  res <- data.frame(
-    ind = 1:nrow(mc.fit),
-    intercept = predict(aa,  data.frame(ind=1:nrow(mc.fit))),
-    square_mass  = predict(bb,  data.frame(ind=1:nrow(mc.fit)))
-  )
+  cc <- lm(cbind(intercept, square_mass) ~ ind, mc.fit)
+  pv <- predict(cc,  data.frame(ind=1:nrow(mc.fit)))  
 }
 
 #' first step of reading - get the tof block
@@ -181,4 +175,16 @@ read.spec.ind <- function(tofblock, indexhelp, i){
   H5Dread(h5dataset = tof.data, 
           h5spaceFile = indexhelp$h5spaceFile, 
           h5spaceMem = indexhelp$h5spaceMem )
+}
+
+#' helper to wrap reader call
+#' @export
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' cr <- make.curr.tofreader(tofblock, indexhelp)
+#' spec5 <- cr(5)
+make.curr.tofreader <- function(tofblock, indexhelp){
+  function(i){read.spec.ind(tofblock,indexhelp,i)}
 }
