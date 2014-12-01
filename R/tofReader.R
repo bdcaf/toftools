@@ -9,6 +9,8 @@ library(tidyr)
 #' @export
 #' @param tof.h5 filename of hdf5 file
 #' @return dataframe with structure: rows = scans, cols = counts + information
+#' @examples
+#' tof.h5 <- file.path('data',"uncal.h5")
 read.tof.peaks <- function( tof.h5 ){
   fid <-H5Fopen(tof.h5)
   at <- H5Aopen(fid,"NbrWaveforms")
@@ -75,30 +77,6 @@ mass.calib.coeff.single <- function (ions, preliminary.coeff, curr.spec.line) {
   return(out)
 }
 
-#' converts the raw multidimensional TOF array into flat structure
-#' @param raw.tof.array multidimensional array as present in hdf5 file, as obtained by read.fullspectra.tof.h5
-#' @returns flat tof array
-#' @examples
-#'  flat.tof <- to.flat.tof(raw.tof)
-to.flat.tof <- function(raw.tof.array) array(raw.tof.array, dim=c(dim(raw.tof.array)[1],prod(dim(raw.tof.array)[2:4])))
-
-#' reads the full spectrum matrix from Tofwerks hdf5 file
-#' @param tof.h5 filename of the hdf5 file
-#' @return raw tof array (4 dimensional)
-#' @examples
-#'  raw.tof <- read.fullspectra.tof.h5(file.path('data',"uncal.h5"))
-read.fullspectra.tof.h5 <- function (tof.h5) h5read(tof.h5,'FullSpectra/TofData')
-
-#' reads the full spectrum matrix from Tofwerks hdf5 file and converts it to flat
-#' @param tof.h5 filename of the hdf5 file
-#' @return flat tof array (2 dimensional)
-#' @examples
-#'  flat.tof <- read.tof.fullspectra(file.path('data',"uncal.h5"))
-read.tof.fullspectra <- function(tof.h5){
-  raw.tof <- read.fullspectra.tof.h5(tof.h5)
-  to.flat.tof(raw.tof)
-}
-
 #' calculates mass calibration coefficients for every scan in the flat tof array
 #' @note this thkes about 30s for a measurement containing 3000 scans
 #' @param tofblock from get.raw.tofblock
@@ -107,7 +85,12 @@ read.tof.fullspectra <- function(tof.h5){
 #' @param n.ions ion list to be used for calibration
 #' @return data frame of calibration coefficients
 #' @examples
-#' mc.table <- mass.calib.tof(tofblock, indexhelp,flat.tof)
+#' tof.h5 <- file.path('data',"Ac just breath after C (2014-10-23T11h34m53_#).h5")
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' cr <- make.curr.tofreader(tofblock, indexhelp)
+#' mc.table <- mass.calib.tof(tofblock, indexhelp)
 #' @export
 mass.calib.tof <- function(tofblock, indexhelp,
                            preliminary.coeff=list(intercept = 900,square_mass = 17650 ), 
@@ -123,6 +106,7 @@ mass.calib.tof <- function(tofblock, indexhelp,
 #' @param mc.table raw mass calibration
 #' @returns mass calibration table after smoothing
 #' @examples
+#' mc.table <- mass.calib.tof(tofblock, indexhelp)
 #' smooth.mc <- smooth.mass.cal(mc.table)
 smooth.mass.cal <- function (mc.table) {
   mc.fit <- mc.table
@@ -148,7 +132,7 @@ get.raw.tofblock <- function(fid) {
 #' tofblock <- get.raw.tofblock(fid)
 #' indexhelp <- tof.indexhelp(tofblock)
 tof.indexhelp <- function(tofblock){
-  h5spaceFile <- H5Dget_space(tof.data)
+  h5spaceFile <- H5Dget_space(tofblock)
   dims <- H5Sget_simple_extent_dims(h5spaceFile)
   calc.indices <- expand.grid(buf=1:dims$size[[3]], write=1:dims$size[[4]])
   h5spaceMem <- H5Screate_simple(dims$size[[1]])
@@ -172,7 +156,7 @@ read.spec.ind <- function(tofblock, indexhelp, i){
   H5Sselect_hyperslab(indexhelp$h5spaceFile, 
                       start = c(1,1,pos$buf,pos$write), 
                       count = c(indexhelp$dims[[1]],1,1,1) )                          
-  H5Dread(h5dataset = tof.data, 
+  H5Dread(h5dataset = tofblock, 
           h5spaceFile = indexhelp$h5spaceFile, 
           h5spaceMem = indexhelp$h5spaceMem )
 }

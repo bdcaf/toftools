@@ -64,15 +64,42 @@ integrate.one.spec <- function(mass.list, spec){
 #' mass.list <- create.mass.bounds(mass.list)
 #' int.res <- integrate.full.spec(curr.reader, indexhelp, smooth.mc, mass.list)
 #' library(ggplot2)
-#' ggplot(int.res) + geom_line(mapping=aes(x=index, y=area, color=compound)) + scale_y_log10()
+#' ggplot(int.res %>% filter(index >1000 & index < 1300)) + geom_line(mapping=aes(x=index, y=area, color=compound)) + scale_y_log10()
 integrate.full.spec <- function(curr.reader, indexhelp, mass.cal, mass.list){
-  target <- data.frame(mass.cal) %>% mutate(index = 1:indexhelp$N)
-  
+  target <- data.frame(mass.cal) %>% mutate(index = 1:indexhelp$N)  
   rowwise(target) %>% do({
-    mass.list2 <- add.index.range(mass.list2, .)
+    mass.list2 <- add.index.range(mass.list, .)
     spec <- curr.reader(.$index)
-    res <- integreate.one.spec(mass.list2, spec)
+    res <- integrate.one.spec(mass.list2, spec)
     res$index=.$index
     return(res)
   })
 }
+
+#' @export
+#' Processes full tofwerks H5 file
+#' @examples
+#' tof.h5 <- file.path('data',"Ac just breath after C (2014-10-23T11h34m53_#).h5")
+#' tof.h5 <- file.path('data',"uncal.h5")
+#' mass.list <- read.table(text='
+#'                         compound  center
+#'                         H3O+  21.022
+#'                         acetone   59.049
+#'                         isoprene  69.0699',
+#'                         stringsAsFactor=FALSE, header=TRUE)
+#' mass.list <- create.mass.bounds(mass.list)
+#' res <- process.tof.h5(tof.h5, mass.list)
+#' ggplot(res %>% filter(index >1000 & index < 1300)) + geom_line(mapping=aes(x=index, y=area, color=compound)) + scale_y_log10()
+process.tof.h5 <- function(tof.h5, mass.list, n.ions = unlist(ions)){
+  cat(paste('processing', tof.h5,'\n'))
+  fid <-H5Fopen(tof.h5)
+  tofblock <- get.raw.tofblock(fid)
+  indexhelp <- tof.indexhelp(tofblock)
+  cat('\n mass calibrating...\n')
+  mc.table <- mass.calib.tof(tofblock, indexhelp, n.ions=n.ions)
+  smooth.mc <- smooth.mass.cal(mc.table)
+  curr.reader <- make.curr.tofreader(tofblock, indexhelp)  
+  cat('\n integrating...\n')
+  int.res <- integrate.full.spec(curr.reader, indexhelp, smooth.mc, mass.list)
+}
+  
