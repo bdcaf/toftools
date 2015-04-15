@@ -1,6 +1,6 @@
 context("read already integrated peaks")
 
-tof.h5 <- file.path('..','..','data',"Ac just breath after C (2014-10-23T11h34m53_#).h5")
+tof.h5 <- file.path('..','..','testdata/',"Ac just breath after C (2014-10-23T11h34m53_#).h5")
  
 test_that("reading of the peak integrations",{
   m1 <- read.tof.peaks(tof.h5)
