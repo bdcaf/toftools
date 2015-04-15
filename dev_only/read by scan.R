@@ -1,12 +1,14 @@
 
 library(rhdf5)
-file.path('data',"Ac just exhale (2014-10-23T10h43m42_#).h5")
+tof.h5 <- file.path('testdata',"Ac just exhale (2014-10-23T10h43m42_#).h5")
 
 fid <-H5Fopen(tof.h5)
 fid
 at <- H5Aopen(fid,"NbrWaveforms")
 waveforms <- H5Aread(at)
 
+
+scan.attr <- h5readAttributes(fid,'FullSpectra')
 
 gr <- H5Gopen(fid,"FullSpectra")
 tof.data <- H5Dopen(gr,"TofData")
