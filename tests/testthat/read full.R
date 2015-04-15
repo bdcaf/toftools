@@ -1,14 +1,15 @@
 library(dplyr)
 library(tidyr)
+library(rhdf5)
 
-list.files('data')
-tof.h5 <- file.path('data',"uncal.h5")
+list.files('testdata')
+tof.h5 <- file.path('testdata',"uncal.h5")
 h5ls(tof.h5)
 
 fm <- h5read(tof.h5,'FullSpectra/TofData')
 class(fm)
 
-tof.h5 <- file.path('data',"Ac just exhale (2014-10-23T10h43m42_#).h5")
+tof.h5 <- file.path('testdata',"Ac just exhale (2014-10-23T10h43m42_#).h5")
 h5ls(tof.h5)
 
 fid <-H5Fopen(tof.h5)
