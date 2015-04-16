@@ -1,7 +1,7 @@
 Package: tofTools
 Type: Package
 Title: Helper functions to read Tofwerk PTR-TOF-MS HDF5 files.
-Version: 0.1
+Version: 0.2
 Date: 2014-11-24
 Author: Clemens Ager
 Maintainer: Clemens Ager <clemens.ager@uibk.ac.at>
@@ -15,4 +15,12 @@ License: Artistic-2.0
 Suggests:
     OrgMassSpecR
 Depends:
-    rhdf5
+    rhdf5,
+    MALDIquant
+Collate:
+    'TofMeasurementClass.R'
+    'TofGetScan.R'
+    'massCalFunctions.R'
+    'tofIntegrations.R'
+    'tofReader.R'
+    'tofTools.R'

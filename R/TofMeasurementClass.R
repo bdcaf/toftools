@@ -3,14 +3,31 @@ library(rhdf5)
 
 # object oriented approach for tof measurements
 
-setClass("TofMeasurement",
+#' Class TofMeasurement
+#' 
+#' Class \code{TofMeasurement} handles access to a Tof hdf5 file
+#' 
+#' @slot file Name of the hdf5 file
+#' @slot metaDataScan some extra informations
+#' @name tofmeasurement
+#' @exportClass TofMeasurement
+TofMeasurement <- setClass("TofMeasurement",
          slots=list(metaDataScan="list", file="character",
                     .indexHelp="list", .fid="H5IdComponent", .tofBlock="H5IdComponent"),
          prototype=list(metaDataScan=list(), file="",
                         .indexHelp=list())
          )
 
-# constructor
+#' constructor for TofMeasurement objects
+#' 
+#'  @param file the name of the hdf5 file containing the scan
+#'  
+#'  @return a TofMeasurement object representing the file
+#'  
+#'  @usage createTofMeasurement(file.path('testdata',"Ac just exhale (2014-10-23T10h43m42_#).h5"))
+#'  
+#'  @export
+#'  @docType methods
 createTofMeasurement <- function(file){
   .fid <-H5Fopen(tof.h5)
   scan.attr <- h5readAttributes(.fid,'FullSpectra')
@@ -30,5 +47,4 @@ createTofMeasurement <- function(file){
   new(Class = "TofMeasurement", file=file, metaDataScan=scan.attr, 
       .fid=.fid, .indexHelp = .indexHelp, .tofBlock=.tofBlock)
 }
-
 
