@@ -11,11 +11,11 @@ sc <- getScan(tm,100)
 
 plot(sc)
 
-# spectra <- transformIntensity(sc, method="sqrt")
+spectra <- transformIntensity(sc, method="sqrt")
 
-spectra <- smoothIntensity(sc, method="SavitzkyGolay", halfWindowSize=3)
+spectra <- smoothIntensity(spectra, method="SavitzkyGolay", halfWindowSize=30)
 
-plot(spectra)
+plot(spectra, xlim=c(58,60))
 
 
 # baseline <- estimateBaseline(spectra, method="SNIP", iterations=100)
@@ -23,3 +23,15 @@ plot(spectra)
 # plot(baseline)
 #
 # is all 0!
+
+
+# library(xcms)
+# detach(name="package:xcms", unload = TRUE)
+
+peaks <- detectPeaks(spectra, method="SuperSmoother", SNR=5, halfWindowSize=50)
+plot(spectra, xlim=c(50,60))
+points(peaks)
+
+cbind(peaks@mass, peaks@intensity, peaks@snr)
+# line(baseline)
+
