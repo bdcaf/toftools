@@ -1,4 +1,5 @@
 library(MALDIquant)
+library(rhdf5)
 
 # object oriented approach for tof measurements
 
@@ -29,6 +30,12 @@ createTofMeasurement <- function(file){
       .fid=.fid, .indexHelp = .indexHelp, .tofBlock=.tofBlock)
 }
 
+
+
+if (is.null(getGeneric("getScan")){
+setGeneric("getScan",
+             function(object, index) standardGeneric("getScan"))
+}
 setMethod(f="getScan", 
           signature = signature("TofMeasurement"),
           definition=function(object, index=1){

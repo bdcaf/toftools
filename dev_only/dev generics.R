@@ -9,9 +9,3 @@ if (is.null(getGeneric("estimateNoise"))) {
   setGeneric("estimateNoise",
              function(object, ...) standardGeneric("estimateNoise"))
 }
-
-
-if (is.null(getGeneric("getScan"))) {
-  setGeneric("getScan",
-             function(object, index) standardGeneric("getScan"))
-}
