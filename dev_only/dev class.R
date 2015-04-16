@@ -16,7 +16,7 @@ createTofMeasurement <- function(file){
   scan.attr <- h5readAttributes(.fid,'FullSpectra')
   
   .tofBlock <- get.raw.tofblock(.fid)
-  h5spaceFile <- H5Dget_space(tofblock)
+  h5spaceFile <- H5Dget_space(.tofBlock)
   dims <- H5Sget_simple_extent_dims(h5spaceFile)
   calc.indices <- expand.grid(buf=1:dims$size[[3]], write=1:dims$size[[4]])
   h5spaceMem <- H5Screate_simple(dims$size[[1]])
@@ -25,6 +25,7 @@ createTofMeasurement <- function(file){
        h5spaceMem=h5spaceMem, 
        calc.indices=calc.indices, 
        dims=dims$size)
+  
   
   new(Class = "TofMeasurement", file=file, metaDataScan=scan.attr, 
       .fid=.fid, .indexHelp = .indexHelp, .tofBlock=.tofBlock)
