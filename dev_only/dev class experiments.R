@@ -38,9 +38,9 @@ cbind(peaks@mass, peaks@intensity, peaks@snr)
 
 range <- 1:tm@.indexHelp$N
 
-get.maxima <- function(i,tm, win=15) {
+get.maxima <- function(i,tm, win=30) {
   sc <- getJustScan(tm,i)
-  logical.max <- MALDIquant:::.localMaxima(sc,win) 
+  logical.max <- sc>2 & MALDIquant:::.localMaxima(sc,win) 
   # use halfWindowSize of 6
   pos <- which(logical.max)
   good <- sc[pos] > 10
@@ -48,11 +48,27 @@ get.maxima <- function(i,tm, win=15) {
   list(pos[good])
 }
 
+library(zoo)
+
+get.maxima2 <- function(i,tm, win=15) {
+  sc <- getJustScan(tm,i)
+  scm <- rollmax(sc,win, na.pad=TRUE)
+  # use 10 counts to identify *landmarks*
+  list(which(sc>10  & sc==scm))
+}
+
+Rprof(file='test.out')
 get.maxima(2000,tm)
+Rprof(NULL)
+summaryRprof('test.out')
 
 range=1:100
-all.max <- lapply(range, function(x) get.maxima(x,tm))
-
+local.max <-  function(x) get.maxima(x,tm)
+local.max.c <- compiler::cmpfun(local.max)
+Rprof(file='test.out')
+all.max <- lapply(range,local.max.c)
+Rprof(NULL)
+summaryRprof('test.out')
 # need to bin peaks
 
 sp <- sort(unlist(all.max), method="quick")
