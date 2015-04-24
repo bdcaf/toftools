@@ -38,7 +38,7 @@ cbind(peaks@mass, peaks@intensity, peaks@snr)
 
 range <- 1:tm@.indexHelp$N
 
-get.maxima <- function(i,tm, win=30) {
+get.maxima <- function(i,tm, win=15) {
   sc <- getJustScan(tm,i)
   logical.max <- sc>2 & MALDIquant:::.localMaxima(sc,win) 
   # use halfWindowSize of 6
@@ -52,9 +52,7 @@ library(zoo)
 
 get.maxima2 <- function(i,tm, win=15) {
   sc <- getJustScan(tm,i)
-  scm <- rollmax(sc,win, na.pad=TRUE)
-  # use 10 counts to identify *landmarks*
-  list(which(sc>10  & sc==scm))
+  list(which(peakFind(sc, win=win, min=10)))
 }
 
 Rprof(file='test.out')
@@ -71,6 +69,12 @@ Rprof(NULL)
 summaryRprof('test.out')
 # need to bin peaks
 
+range=1:1000
+Rprof(file='test2.out')
+all.max <- lapply(range,function(x) get.maxima2(x,tm))
+Rprof(NULL)
+summaryRprof('test2.out')
+
 sp <- sort(unlist(all.max), method="quick")
 dsp <- diff(sp)
 candidates <- dsp>15
@@ -86,5 +90,7 @@ a <- tm@metaDataScan[['MassCalibration a']]
 b <- tm@metaDataScan[['MassCalibration b']]
 # mv <- .idx2mass(1:length(spec),a,b)
 mass.suggestion <- an %>% group_by(grouped) %>% 
-  summarise(mean=mean(sp), median=median(sp), n=n()) %>% filter(n>70) %>%
+  summarise(mean=mean(sp), n=n()) %>% filter(n>700) %>%
   mutate(mass.pre = .idx2mass(mean,a,b))
+
+an %>% group_by(grouped) %>%  summarise(mean=mean(sp), n=n()) 
