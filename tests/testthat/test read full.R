@@ -1,7 +1,11 @@
 library(dplyr)
-library(tidyr)
 library(rhdf5)
 library(devtools)
+
+r.path <- file.path('..','..','R')
+
+sl <- file.path(r.path,list.files(r.path, pattern='*.R'))
+lapply(sl, source)
 
 context("read full spectrum")
 

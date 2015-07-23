@@ -19,6 +19,7 @@ Depends:
     MALDIquant
 Collate:
     'TofMeasurementClass.R'
+    'TofGetJustScan.R'
     'TofGetScan.R'
     'massCalFunctions.R'
     'tofIntegrations.R'

@@ -51,10 +51,11 @@ ions <- c(h3o = 21.0220875,
 mass.calc <- function(pars, vec) {(( vec - pars[[1]] )/ pars[[2]] )^2 }
 
 #' find location of ion maximum in TOF spectrum
-find_ion_tof <- function (ion.mass = 21.0220875, preliminary.coeff, curr.spec.line) {  
-  ig <- round(preliminary.coeff$intercept + preliminary.coeff$square_mass*sqrt(ion.mass)) + c(-700:+700)  
+find_ion_tof <- function (ion.mass = 21.0220875, preliminary.coeff, curr.spec.line, wid=0.3) {  
+  mass.range <- round(preliminary.coeff$intercept + preliminary.coeff$square_mass*sqrt(ion.mass+ wid*c(-1,1)))
+  ig <- mass.range[1]:mass.range[2]
   pos <- ig[1]-1 + which.max(curr.spec.line[ig])
-  ifelse(curr.spec.line[pos] > 10 & curr.spec.line[pos] < 10000, pos, NA) # NA if either saturated or not enough
+  ifelse(curr.spec.line[pos] > 100 & curr.spec.line[pos] < 1e6, pos, NA) # NA if either saturated or not enough
 }
 
 # #' calibrate a single spec line
