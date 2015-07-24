@@ -26,8 +26,14 @@ library(Rcpp)
 #   }
 #   return out;
 # }')
-sourceCpp(file="src//peakFind.cpp")
+sourceCpp(file="src/peakFind.cpp")
 pf <- peakFind(sc, win=15, min=10)
 plot(pf, type='l')
 which(pf)
 sc[pf]
+
+
+sourceCpp(file="src/peakFind.cpp")
+data <- rep(1,10)
+pos <- seq(2.1, 3.1, length.out=10)
+readScales(data,pos)
