@@ -12,12 +12,14 @@ Description: Functions to work with the h5 files produced by the device. Most
     quite slow. As the data can get quite big I'm investigating ways to
     parallelize and use dplyr for most table tasks.
 License: Artistic-2.0
+LinkingTo: Rcpp
 Suggests:
     OrgMassSpecR
 Depends:
     rhdf5,
     MALDIquant
 Collate:
+    'RcppExports.R'
     'TofMeasurementClass.R'
     'TofGetJustScan.R'
     'TofGetScan.R'

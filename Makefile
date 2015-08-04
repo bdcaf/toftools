@@ -1,5 +1,4 @@
 
-
 tmp/documented: $(wildcard *.R)
 	R -e 'library(devtools);document()'
 	touch $@
