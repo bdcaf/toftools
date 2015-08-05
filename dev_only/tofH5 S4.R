@@ -1,22 +1,20 @@
 library(rhdf5)
 
 setClass("TofH5", 
-         representation(file.name='character', num='numeric', .Data='list'), 
-         prototype(file.name='', num=1))
+         representation(file.name='character',
+         				n.scans='numeric', 
+         				meas.reader='H5IdComponent',
+         				.Data='list') 
+         )
  
+# open tof file
 setGeneric("open", function(object) {
   standardGeneric("open")
 })
-setGeneric("add1", function(object) {
-  standardGeneric("add1")
-})
+
 
 setMethod('open', signature(object = 'TofH5'), function(object) {
-  print(object@file.name)
+			object@meas.reader <- H5Fopen(object@file.name)
 })
 
 
-setMethod("add1", signature(object = "TofH5"), function(object) {
-  object@num <- object@num +1
-  return(object)
-})
