@@ -11,8 +11,10 @@ Description: Functions to work with the h5 files produced by the device. Most
     need. Currently the functions for mass calibration and integration are
     quite slow. As the data can get quite big I'm investigating ways to
     parallelize and use dplyr for most table tasks.
-License: Artistic-2.0
 LinkingTo: Rcpp
+License: GPL (>= 2)
+Imports:
+    Rcpp
 Suggests:
     OrgMassSpecR
 Depends:
@@ -23,6 +25,7 @@ Collate:
     'TofMeasurementClass.R'
     'TofGetJustScan.R'
     'TofGetScan.R'
+    'make_data.R'
     'massCalFunctions.R'
     'tofIntegrations.R'
     'tofReader.R'

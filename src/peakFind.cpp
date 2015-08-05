@@ -12,6 +12,13 @@ LogicalVector peakFind(NumericVector ys, int win, int min) {
   return out;
 }
 
+
+//' calculates the number of counts between indices
+//' 
+//' @param ys spectrum vector
+//' @param pos position vector
+//' @return vector of length pos with the summed counts (first is 0)
+//' @export
 // [[Rcpp::export]]
 NumericVector readScales(NumericVector ys, NumericVector pos){
   //int n = ys.size();
