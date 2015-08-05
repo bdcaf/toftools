@@ -27,6 +27,7 @@ Collate:
     'TofGetScan.R'
     'make_data.R'
     'massCalFunctions.R'
+    'tofHolder.R'
     'tofIntegrations.R'
     'tofReader.R'
     'tofTools.R'

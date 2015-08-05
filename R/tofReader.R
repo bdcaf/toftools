@@ -173,36 +173,3 @@ read.spec.ind <- function(tofblock, indexhelp, i){
 make.curr.tofreader <- function(tofblock, indexhelp){
   function(i){read.spec.ind(tofblock,indexhelp,i)}
 }
-
-#' list to hold functions for a single H5 measurement
-#' @export
-#' @param tof.h5 file path to relevant H5 file
-#' @return list of functions
-#' @useDynLib tofTools
-#' @examples
-#' \dontrun{
-#' tof.h5 <- file.path('data/',"2015.07.17-10h40m34 Ethanol deurated Karl .h5")
-#' curr.h5 <- h5.holder(tof.h5)
-#' }
-h5.holder <- function(tof.h5){
-  fid <-H5Fopen(tof.h5)
-  tofblock <- get.raw.tofblock(fid)
-  indexhelp <- tof.indexhelp(tofblock)
-  cr <- make.curr.tofreader(tofblock, indexhelp)
-  
-  list(close = function() H5close(),
-       readIndex = cr, 
-       sampleScans = function(n=100) {
-         with(indexhelp, 
-              if(N > 2*n) { floor(seq(from=1,to=N, length.out=n))}
-              else {  seq(from=1,to=N)}
-         )},
-       num.scan = function() indexhelp$N,
-       read.scan = function (i) read.spec.ind(tofblock, indexhelp, i),
-       read.bin = function (i, bin.vec) {
-         sc <- read.spec.ind(tofblock, indexhelp, i)
-         readScales(sc, bin.vec)
-       }
-  )
-  
-}

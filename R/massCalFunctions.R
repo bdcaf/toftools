@@ -16,6 +16,36 @@
 #' 
 #' 
 #' @param df.ion named list of ion masses
+#' @param scl scans to mass calibrate
+#' @param perliminary.coef starting values for coefficients
+#' @param n.samp number of points to take along the measurement
+#' 
+#' @return data.frame having columns scan, ion, and located position
+locate.ions.block_ <- function(df.ion,
+                               scl,
+                               read.scan,
+                               preliminary.coeff) {
+  
+  pos.block <- expand.grid(scan=scl , ion=df.ion$ions)
+  pp <- apply(pos.block, 1,function (dd) { 
+    curr.spec.line <- read.scan( dd[['scan']])
+    pos <- find_ion_tof(dd[['ion']], preliminary.coeff, curr.spec.line)
+  })
+  
+  pos.block$pos <- pp
+  pos.block <- pos.block[!is.na(pos.block$pos),]  
+  pos.block
+}
+
+#' @title
+#' locate ions for mass calibration
+#' 
+#' @description
+#' searches for dominant ions in the relevant places and return a structure for mass calibration.
+#' This should be improved soon to incorporate data alreade precalculated
+#' 
+#' 
+#' @param df.ion named list of ion masses
 #' @param curr.h5 current tof measurement holder
 #' @param perliminary.coef starting values for coefficients
 #' @param n.samp number of points to take along the measurement
@@ -23,20 +53,14 @@
 #' @return data.frame having columns scan, ion, and located position
 #' 
 #' @export
-locate.ions.block <- function(df.ion,curr.h5,
-                              preliminary.coeff=list(intercept = 900,square_mass = 17650 ),
-                              n.samp=100 ) {
-  scl <- curr.h5$sampleScans(n.samp)
-  pos.block <- expand.grid(scan=scl , ion=df.ion$ions)
-  pp <- apply(pos.block, 1,function (dd) { 
-    curr.spec.line <- curr.h5$read.scan( dd[['scan']])
-    pos <- find_ion_tof(dd[['ion']], preliminary.coeff, curr.spec.line)
+locate.ions.block <- function(df.ion,
+                            curr.h5,
+                            preliminary.coeff=list(intercept = 900,square_mass = 17650 ),
+                            n.samp=100 ){
+  with(curr.h5, {
+    scl <- sampleScans(n.samp)
+    locate.ions.block_(df.ion,scl,read.scan,preliminary.coeff)
   })
-  
-  pos.block$pos <- pp
-  pos.block <- pos.block[!is.na(pos.block$pos),]
-  
-  pos.block
 }
 
 #' @title 

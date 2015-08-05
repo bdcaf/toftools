@@ -1,6 +1,9 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+//' find peaks within a window
+//' 
+//' Not really adjusted by my needs
 // [[Rcpp::export]]
 LogicalVector peakFind(NumericVector ys, int win, int min) {
   int n = ys.size();
@@ -18,7 +21,6 @@ LogicalVector peakFind(NumericVector ys, int win, int min) {
 //' @param ys spectrum vector
 //' @param pos position vector
 //' @return vector of length pos with the summed counts (first is 0)
-//' @export
 // [[Rcpp::export]]
 NumericVector readScales(NumericVector ys, NumericVector pos){
   //int n = ys.size();

@@ -62,23 +62,6 @@ locate.ions.block <- function(df.ion,curr.h5,
 
 # TODO: Massen suchen die *eindeutig* sind für die Kalibration
 
-# h2oh3o = MonoisotopicMass(formula=list(O=1,x=1,H=4),charge=1, isotopes=list(x=17.999159)),
-ions <- c(h3o = 21.0220875, 
-		  #h2oh3o = MonoisotopicMass(formula=list(O=1,x=1,H=4),charge=1, isotopes=list(x=17.999159)),
-		  h2o2h3o = MonoisotopicMass(formula=list(O=3,H=6),charge=1),
-		  #no = MonoisotopicMass(formula=list(O=1,N=1))-electron.mass ,
-		  #o2 = MonoisotopicMass(formula=list(O=2))-electron.mass ,
-          aceton=59.04914,  
-          isopren= MonoisotopicMass(formula=list(C=5,H=8),charge=1),
-          etOH= MonoisotopicMass(formula=list(C=2,H=6,O=1),charge=1),
-          butOH= MonoisotopicMass(formula=list(C=4,H=10,O=1),charge=1),
-          butO= MonoisotopicMass(formula=list(C=4,H=8,O=1),charge=1),
-          pentO= MonoisotopicMass(formula=list(C=5,H=10,O=1),charge=1),
-          #hexO= MonoisotopicMass(formula=list(C=6,H=12,O=1),charge=1),
-          ac= MonoisotopicMass(formula=list(C=2,H=4,O=1),charge=1)
-          )
-df.ion <- as.data.frame(ions)
-
 pos.block <- locate.ions.block(df.ion,curr.h5, 
 							   preliminary.coeff=list(intercept=1850, square_mass=17500))
 
