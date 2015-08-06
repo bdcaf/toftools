@@ -13,7 +13,6 @@ setClass("TofH5",
          				n.scans='numeric', 
          				.meas.reader='H5IdComponent',
          				.tofblock='H5IdComponent',
-         				.indexhelp='list',
-         				.mass.calib='list') 
+         				.indexhelp='list') 
          )
  

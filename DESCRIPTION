@@ -19,7 +19,10 @@ Suggests:
     OrgMassSpecR
 Depends:
     rhdf5,
-    MALDIquant
+    MALDIquant,
+    MASS,
+    splines,
+    dplyr
 Collate:
     'RcppExports.R'
     'TofMeasurementClass.R'
@@ -34,3 +37,4 @@ Collate:
     'tofh5-class.R'
     'tofh5-file.R'
     'tofh5-mass-calib.R'
+    'tofh5-scan.R'
