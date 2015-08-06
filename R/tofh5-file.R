@@ -1,39 +1,39 @@
 #' open TOF file
 #' 
-#' required for reading tof data
+#' open required for reading tof data
 #' @export
 #' @docType methods
-#' @rdname tofh5-methods
+#' @rdname open-methods
+#' @exportMethod open
 setGeneric("open", function(object) {
   standardGeneric("open")
 })
 
-#' @rdname tofh5-methods
-#' @aliases tofh5,open,open-method
+#' @rdname open-methods
 setMethod('open', signature(object = 'TofH5'), function(object) {
 			object@.meas.reader <- H5Fopen(object@file.name)
-			object@.tofblock <- get.raw.tofblock(object@meas.reader)
+			object@.tofblock <- get.raw.tofblock(object@.meas.reader)
 			object@.indexhelp <- tof.indexhelp(object@.tofblock)
+      object
 })
 
 
 #' close TOF file
 #' 
-#' usually not required
+#' close usually not required
 #' @export
 #' @docType methods
-#' @rdname tofh5-methods
+#' @rdname close-methods
+#' @exportMethod close
 setGeneric("close", function(object) {
   standardGeneric("close")
 })
 
-#' @rdname tofh5-methods
-#' @aliases tofh5,close,close-method
+#' @rdname close-methods
 setMethod('close', signature(object = 'TofH5'), function(object) {
-			H5Fclose(object@meas.reader)
-			object@.meas.reader <- NULL
-			object@.tofblock <- NULL
-			object@.indexhelp <- NULL
+			H5Fclose(object@.meas.reader)		
+      
+			object
 })
 
 
