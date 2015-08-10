@@ -25,4 +25,7 @@ plot(x[ig], sc.test[ig], type='l')
 
 mass.calibration <- mass.calib(n2, sample_ions)
 
-rb <- read.bins(n2, mass.calibration, index=1:10, masses=20:50)
+rb <- read.bins(n2, mass.calibration, index=30:1000, masses=68:70)
+
+library(ggplot2)
+ggplot(rb) + geom_line(mapping=aes(x=scan, y=bin, color=as.factor(ion)))
