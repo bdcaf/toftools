@@ -13,6 +13,7 @@ Description: Functions to work with the h5 files produced by the device. Most
     parallelize and use dplyr for most table tasks.
 LinkingTo: Rcpp
 License: GPL (>= 2)
+LazyData: true
 Imports:
     Rcpp
 Suggests:
