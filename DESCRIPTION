@@ -13,7 +13,6 @@ Description: Functions to work with the h5 files produced by the device. Most
     parallelize and use dplyr for most table tasks.
 LinkingTo: Rcpp
 License: GPL (>= 2)
-LazyData: true
 Imports:
     Rcpp
 Suggests:
@@ -40,3 +39,4 @@ Collate:
     'tofh5-file.R'
     'tofh5-mass-calib.R'
     'tofh5-scan.R'
+LazyData: true

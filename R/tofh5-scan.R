@@ -63,7 +63,7 @@ setGeneric("read.prepared.bins", function(object, ...) {
 #' ion.block <- enrich.ib(ion.block)
 #' head(ion.block)
 #' num.knots <- 2
-#' kn <- floor(seq(1,to=object.indexhelp$N, length.out=num.knots+2))[2:num.knots+1]
+#' kn <- floor(seq(1,to=object@@.indexhelp$N, length.out=num.knots+2))[2:num.knots+1]
 #' fit.mos <- rlm(pos ~ (isq + ion + sq) * ns(scan,knots=kn), ion.block, method='MM')
 #' 
 #' extr.data <- expand.grid(scan= 1:10, ion=seq(47,47.1,length.out=100))
