@@ -15,7 +15,7 @@ mass.list <- read.table(text='
                         stringsAsFactor=FALSE, header=TRUE)
 
 res = 1500
-mass.list %>% mutate(lower = center-center/res, upper = center+center/res)
+mass.list %>% mutate(lower = center-center/res, upper = center+center/res) 
 
 
 mass.list2 <- mass.list %>% create.mass.bounds(res=1000)

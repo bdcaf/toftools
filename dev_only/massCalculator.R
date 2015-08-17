@@ -11,7 +11,7 @@ mass
 MonoisotopicMass(formula = list(H=5, O=1, x1=1), isotopes=list(x1=isotopes$O18)) - electron.mass
 
 # 2*H2o*H3O+
-MonoisotopicMass(formula = list(H=7, O=3)) - electron.mass
+library(OrgMassSpecR) - electron.mass
 
 # 3*H2o*H3O+
 MonoisotopicMass(formula = list(H=9, O=4)) - electron.mass

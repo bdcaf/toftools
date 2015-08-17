@@ -1,3 +1,4 @@
+library(rhdf5)
 #' TOF H5 measurement class
 #' 
 #' designed to hold and interact with the H5 measurment

@@ -1,8 +1,9 @@
 library(MASS)
 library(splines)
+
 #' Calibrate TOF file mass axis
 #' 
-#' perfors an elaborate mass calibration
+#' performs an elaborate mass calibration
 #' @export
 #' @docType methods
 #' @rdname mass.calib-methods
@@ -19,7 +20,7 @@ setMethod('mass.calib', signature(object = 'TofH5', ions = 'data.frame'),
   read.scan <- function(i) read.raw.scan(object,i)
   ions.block <- locate.ions.block_(ions,scl,read.scan,preliminary.coeff=preliminary.coeff)
   ions.block <- enrich.ions.block(ions.block)
-    kn <- floor(seq(1,to=object@.indexhelp$N, length.out=num.knots+2))[2:num.knots+1]  
+  kn <- floor(seq(1,to=object@.indexhelp$N, length.out=num.knots+2))[2:num.knots+1]  
   # object@.mass.calib <- 
   rlm(pos ~ ion + sq3.mass + sq5.mass + sq.mass * ns(scan,knots=kn), ions.block, method='MM')
 #   object

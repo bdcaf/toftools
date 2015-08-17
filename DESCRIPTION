@@ -35,6 +35,7 @@ Collate:
     'tofIntegrations.R'
     'tofReader.R'
     'tofTools.R'
+    'tofh5-calib-ionblock.R'
     'tofh5-class.R'
     'tofh5-file.R'
     'tofh5-mass-calib.R'
