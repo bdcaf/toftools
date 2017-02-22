@@ -1,4 +1,5 @@
 source('R/tofReader.R')
+source('R/spec_tools.R')
 library(dplyr)
 # load the data
 tof.h5 <- 'testdata/Ac just breath after C (2014-10-23T11h34m53_#).h5'
