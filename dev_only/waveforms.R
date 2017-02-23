@@ -34,6 +34,7 @@ alignment <- dtw(w3, w4,
 plot(alignment, type="two")
 plot(alignment)
 
+plot(spec0-spec1,type='l')
 #plot(spec1,spec2,type='p')
 
 ## from example

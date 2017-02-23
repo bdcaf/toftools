@@ -1,5 +1,6 @@
-source('R/tofReader.R')
 source('R/spec_tools.R')
+source('R/tofReader.R')
+
 library(dplyr)
 # load the data
 tof.h5 <- 'testdata/Ac just breath after C (2014-10-23T11h34m53_#).h5'
@@ -24,22 +25,7 @@ plot(spec1-spec2,type='l')
 # 
 full.wave <- as.vector(spec1)
 
-sparse_spec <- function(full.wave){
-  idx <- full.wave > 0
-  renc <- rle((idx))
-  startp <- cumsum( c(0, as.numeric(renc$lengths)))
-
-  extract_ts <- function(starter, len)
-	list(start = starter, 
-		 rlen = len,
-		 signal = full.wave[starter + seq_len(len)])
-
-  dv <- data.frame(start=startp[seq_along(renc$lengths)], 
-				   rlen = renc$lengths, 
-				   greater0 = renc$values) %>%
-				filter(rlen >3, greater0) 
-
-  mapply(extract_ts, dv$start, dv$rlen)
-}
+s1 <- sparse_spec(spec0)
+s2 <- sparse_spec(spec0)
 	
 ## algorithm 2
