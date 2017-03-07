@@ -30,6 +30,7 @@ Collate:
     'TofGetScan.R'
     'make_data.R'
     'massCalFunctions.R'
+    'spec_tools.R'
     'tofHolder.R'
     'tofIntegrations.R'
     'tofReader.R'
