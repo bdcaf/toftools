@@ -1,3 +1,6 @@
+library(dplyr)
+library(purrr)
+
 #' create a sparse representation of the full TOF scan
 #'
 #' @description For many functions it seems helpful to use a sparse
@@ -26,10 +29,20 @@ sparse_spec <- function(full.wave, lower=0, minlen=5){
 		 rlen = len,
 		 signal = full.wave[starter + seq_len(len)])
 
-  dv <- data.frame(start=startp[seq_along(renc$lengths)], 
+
+  extract_d <- function(starter, len)
+	(full.wave[starter + seq_len(length.out = len)])
+
+  dv <- data_frame(start=startp[seq_along(renc$lengths)], 
 				   rlen = renc$lengths, 
 				   greater0 = renc$values) %>%
 				filter(greater0, rlen > minlen) 
 
-  with(dv, mapply(extract_ts, start, rlen))
+  
+  d2 <- dv %>% mutate( ser = map2(start, rlen, extract_d),
+  					   mv = unlist(map(ser, max)),
+  					   localmax = unlist(map(ser, which.max)),
+  					   glob_max = start + localmax - 1)
+
+  return(d2)
 }
