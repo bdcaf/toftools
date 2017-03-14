@@ -62,17 +62,49 @@ costP12 <- function(peak1v,peak2v){
   cost <- 1 - cc/mm
 }
 
-dm <- expand.grid(s1 = s1$glob_max, s2=s2$glob_max) %>%
-  mutate(dist = (s1 - s2)^2, d2 = ifelse(dist>1e5, Inf, dist))
-
-
-distm <- matrix(data = dm$d2, nrow = nrow(s1), ncol = nrow(s2))
-
 
 rec_dist <- function(distm){
-  if (all(is.infinite(distm))) return(data.frame())
-  nds = which(distm == min(distm), arr.ind=TRUE)
-  o0 <- data.frame(nds)
-  distm[o0$row,] <- Inf
-  distm[,o0$col] <- Inf
+  if (is.null(distm) || is.null(dim(distm))) return(NULL)
+
+  ind <- which.min(distm)
+  if (length(ind) < 1) return(NULL)
+  subs <- arrayInd(ind[[1]], dim(distm))
+
+  bef_mat <- distm[1:subs[[1]]-1,1:subs[[2]]-1]
+  aft_mat <- distm[(subs[[1]]+1): nrow(distm),(subs[[2]]+1): ncol(distm)]
+
+  #nds = which(distm == min(distm), arr.ind=TRUE)
+  #o0 <- data.frame(nds)
+  #distm[o0$row,] <- Inf
+  #distm[,o0$col] <- Inf
+
+  #o1 <- rec_dist(distm)
+
+  bef_res <- rec_dist(bef_mat)
+  aft_res <- rec_dist(aft_mat)
+  if (!is.null(aft_res)){
+	aft_res[,1] <- aft_res[,1]+subs[[1]]
+	aft_res[,2] <- aft_res[,2]+subs[[2]]
+  }
+  rbind(bef_res, subs) %>% rbind(aft_res)
 }
+
+
+plot(raw_peak_comb)
+
+pair_peaks <- function(s1,s2, maxDist = 1e3){
+  dm <- expand.grid(s1 = s1$glob_max, s2=s2$glob_max) %>%
+	mutate(dist = (s1 - s2)^2, d2 = ifelse(dist>maxDist, Inf, dist))
+  distm <- matrix(data = dm$d2, nrow = nrow(s1), ncol = nrow(s2))
+
+  raw_peak_comb <- rec_dist(distm)
+
+  colnames(s1) <- paste(colnames(s1),'1')
+  colnames(s2) <- paste(colnames(s2),'2')
+  paired <- with(raw_peak_comb, as_data_frame(
+						  cbind(s1[row,], 
+								s2[col,])))
+}
+
+
+raw_pm <- pair_peaks(s1, s2)

@@ -42,7 +42,8 @@ sparse_spec <- function(full.wave, lower=0, minlen=5){
   d2 <- dv %>% mutate( ser = map2(start, rlen, extract_d),
   					   mv = unlist(map(ser, max)),
   					   localmax = unlist(map(ser, which.max)),
-  					   glob_max = start + localmax - 1)
+  					   glob_max = start + localmax - 1) %>%
+			  select(-greater0)
 
   return(d2)
 }
