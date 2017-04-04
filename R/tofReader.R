@@ -16,14 +16,10 @@ read.tof.peaks <- function( tof.h5 ){
   at <- H5Aopen(fid,"NbrWaveforms")
   waveforms <- H5Aread(at)
   H5Aclose(at)
-  gr <- H5Gopen(fid,"PeakData")
-  pdh <- H5Dopen(gr,"PeakTable")
-  peak.data <- H5Dread(pdh)
-  H5Dclose(pdh)
-  pdh <- H5Dopen(gr,"PeakData") # peak value in counts per extractions
-  peak.value <- H5Dread(pdh)
-  H5Dclose(pdh)
-  H5Fclose(fid)
+  pd1 <- H5Dopen(fid,"PeakData/PeakTable")
+  peak.data <- H5Dread(pd1)
+  pd2 <- H5Dopen(fid,"PeakData/PeakData") # peak value in counts per extractions
+  peak.value <- H5Dread(pd2)
   
   peak.counts <- peak.value * waveforms[[1]]
   tmp <- apply(peak.counts, 1, as.vector)    
@@ -32,6 +28,15 @@ read.tof.peaks <- function( tof.h5 ){
   colnames(peak.frame) <- peak.data$label
   peak.frame$file <- tof.h5
   return(peak.frame)
+}
+
+read.sum.spec <- function(fid){
+  gr <- H5Dopen(fid, 'FullSpectra/SumSpectrum')
+  H5Dread(gr)
+}
+read.mass.cals <- function(fid){
+  gr <- H5Dopen(fid, 'FullSpectra/MassCalibration')
+  H5Dread(gr)
 }
 
 #' approximate mass calibration
@@ -173,4 +178,47 @@ read.spec.ind <- function(tofblock, indexhelp, i){
 #' spec5 <- cr(5)
 make.curr.tofreader <- function(tofblock, indexhelp){
   function(i){read.spec.ind(tofblock,indexhelp,i)}
+}
+
+
+#' mass calibration function to simulate it as performed by breath view
+#' @export
+#' @param fid h5 file handle of the measurement
+#' @param indexhelp shape of the data block
+#' @return sorted data_frame where buf and write are from indexhelp,
+#' while a and b are the coefficients for mass calibration 
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' mcv <- masscal_legacy_plain(fid, indexhelp)
+masscal_legacy_plain <- function(fid, indexhelp){
+  legacy_masscal <- read.mass.cals(fid)
+  df <- as_data_frame(t(legacy_masscal)) %>%
+	mutate(write = 1:nrow(.)) %>% rename(a=V1, b=V2)
+  with(indexhelp, left_join(calc.indices, df, by=c('write')))
+}
+
+#' mass calibration function to improve it as performed by breath view
+#' @export
+#' @param fid h5 file handle of the measurement
+#' @param indexhelp shape of the data block
+#' @return sorted data_frame where buf and write are from indexhelp,
+#' while a and b are the coefficients for mass calibration 
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' mcv <- masscal_legacy_plain(fid, indexhelp)
+masscal_legacy_smooth <- function(fid, indexhelp){
+  legacy_masscal <- read.mass.cals(fid)
+  df <- as_data_frame(t(legacy_masscal)) %>% mutate(write = 1:nrow(.))
+  a_smooth <- with(df, smooth.spline(write, V1))
+  b_smooth <- with(df, smooth.spline(write, V2))
+  ci <- indexhelp$calc.indices %>% 
+	mutate(x = write - 0.5 + r*buf,
+		   a = predict(a_smooth, x=x)$y,
+		   b = predict(b_smooth, x=x)$y
+		   )
+  select(ci, buf, write, a,b)
 }
