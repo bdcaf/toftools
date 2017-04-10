@@ -38,10 +38,6 @@ spec <- aspec(1)
 ma <- with(calib, (seq_along(spec)-b)^2/a^2)
 plot(ma, spec, type='l')
 
-spec2mav <- function(spec, calib, mass_axis){
-  sqrt(mass_axis)
-}
-
 masscal_c1 <- function(fid, indexhelp, 
 					   resolution=1e4,
 					   mass.low=10,
@@ -57,7 +53,6 @@ par(mfrow=c(2,1))
 plot(legacy_masscal[1,], type='l')
 plot(legacy_masscal[2,], type='l')
 ```
-
 
 ```{r, fig.cap="some smoothing may globally be more effective"}
 # mass calibration a smooth one makes maybe sense
@@ -115,4 +110,68 @@ r0 <- peak_stat(spec0, ma59)
 
 ```{r, fig.cap="Acetone with only one calibration for whole measurement"}
 plot(ma59, spec0, type='l')
+```
+
+#### Tof daq calibration
+
+```{r}
+legacy_masscal <- read.mass.cals(fid)
+
+
+ihc <- indexhelp$calc.indices %>% left_join(df, by='write')
+lapply(1:10, aspec)
+
+n <- 100
+n2spec <- function(ihc,n){
+  sa <- aspec(n)
+  cala <- with(ihc[n,], list( a=V1, b=V2))
+  speca <- spec2mav(sa,cala, ma59)
+}
+
+rfun <- function(x, n){
+  x + n2spec(ihc,n)
+}
+
+allSpec <- Reduce(rfun, seq_len(indexhelp$N), 0)
+
+plot(ma59, allSpec, type='l')
+ra <- peak_stat(allSpec, ma59)
+```
+#### smooth tof daq
+
+```{r}
+legacy_masscal <- read.mass.cals(fid)
+df <- as_data_frame(t(legacy_masscal)) %>% mutate(write = 1:nrow(.))
+a_smooth <- with(df, smooth.spline(write, V1))
+b_smooth <- with(df, smooth.spline(write, V2))
+
+r <- with(indexhelp, 1/dims[[3]])
+ci <- indexhelp$calc.indices %>% 
+  mutate(x = write - 0.5 + r*buf,
+  		 a = predict(a_smooth, x=x)$y,
+  		 b = predict(b_smooth, x=x)$y
+  		 )
+
+calfun <- function(n)
+  ci[n,]
+
+n2spec <- function(cf,n){
+  sa <- aspec(n)
+  cala <- cf(n)
+  speca <- spec2mav(sa,cala, ma59)
+}
+
+rfun <- function(x, n){
+  x + n2spec(calfun,n)
+}
+
+allSpecS <- Reduce(rfun, seq_len(indexhelp$N), 0)
+
+plot(ma59, allSpecS, type='l')
+rS <- peak_stat(allSpecS, ma59)
+```
+
+
+```{r}
+do.call(rbind, list(r0, ra, rS))
 ```
