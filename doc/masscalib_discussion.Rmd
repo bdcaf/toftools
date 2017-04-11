@@ -179,3 +179,36 @@ rS <- peak_stat(allSpecS, curr.mass.range)
 comp.peak <- do.call(rbind, list(r0, ra, rS))
 mutate(data.frame(comp.peak), sd = sqrt(unlist(var)))
 ```
+
+
+## realigning
+
+```{r}
+n<- 100
+cumspec <- read.sum.spec(fid)
+sa <- aspec(n)
+ca <- cumspec-sa
+plot(ca,sa)
+
+css <- cumsum(cumspec)
+cca <- cumsum(ca)
+
+inds <- seq_along(cca)
+af <- approxfun(inds, cca, rule=2)
+
+
+scaled <- function(af,inds,d,e) {
+  i2 <- inds/d-e
+  c(0,diff(af(i2)))
+}
+
+sas <- scaled(af,inds, d,e)
+
+dist_fun <- function(af, d, e){
+  sas <- scaled(af,inds, d,e)
+  1- cor(sas,cumspec)
+}
+
+distance <- 1-cor(sa,cumspec)
+cor(sas,cumspec)
+```
