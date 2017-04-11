@@ -78,16 +78,7 @@ lines(ci$x, ci$b)
 
 ## try comparing the results
 
-### Aceton
-
-#### only one mass calibration per measurement
 ```{r}
-ma59 <- make_mass_axis(mass.low=58.95, 
-					   mass.high=59.15)
-
-cal0 <- with(df, list(a=median(V1), b=median(V2)))
-spec0 <- spec2mav(ss,cal0, ma59)
-
 peak_stat <- function(spec0, maxis){
   spec0[1]<-0
   mom0 = sum(spec0)
@@ -105,11 +96,25 @@ peak_stat <- function(spec0, maxis){
 	  max.mass = maxis[im])
 }
 
-r0 <- peak_stat(spec0, ma59)
+```
+### m/z 31
+
+#### only one mass calibration per measurement
+```{r}
+base.mass <- 31
+curr.mass.range <- 
+  make_mass_axis( mass.low=base.mass-0.05, 
+				  mass.high=base.mass + 0.05)
+
+cal0 <- with(df, list(a=median(V1), b=median(V2)))
+spec0 <- spec2mav(ss,cal0, curr.mass.range)
+
+r0 <- peak_stat(spec0, curr.mass.range)
+#plot(curr.mass.range, spec0, type='l')
 ```
 
 ```{r, fig.cap="Acetone with only one calibration for whole measurement"}
-plot(ma59, spec0, type='l')
+plot(curr.mass.range, spec0, type='l')
 ```
 
 #### Tof daq calibration
@@ -117,15 +122,13 @@ plot(ma59, spec0, type='l')
 ```{r}
 legacy_masscal <- read.mass.cals(fid)
 
-
 ihc <- indexhelp$calc.indices %>% left_join(df, by='write')
-lapply(1:10, aspec)
 
 n <- 100
 n2spec <- function(ihc,n){
   sa <- aspec(n)
   cala <- with(ihc[n,], list( a=V1, b=V2))
-  speca <- spec2mav(sa,cala, ma59)
+  speca <- spec2mav(sa,cala, curr.mass.range)
 }
 
 rfun <- function(x, n){
@@ -134,8 +137,8 @@ rfun <- function(x, n){
 
 allSpec <- Reduce(rfun, seq_len(indexhelp$N), 0)
 
-plot(ma59, allSpec, type='l')
-ra <- peak_stat(allSpec, ma59)
+plot(curr.mass.range, allSpec, type='l')
+ra <- peak_stat(allSpec, curr.mass.range)
 ```
 #### smooth tof daq
 
@@ -158,7 +161,7 @@ calfun <- function(n)
 n2spec <- function(cf,n){
   sa <- aspec(n)
   cala <- cf(n)
-  speca <- spec2mav(sa,cala, ma59)
+  speca <- spec2mav(sa,cala, curr.mass.range)
 }
 
 rfun <- function(x, n){
@@ -167,11 +170,12 @@ rfun <- function(x, n){
 
 allSpecS <- Reduce(rfun, seq_len(indexhelp$N), 0)
 
-plot(ma59, allSpecS, type='l')
-rS <- peak_stat(allSpecS, ma59)
+plot(curr.mass.range, allSpecS, type='l')
+rS <- peak_stat(allSpecS, curr.mass.range)
 ```
 
 
 ```{r}
-do.call(rbind, list(r0, ra, rS))
+comp.peak <- do.call(rbind, list(r0, ra, rS))
+mutate(data.frame(comp.peak), sd = sqrt(unlist(var)))
 ```

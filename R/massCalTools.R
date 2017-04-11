@@ -87,6 +87,9 @@ ind2massaxis <- function(calib, ind){
 spec2mav <- function(spec, calib, mass_axis){
   inds <- massaxis2ind(calib, mass_axis)
   cspec <- cumsum(spec)
-  y2 <- approx(x=seq_along(cspec), y=cspec, xout=inds)$y
+  y2 <- approx(x=seq_along(cspec), 
+  			   y=cspec, 
+  			   xout=inds,
+  			   method="linear")$y
   mav <- c(NA, diff(y2))
 }
