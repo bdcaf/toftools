@@ -184,17 +184,16 @@ mutate(data.frame(comp.peak), sd = sqrt(unlist(var)))
 ## realigning
 
 ```{r}
-n<- 100
+n<- 1000
 cumspec <- read.sum.spec(fid)
 sa <- aspec(n)
 ca <- cumspec-sa
-plot(ca,sa)
 
-css <- cumsum(cumspec)
+css <- cumsum(sa)
 cca <- cumsum(ca)
 
 inds <- seq_along(cca)
-af <- approxfun(inds, cca, rule=2)
+af <- approxfun(inds, css, rule=2)
 
 
 scaled <- function(af,inds,d,e) {
@@ -206,9 +205,41 @@ sas <- scaled(af,inds, d,e)
 
 dist_fun <- function(af, d, e){
   sas <- scaled(af,inds, d,e)
-  1- cor(sas,cumspec)
+  1 - cor(sas,ca)
 }
 
-distance <- 1-cor(sa,cumspec)
-cor(sas,cumspec)
+best_shift <-
+  optim(c(1,0), 
+	  function(x) dist_fun(af, x[[1]], x[[2]])
+	  )
+
+es <- seq(-0,0.7,length.out=50)
+ed <- sapply(es, function(x) dist_fun(af,best_shift$par[[1]],x))
+plot(es,ed, type='l')
+
+ds <- seq(1,1.00002,length.out=50)
+dd <- sapply(ds, function(x) dist_fun(af,x,best_shift$par[[2]]))
+plot(ds,dd, type='l')
+
+optim_shift <- function(n){
+  curr.spec <- aspec(n)
+  other.specs <- cumspec-sa
+  cum.cur.spec <- cumsum(sa)
+  
+  work.indices <- seq_along(cumspec)
+  interp.spec <- approxfun(inds, css, rule=2)
+  shifted.spec <- function(x) {
+  	e <- x[[1]]
+  	d <- x[[2]]
+    i2 <- inds/d-e
+    c(0,diff(interp.spec(i2)))
+  }
+
+  dist2other <- function(x){
+	sas <- scaled(x)
+	1 - cor(sas, other.specs)
+  }
+  spec.opt <- optim(c(0,1), dist2other) 
+}
+
 ```

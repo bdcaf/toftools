@@ -1,8 +1,9 @@
 source('R/spec_tools.R')
 source('R/tofReader.R')
+source('R/massCalTools.R')
 library(dtw)
-
 library(dplyr)
+
 # load the data
 tof.h5 <- 'testdata/Ac just breath after C (2014-10-23T11h34m53_#).h5'
 fid <-H5Fopen(tof.h5)
@@ -15,6 +16,72 @@ spec3 <- read.spec.ind(tofblock, indexhelp, 900)
 spec4 <- read.spec.ind(tofblock, indexhelp, 901)
 plot(spec1-spec2,type='l')
 
+inds <- seq_len(indexhelp$N) 
+aspec <- function(n) read.spec.ind(tofblock, indexhelp, n)
+rf <- function(x,n) x + aspec(n)
+#ss <- Reduce(rf, inds, 0, accumulate=F)
+ss <- read.sum.spec(fid)
+plot(ss, type='l')
+
+m2 <- masscal_legacy_smooth(fid, indexhelp)
+
+
+make_massaxis <- function( resolution=1e4,
+						   mass.low=10,
+						   mass.high=200){
+  log_mass_axis <- seq(from=log10(mass.low), 
+					   to = log10(mass.high),
+					   length.out=((mass.high-mass.low)*resolution)
+					   )
+  mass_axis <- 10^log_mass_axis
+}
+
+calib <- m2[1,]
+spec <- aspec(1)
+ma <- with(calib, (seq_along(spec)-b)^2/a^2)
+plot(ma, spec, type='l')
+
+spec2mav <- function(spec, calib, mass_axis){
+  sqrt(mass_axis)
+}
+
+masscal_c1 <- function(fid, indexhelp, 
+					   resolution=1e4,
+					   mass.low=10,
+					   mass.high=200){
+  mass_axis <- make_mass_axis(resolution=resolution, mass.low=mass.low, mass.high=mass.high)
+}
+
+
+# mass calibration jumps
+legacy_masscal <- read.mass.cals(fid)
+plot(legacy_masscal[1,], type='l')
+plot(legacy_masscal[2,], type='l')
+
+
+# mass calibration a smooth one makes maybe sense
+df <- as_data_frame(t(legacy_masscal)) %>% mutate(write = 1:nrow(.))
+a_smooth <- with(df, smooth.spline(write, V1))
+b_smooth <- with(df, smooth.spline(write, V2))
+
+
+r <- with(indexhelp, 1/dims[[3]])
+ci <- indexhelp$calc.indices %>% 
+  mutate(x = write - 0.5 + r*buf,
+  		 a = predict(a_smooth, x=x)$y,
+  		 b = predict(b_smooth, x=x)$y
+  		 )
+
+par(mfrow=c(2,1))
+
+plot(df$write, df$V1, type='p')
+lines(ci$x, ci$a)
+
+plot(df$write, df$V2, type='p')
+lines(ci$x, ci$b)
+
+
+left_join(indexhelp$calc.indices, df, by='write')
 # trying to follow
 # 1. Dupont, M. & Marteau, P.-F. in Lecture Notes in Computer Science
 # (including subseries Lecture Notes in Artificial Intelligence and
