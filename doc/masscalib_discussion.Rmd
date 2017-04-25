@@ -17,11 +17,10 @@ spec1 <- read.spec.ind(tofblock, indexhelp, 700)
 spec2 <- read.spec.ind(tofblock, indexhelp, 800)
 spec3 <- read.spec.ind(tofblock, indexhelp, 900)
 spec4 <- read.spec.ind(tofblock, indexhelp, 901)
-plot(spec1-spec2,type='l')
 
 inds <- seq_len(indexhelp$N) 
 aspec <- function(n) read.spec.ind(tofblock, indexhelp, n)
-rf <- function(x,n) x + aspec(n)
+#rf <- function(x,n) x + aspec(n)
 #ss <- Reduce(rf, inds, 0, accumulate=F)
 ss <- read.sum.spec(fid)
 ```
@@ -70,10 +69,10 @@ ci <- indexhelp$calc.indices %>%
 par(mfrow=c(2,1))
 
 plot(df$write, df$V1, type='p')
-lines(ci$x, ci$a)
+lines(ci$x, ci$a, col='red', lwd=3)
 
 plot(df$write, df$V2, type='p')
-lines(ci$x, ci$b)
+lines(ci$x, ci$b, col='red', lwd=3)
 ```
 
 ## try comparing the results
@@ -138,8 +137,10 @@ rfun <- function(x, n){
 allSpec <- Reduce(rfun, seq_len(indexhelp$N), 0)
 
 plot(curr.mass.range, allSpec, type='l')
-ra <- peak_stat(allSpec, curr.mass.range)
+#ra <- peak_stat(allSpec, curr.mass.range)
 ```
+
+
 #### smooth tof daq
 
 ```{r}
@@ -175,9 +176,10 @@ rS <- peak_stat(allSpecS, curr.mass.range)
 ```
 
 
-```{r}
-comp.peak <- do.call(rbind, list(r0, ra, rS))
-mutate(data.frame(comp.peak), sd = sqrt(unlist(var)))
+```{r, fig.cap="overlay tof daq calibrations"}
+plot(curr.mass.range, spec0, type='l')
+lines(curr.mass.range, allSpec, col='red')
+lines(curr.mass.range, allSpecS, col='blue')
 ```
 
 
@@ -201,7 +203,6 @@ scaled <- function(af,inds,d,e) {
   c(0,diff(af(i2)))
 }
 
-sas <- scaled(af,inds, d,e)
 
 dist_fun <- function(af, d, e){
   sas <- scaled(af,inds, d,e)
@@ -215,18 +216,25 @@ best_shift <-
 
 es <- seq(-0,0.7,length.out=50)
 ed <- sapply(es, function(x) dist_fun(af,best_shift$par[[1]],x))
-plot(es,ed, type='l')
 
-ds <- seq(1,1.00002,length.out=50)
+ds <- seq(1- 2e-5,1.00002,length.out=50)
 dd <- sapply(ds, function(x) dist_fun(af,x,best_shift$par[[2]]))
+
+par(mfrow=c(2,1))
+plot(es,ed, type='l')
 plot(ds,dd, type='l')
 
+```
+
+
+```{r}
 optim_shift <- function(n){
   curr.spec <- aspec(n)
   other.specs <- cumspec-sa
   cum.cur.spec <- cumsum(sa)
   
   work.indices <- seq_along(cumspec)
+  inds <- seq_along(curr.spec)
   interp.spec <- approxfun(inds, css, rule=2)
   shifted.spec <- function(x) {
   	e <- x[[1]]
@@ -236,10 +244,13 @@ optim_shift <- function(n){
   }
 
   dist2other <- function(x){
-	sas <- scaled(x)
+	sas <- shifted.spec(x)
 	1 - cor(sas, other.specs)
   }
+
   spec.opt <- optim(c(0,1), dist2other) 
 }
+
+optim_shift(4)
 
 ```

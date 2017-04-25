@@ -32,6 +32,7 @@ masscal_legacy_smooth <- function(fid, indexhelp){
   df <- as_data_frame(t(legacy_masscal)) %>% mutate(write = 1:nrow(.))
   a_smooth <- with(df, smooth.spline(write, V1))
   b_smooth <- with(df, smooth.spline(write, V2))
+  r <- 1/indexhelp$dims[[3]]
   ci <- indexhelp$calc.indices %>% 
 	mutate(x = write - 0.5 + r*buf,
 		   a = predict(a_smooth, x=x)$y,
