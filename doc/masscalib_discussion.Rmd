@@ -230,12 +230,12 @@ plot(ds,dd, type='l')
 ```{r}
 optim_shift <- function(n){
   curr.spec <- aspec(n)
-  other.specs <- cumspec-sa
-  cum.cur.spec <- cumsum(sa)
+  other.specs <- cumspec-curr.spec
+  cum.cur.spec <- cumsum(curr.spec)
   
   work.indices <- seq_along(cumspec)
   inds <- seq_along(curr.spec)
-  interp.spec <- approxfun(inds, css, rule=2)
+  interp.spec <- approxfun(inds, cum.cur.spec, rule=2)
   shifted.spec <- function(x) {
   	e <- x[[1]]
   	d <- x[[2]]
@@ -249,8 +249,13 @@ optim_shift <- function(n){
   }
 
   spec.opt <- optim(c(0,1), dist2other) 
+  return(spec.opt$par)
 }
 
-optim_shift(4)
+#a <- optim_shift(4)
 
+#os <- lapply(seq_len(indexhelp$N), optim_shift)
+os <- lapply(seq_len(10)*100, optim_shift)
+
+otl <- do.call(rbind, os)
 ```
