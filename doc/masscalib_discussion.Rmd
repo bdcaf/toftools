@@ -255,7 +255,46 @@ optim_shift <- function(n){
 #a <- optim_shift(4)
 
 #os <- lapply(seq_len(indexhelp$N), optim_shift)
-os <- lapply(seq_len(10)*100, optim_shift)
+os <- lapply(seq_len(20), optim_shift)
 
 otl <- do.call(rbind, os)
 ```
+
+### ptw seems all the rage
+```{r}
+library(ptw)
+n <- 100
+  curr.spec <- matrix(aspec(n), nrow=1)
+  other.specs <- matrix(cumspec, nrow=1) - curr.spec
+
+system.time(
+tmp <- ptw(other.specs, curr.spec, 
+		   mode = "forward",
+           warp.type = "global", 
+           trwdth = 10)
+)
+
+s2 <- tmp$warped.sample
+s2[is.na(s2)] <- 0
+sum(curr.spec)
+sum(s2, na.rm=T)
+
+plot(x=inds, curr.spec, type='l')
+lines(x=inds, t(tmp$warped.sample), col='red')
+
+tmp$warp.coef
+curr.spec2 <- matrix(aspec(101), nrow=1)
+upd.spec <- other.specs - curr.spec2 + s2
+system.time(
+tmp2 <- ptw( upd.spec, curr.spec2, 
+		   mode = "forward",
+           warp.type = "global", 
+           smooth.param = 0, 
+           init.coef = tmp$warp.coef,
+           trwdth = 10)
+)
+
+```
+
+This isn't very fast either - and I'm unhappy that count rates are not
+preserved.
