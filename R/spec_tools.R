@@ -19,7 +19,7 @@ library(purrr)
 #' @return list of sparse regions where the spectrum is > `lower`	
 #'
 #' @export
-sparse_spec <- function(full.wave, lower=0, minlen=5){
+sparse_spec <- function(full.wave, lower=0, minlen=2){
   idx <- full.wave > lower
   renc <- rle(as.vector(idx))
   startp <- cumsum( c(0, as.numeric(renc$lengths)))
@@ -29,21 +29,29 @@ sparse_spec <- function(full.wave, lower=0, minlen=5){
 		 rlen = len,
 		 signal = full.wave[starter + seq_len(len)])
 
+  calc_inds <- function(starter, len) starter + seq_len(length.out = len)
+}
 
-  extract_d <- function(starter, len)
-	(full.wave[starter + seq_len(length.out = len)])
+  extract_d <- function(inds) (full.wave[inds])
 
   dv <- data_frame(start=startp[seq_along(renc$lengths)], 
 				   rlen = renc$lengths, 
 				   greater0 = renc$values) %>%
-				filter(greater0, rlen > minlen) 
-
-  
-  d2 <- dv %>% mutate( ser = map2(start, rlen, extract_d),
-  					   mv = unlist(map(ser, max)),
-  					   localmax = unlist(map(ser, which.max)),
-  					   glob_max = start + localmax - 1) %>%
+				filter(greater0, rlen > minlen) %>%  
+				mutate( inds = map2(start, rlen, calc_inds),
+					    ser = map(inds, extract_d)
+                         #mv = unlist(map(ser, max)),
+                         #localmax = unlist(map(ser, which.max)),
+                         #glob_max = start + localmax - 1
+  					   ) %>%
 			  select(-greater0)
 
-  return(d2)
+  return(dv)
+}
+
+inpterp_sparse <- function(spa, func){
+# TODO
+}
+corr_sparse <- function(spa, spb){
+# TODO
 }
