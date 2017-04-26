@@ -19,7 +19,7 @@ library(purrr)
 #' @return list of sparse regions where the spectrum is > `lower`	
 #'
 #' @export
-sparse_spec <- function(full.wave, lower=0, minlen=2){
+sparse_spec <- function(full.wave, lower=0, minlen=0){
   idx <- full.wave > lower
   renc <- rle(as.vector(idx))
   startp <- cumsum( c(0, as.numeric(renc$lengths)))
