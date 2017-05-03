@@ -1,0 +1,41 @@
+\documentclass[twocolumn]{article}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{eurosym}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[]{natbib}
+\usepackage{attrib}
+
+\usepackage{draftwatermark}
+\SetWatermarkText{DRAFT}
+
+\DeclareSIUnit\ppmv{ppm\textsubscript{V} }
+\DeclareSIUnit\ppbv{ppb\textsubscript{V} }
+
+\hyphenation{op-tical net-works semi-conduc-tor}
+\title{Workflow for Ionicon data}
+\author{Clemens~Ager}
+\date{\today}
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  This document outlines a reproducible workflow for interacting with
+  Ionicon TOF data.
+\end{abstract}
+
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\input{doc/introduction.tex}
+
+\bibliographystyle{plainnat}
+\bibliography{bibliography}
+
+\end{document}
