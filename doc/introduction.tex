@@ -3,39 +3,20 @@
 In this paper a modern work flow is shown.
 
 Currently most user work with the TOF data analysis tool
-\citep{Muller2013a} provided by Ionicon.  It is a convenient tool;
-unfortunately it does not fit every work flow.
+\citep{Muller2013a} provided by Ionicon.  Here another work flow is
+developed based on a set of principles.
 
-\subsection{possible issues}
-\paragraph{Data issue}
+\subsection{Principles}
 
-One big issue for me is actually the data file.  It contains not only
-the measurement data --- but also part of the evaluation.  Specifically
-the mass calibration, and derived from it peak areas.   Although these
-are initially written at measurement time, during a typical evaluation
-both will be recreated.  
+\paragraph{Data}
 
-There are a number of methods for mass calibration available, and more
-important different points of reference may be used; also it is possible
-to select whether the calibration is performed on the sum spectrum or
-separately for each buf. 
-
-The same is true for integration.  One can choose from several options
-how to integrate peaks, and also needs to define which peaks will be
-integrated. 
-
-The real issue being the data file gets modified by viewing it.  This
-has two important implications: 1st as the file gets rewritten any
-hardware or software error may destroy the data.  2nd a problem of
-reproducibility; a user might change values inside the data file by
-opening it --- or consider two persons working on the same file may end
-up with different results.
-
-In our work group we believe that measurement data should be stored
-read-only and may not be altered after capture.
+Assuring the integrity of observed data is of paramount importance.  One
+core point is that any file containing observation data must not be
+altered.  The integrity of such files can then also be confirmed using
+checksum and even cryptographic signatures to guarantee authenticity.
 
 
-\paragraph{missing batch processing}
+\paragraph{batch processing}
 
 For larger measurement campaigns a reproducible work flow is essential.
 This means that every measurement must be processed exactly the same
