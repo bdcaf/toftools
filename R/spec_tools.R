@@ -73,9 +73,15 @@ sparse_spec <- function(full.wave, lower=0, minlen=0){
 
   extract_ts <- function(starts, ends) list(full.wave[starts:ends])
   condensed_sig %>% rowwise() %>% mutate(v=extract_ts(starts,ends))
-  # TODO check identity
 }
 
+sparse2dense <- function(sparse.list, full.len=398999){
+  out <- vector(mode='numeric', length=full.len)
+  sparse.list %>% rowwise() %>%
+  	do( x=with(., out[starts:ends] <<- c(unlist(v))))
+  
+  out
+}
 
 inpterp_sparse <- function(spa, func){
 # TODO

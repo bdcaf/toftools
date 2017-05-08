@@ -42,11 +42,17 @@ spec4 <- read.spec.ind(tofblock, indexhelp, 901)
 
 inds <- seq_len(indexhelp$N) 
 aspec <- function(n) read.spec.ind(tofblock, indexhelp, n)
+spspec <- function(n) sparse_spec(aspec(n))
 #rf <- function(x,n) x + aspec(n)
 #ss <- Reduce(rf, inds, 0, accumulate=F)
 ss <- read.sum.spec(fid)
 
 sss <- sparse_spec(spec0)
+
+
+df <- tibble( scan=seq_len(indexhelp$N))  %>% 
+  rowwise() %>%
+  do(spspec(.$scan))
 @
 
 <<fig.cap="sum spectrum">>=

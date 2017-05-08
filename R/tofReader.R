@@ -1,6 +1,7 @@
 library(rhdf5)
 library(dplyr)
 library(tidyr)
+library(purr)
 
 #' reads integrated peaks as integrated by PTR-MS TOD-DAQ-Viewer.
 #' 
@@ -178,5 +179,43 @@ read.spec.ind <- function(tofblock, indexhelp, i){
 #' spec5 <- cr(5)
 make.curr.tofreader <- function(tofblock, indexhelp){
   function(i){read.spec.ind(tofblock,indexhelp,i)}
+}
+
+h5ToSqlite <- function(path, tof.h5){
+  src <- src_sqlite(path, create=T)
+  #sparse.table <- tbl('sparse', src)
+
+  fid <-H5Fopen(tof.h5)
+  tofblock <- get.raw.tofblock(fid)
+  indexhelp <- tof.indexhelp(tofblock)
+  aspec <- function(n) read.spec.ind(tofblock, indexhelp, n)
+
+  #db_drop_table(src$con, 'sparse')
+
+  ind <- 4
+
+  osframe <- function(ind) {
+	as <- aspec(ind)
+	ss <- sparse_spec(as)
+	cbind(scan = ind, ss)
+  }
+
+	#ss2 <- ss %>% 
+	  #rowwise() %>%
+	  #mutate(ser = list(serialize(v,NULL))) %>%
+	  #select(-v)
+  system.time(
+  tmp <- data_frame(scan = seq_len(indexhelp$N)) %>%
+  	rowwise() %>%
+  	do( osframe(.$scan))
+	)
+
+  to_db <- tmp %>% 
+	  rowwise() %>%
+	  mutate(ser = list(serialize(v,NULL))) %>%
+	  select(-v)
+  
+  copy_to(src, to_db, name='sparse', temporary=F)
+  #copy_to(src, tmp, name='sparse', temporary=F, indexes=list('scan','bin'))
 }
 
