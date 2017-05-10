@@ -5,6 +5,7 @@ library(ptw)
 library(Matrix)
 library(dplyr)
 library(parallel)
+library(nloptr)
 
 tof.h5 <- 'testdata/Ac just breath after C (2014-10-23T11h34m53_#).h5'
 fid <-H5Fopen(tof.h5)
@@ -15,6 +16,89 @@ system.time(
 tof.spectra <- get.full.specblock(tofblock) 
 )
 #ass <- Matrix(tof.spectra, sparse=T)
+#
+#
+
+# next idea make it iterative
+totSigs <- colSums(tof.spectra)
+tosum <- rowSums(tof.spectra)
+
+# split matrix
+
+ifun <- function(ll, inds)  ll[[1]] + ll[[2]]*inds + ll[[3]]*inds^2
+re.index <- function(ll)  ifun(ll,seq_along(tosum))
+ap.spec <- function(spc){ 
+  cusp <- cumsum(spc)
+  approxfun(x=seq_along(cusp), y=cusp, yleft=0, yright=cusp[length(cusp)])
+}
+
+prep.ref <- c(as.array(diff(tosum)),0)
+nspec <- ncol(tof.spectra)
+nsplits <- 6
+
+dsplit <- ceiling(nspec/nsplits)
+seqs <- seq(dsplit, nspec-1, by=dsplit)
+ranges <- mapply(function(a,b) list(a:b),c(1,seqs+1), c(seqs,nspec))
+specs <- lapply(ranges, function(x) rowSums(tof.spectra[,x]))
+#data.frame(starts=c(1,seqs+1), ends=c(seqs,nspec))
+pr <- 178000:178500
+plot(pr,tosum[pr], type='l')
+lines(pr,specs[[3]][pr], col='red')
+
+aspec <- specs[[4]]
+spec.fun <- ap.spec(aspec)
+optfun <- function(ll){
+  i2 <- re.index(ll)
+  s2 <- spec.fun(i2)
+  crossprod(prep.ref,s2)
+}
+# see: http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
+op.ra <- nloptr(c(0,1,0), optfun, opts = list("algorithm"="NLOPT_LN_COBYLA"))
+op.ra <- nloptr(c(0,1,0), optfun, opts = list("algorithm"="NLOPT_GN_DIRECT_L_RAND"))
+
+# ---
+#split.at <- floor(ncol(tof.spectra)/2)
+#left.spec <- tof.spectra[,1:split.at]
+#right.spec <- tof.spectra[,-(1:split.at)]
+#lefts <- rowSums(left.spec)
+#rights <- rowSums(right.spec)
+
+#pr <- 178000:178500
+#plot(pr,tosum[pr], type='l')
+#lines(pr,lefts[pr], col='red')
+#lines(pr,rights[pr], col='blue')
+
+left.fun <- ap.spec(lefts)
+right.fun <- ap.spec(rights)
+
+optfun <- function(ifun,ll){
+  i2 <- re.index(ll)
+  s2 <- ifun(i2)
+  crossprod(prep.ref,s2)
+}
+
+o1 <- optim(c(0,1,0), function(x) optfun(left.fun,x))
+o2 <- optim(c(0,1,0), function(x) optfun(right.fun,x))
+
+left2 <- diff(c(0, left.fun(re.index(o1$par))))
+right2 <- diff(c(0, right.fun(re.index(o2$par))))
+
+pr <- 178000:178500
+plot(pr,tosum[pr], type='l')
+lines(pr,left2[pr], col='red')
+lines(pr,lefts[pr], col='blue')
+
+plot(pr,tosum[pr], type='l')
+lines(pr, right2[pr], col='red')
+lines(pr, rights[pr], col='blue')
+
+
+pr <- 171000:171500
+plot(pr,tosum[pr], type='l')
+lines(pr, (left2+right2)[pr], col='red')
+
+# old
+#
 
 n<- 1000
 sumspec <- read.sum.spec(fid)
@@ -22,21 +106,24 @@ cumspec <- cumsum(sumspec)
 
 master.app <- approxfun(x=seq_along(cumspec), y=cumspec, yleft=0, yright=cumspec[length(cumspec)])
 
-ifun <- function(ll, inds)  ll[[1]] + ll[[2]]*inds + ll[[3]]*inds^2
 
 ss <- tof.spectra[,234,drop=F]
 reference <- Matrix(sumspec, sparse=T)
 
 system.time(
-test <- ptw(t(sumspec), t(tof.spectra[,1:10]))
+test <- ptw(t(sumspec), t(tof.spectra[,1:10]), optim.crit='RMS', smooth.param=0)
 )
 plot(test)
 
-pr = seq(152000, 160000)
-ms <- max(sumspec[pr])
-mc <- max(ss[pr])
-plot(pr,sumspec[pr]/ms, type='l', lwd=4)
-lines(pr,ss[pr]/mc, col='red')
+pr = seq(200000, 220000)
+ms <- max(reference[pr])
+mc <- max(test$warped.sample[,pr])
+ws <- test$warped.sample[,pr]
+wo <- test$sample[,pr]
+plot(pr,reference[pr]/ms, type='l', lwd=4)
+i <- 5
+lines(pr,ws[i,], col='red')
+lines(pr,wo[i,], col='blue')
 
 targets <- 0:length(cumspec)
 newind <- function(ll) ifun(ll, targets)
