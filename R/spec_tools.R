@@ -75,20 +75,55 @@ sparse_spec <- function(full.wave, lower=0, minlen=0){
   condensed_sig %>% rowwise() %>% mutate(v=extract_ts(starts,ends))
 }
 
-sparse2dense <- function(sparse.list, full.len=398999){
+#' revert sparse spectrum to dense
+#'
+#' @description Turns a sparse spectrum into a dense vector.  Mostly
+#' useful for quick testing.
+#' @param sparse.spec, sparse spectrum
+#' @param full.len, optional full length of dense spectrum
+#' @return vector
+#' @export
+sparse2dense <- function(sparse.spec, full.len=398999){
   out <- vector(mode='numeric', length=full.len)
-  sparse.list %>% rowwise() %>%
+  sparse.spec %>% rowwise() %>%
   	do( x=with(., out[starts:ends] <<- c(unlist(v))))
   
   out
 }
 
-inpterp_sparse <- function(spa, func){
-# TODO
-}
-corr_sparse <- function(spa, spb){
-# TODO
-}
+ifun <- function(ll, inds)  ll[[1]] + ll[[2]]*inds + ll[[3]]*inds^2
 
 
+one_interp <- function(lin, func){
+  cums <- cumsum(c(0,0,lin[['v']],0,0))
+  bins <- with(lin, (starts-2):(ends+2))
+  nbins <- ifun(func, bins)
+  tbins <- floor(nbins[[1]]):ceiling(nbins[[length(nbins)]])
+  cout <- approx(nbins, cums, tbins, rule=2)
+  out <- diff(cout$y)
+
+  data_frame(starts2=tbins[[2]], ends2=tbins[[length(tbins)]], v2=list(out))
+}
+
+interp_sparse <- function(spa, func){
+  spa %>% rowwise() %>% do(one_interp(.,func))
+}
+
+one_cor <- function(dense, lin){
+  sum(with(lin, dense[starts2:ends2] * unlist(v2)))
+}
+corr_sparse <- function(dense, spa2){
+  tmp <- spa2 %>% rowwise() %>% do(cor=one_cor(dense,.))
+  vals <- unlist(tmp$cor)
+  sum(vals, na.rm=T)
+}
+
+ofun <- function(dense, spa, func){
+  spa2 <- interp_sparse(spa, func)
+  corr_sparse(dense, spa2)
+}
+
+# even slower!!!
+#concfun <- function(x) ofun(dense, spa, x)
+#of <- optim(c(0,1,0), concfun )
 

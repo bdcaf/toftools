@@ -1,7 +1,8 @@
 library(rhdf5)
 library(dplyr)
 library(tidyr)
-library(purr)
+library(purrr)
+library(Matrix)
 
 #' reads integrated peaks as integrated by PTR-MS TOD-DAQ-Viewer.
 #' 
@@ -132,6 +133,28 @@ smooth.mass.cal <- function (mc.table) {
 get.raw.tofblock <- function(fid) {
   gr <- H5Gopen(fid,"FullSpectra")
   H5Dopen(gr,"TofData")}
+
+#' returns full block of tof spectra
+#'
+#' @descriptions reads the full block of tof spectra
+#' This can be very large!
+#' @param tofblock from get.raw.tofblock
+#' @return array, first dimenstion is timebin, second scan index
+get.full.specblock <- function(tofblock){
+  h5spaceFile <- H5Dget_space(tofblock)
+  dims <- H5Sget_simple_extent_dims(h5spaceFile)
+  ot <- H5Dread(h5dataset = tofblock, 
+          h5spaceFile = h5spaceFile,
+          compoundAsDataFrame = FALSE)
+  #ot2 <- ot
+  #dd <- dim(ot)
+  #dim(ot2) <- c(dd[[1]], prod(dd[-1]))
+  #all(ot2[,1]==ot[,1,1,1])
+  #all(ot2[,2]==ot[,1,2,1])
+  dd <- dim(ot)
+  dim(ot) <- c(dd[[1]], prod(dd[-1]))
+  Matrix(ot, sparse=T)
+}
 
 #' pre calculates some values
 #' not export

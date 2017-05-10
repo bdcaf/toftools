@@ -248,7 +248,8 @@ es <- seq(-0,0.7,length.out=50)
 ed <- sapply(es, function(x) dist_fun(af,best_shift$par[[1]],x))
 
 ds <- seq(1- 2e-5,1.00002,length.out=50)
-dd <- sapply(ds, function(x) dist_fun(af,x,best_shift$par[[2]]))
+concfun <- function(x) ofun(dense, spa, x)
+of <- optim(c(0,1,0), concfun )
 
 par(mfrow=c(2,1))
 plot(es,ed, type='l')
