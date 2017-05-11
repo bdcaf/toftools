@@ -18,8 +18,40 @@ Here we consider two variants:
 \end{itemize}
 
 
-As the spectrum is a large vector it is useful to transfer it into a
-sparser coding.  We chose a kind of run-length encoding.
+The initial intuition was to use sparse coding - but this proved more
+complex than it was worth.  May be revisited later.
+
+
+
+\paragraph{calculation}
+
+As measurement of agreement we consider correlation. i.e. the function
+$\cor a b = \tfrac{ a \ldot b}{\norm{a}\norm{b}} is to be maximized.
+
+\subparagraph{resampling}
+
+We consider the warp function $ \tilde i = a + b \sqrt i + c i$.  For
+the further discussion we want the warped signal $\tilde v$ to have the
+same sum as the unwarped $v$.  This is easiest achieved when we use the
+cumulative $V$ of $v$ and locally interpolate to the new indexes to a
+warped cumulative $\tilde V$.  $\tilde v$ is the 2 point derivative of
+$\tilde V$.
+
+\subparagraph{correlation}
+
+The as the resampled vector is available as cumulative we can also
+rewrite it.
+
+\[
+  \cor v w 
+  &= \Sum_{i=1}^{N} v_i w_i \\
+  &= \Sum_{i=2}^{N} v_i (W_i - W_{i-1}) \\
+  &= \Sum_{i=2}^{N} v_i W_i -  \Sum_{i=1}^{N-1} v_{i+1} W_i \\
+  &= \Sum_{i=1}^{N-1} W_i (v_i - v_{i+1})
+\]
+
+We use that the first and last entries of all spectra are $0$ to
+simplify the indices above.
 
 <<initialization>>=
 source('R/spec_tools.R')

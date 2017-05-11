@@ -21,42 +21,90 @@ tof.spectra <- get.full.specblock(tofblock)
 
 # next idea make it iterative
 totSigs <- colSums(tof.spectra)
-tosum <- rowSums(tof.spectra)
+tosum <- ( rowSums(tof.spectra))
+
 
 # split matrix
-
-ifun <- function(ll, inds)  ll[[1]] + ll[[2]]*inds + ll[[3]]*inds^2
-re.index <- function(ll)  ifun(ll,seq_along(tosum))
+rescale.prep <- list(inds = seq_along(tosum), sqind = sqrt(seq_along(tosum)))
+re.index <- with(rescale.prep, function(ll)  ll[[1]] + ll[[2]]*sqind + ll[[3]]*inds)
 ap.spec <- function(spc){ 
   cusp <- cumsum(spc)
   approxfun(x=seq_along(cusp), y=cusp, yleft=0, yright=cusp[length(cusp)])
 }
 
 prep.ref <- c(as.array(diff(tosum)),0)
+
+ssRef = sqrt(sum(tosum^2))
 nspec <- ncol(tof.spectra)
-nsplits <- 6
+nsplits <- 7
 
 dsplit <- ceiling(nspec/nsplits)
 seqs <- seq(dsplit, nspec-1, by=dsplit)
 ranges <- mapply(function(a,b) list(a:b),c(1,seqs+1), c(seqs,nspec))
 specs <- lapply(ranges, function(x) rowSums(tof.spectra[,x]))
 #data.frame(starts=c(1,seqs+1), ends=c(seqs,nspec))
-pr <- 178000:178500
+pr <- 77700:78000
 plot(pr,tosum[pr], type='l')
 lines(pr,specs[[3]][pr], col='red')
 
 aspec <- specs[[4]]
-spec.fun <- ap.spec(aspec)
-optfun <- function(ll){
-  i2 <- re.index(ll)
-  s2 <- spec.fun(i2)
-  crossprod(prep.ref,s2)
-}
-# see: http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
-op.ra <- nloptr(c(0,1,0), optfun, opts = list("algorithm"="NLOPT_LN_COBYLA"))
-op.ra <- nloptr(c(0,1,0), optfun, opts = list("algorithm"="NLOPT_GN_DIRECT_L_RAND"))
 
-# ---
+op_spec <- function(aspec){
+  spec.fun <- ap.spec( aspec)
+  warper <- function(ll){ diff(c(0,spec.fun(re.index(ll)))) }
+  optfun <- function(ll){ 
+  	wspc <- warper(ll) 
+  	ssw <- sqrt(sum(wspc^2))
+	-crossprod(tosum, wspc)/ssw/ssRef 
+  }
+
+  # see: http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
+  #op.ra <- nloptr(c(0,0,1), optfun, 
+				  #opts = list("algorithm"="NLOPT_LN_COBYLA", 
+								#ftol_rel=1e-6, xtol_rel=1e-6, maxeval=1000),
+				  #lb=c(-1e6,-1e4,0), ub=c(1e6,1e4,2))
+
+  op.rao <- optim(c(0,0,1), optfun) 
+  ws <- warper(op.rao$par)
+
+#pr <- 230000:240000
+#plot(pr,tosum[pr], type='l')
+#lines(pr,ws[pr], col='blue')
+
+  list(parameter = op.rao$par,
+  	   warped = ws)
+}
+
+system.time(
+w1 <- lapply(specs, op_spec)
+)
+
+tmp <- do.call(rbind,  lapply(w1, function(x) with(x,warped)) )
+
+s2 <- apply(tmp,2,sum)
+ss2 <- smooth(s2)
+#pr <- 178000:178500
+pr <- 230000:240000
+pr <- 222000:222500
+pr <- 236400:236700
+plot(pr,s2[pr], type='l')
+lines(pr,ss2[pr], col='blue')
+lines(pr,tosum[pr], col='red')
+lines(pr,tmp[7,pr], col='cyan')
+#lines(pr,tmp[4,pr], col='cyan')
+
+wf <- do.call(rbind,  lapply(w1, function(x) with(x,parameter)) )
+plot(wf[,1])
+plot(wf[,2])
+plot(wf[,3])
+
+
+#global
+#op.ra <- nloptr(c(0,1,0), optfun, 
+				#opts = list("algorithm"="NLOPT_GN_DIRECT_L", ftol_rel=1e-4),
+				#lb=c(-1e6,0,0), ub=c(1e6,2,1e-3))
+
+# ---NLOPT_GN_DIRECT_L
 #split.at <- floor(ncol(tof.spectra)/2)
 #left.spec <- tof.spectra[,1:split.at]
 #right.spec <- tof.spectra[,-(1:split.at)]
