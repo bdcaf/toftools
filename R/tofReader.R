@@ -242,3 +242,27 @@ h5ToSqlite <- function(path, tof.h5){
   #copy_to(src, tmp, name='sparse', temporary=F, indexes=list('scan','bin'))
 }
 
+#' tofH5 constructor for S3 class
+#' @export
+tofH5 <- function(tof.h5){
+  fid <-H5Fopen(tof.h5)
+  tofblock <- get.raw.tofblock(fid)
+  indexhelp <- tof.indexhelp(tofblock)
+  structure( list(filename = tof.h5,
+  				  fid = fid, 
+  				  tofblock = tofblock,
+  				  indexhelp = indexhelp), 
+  			class = 'TofH5')
+}
+
+#' print TofH5 class
+#' @export
+print.TofH5 <- function(th5){
+  with(th5, cat(sep='\n', 
+  				'H5 TOF measurement',
+  				paste('file:',filename), 
+  				paste('scans:',indexhelp$N)
+  				))
+}
+
+
