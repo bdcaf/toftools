@@ -8,16 +8,17 @@ library(parallel)
 library(nloptr)
 
 tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
-fid <-H5Fopen(tof.h5)
-tofblock <- get.raw.tofblock(fid)
+myTof <- tofH5(tof.h5)
+aSpec <- readInd.TofH5(myTof,10)
+bSpec <- readInd.TofH5(myTof,10000)
+totalSpec <- sumSpec.TofH5(myTof)
+a2 <- aSpec/max(aSpec)
+b2 <- bSpec/max(bSpec)
+t2 <- totalSpec/max(totalSpec)
 
-# takes 30s and 9GB in process - maybe can be accelerated
-system.time(
-tof.spectra <- get.full.specblock(tofblock) 
-)
-#ass <- Matrix(tof.spectra, sparse=T)
-#
-#
+plot(t2, type='l')
+lines(a2, col='red')
+tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
 
 # next idea make it iterative
 totSigs <- colSums(tof.spectra)
