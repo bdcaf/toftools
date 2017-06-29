@@ -242,6 +242,11 @@ h5ToSqlite <- function(path, tof.h5){
   #copy_to(src, tmp, name='sparse', temporary=F, indexes=list('scan','bin'))
 }
 
+
+###############################
+# S3 class for easier working #
+###############################
+
 #' tofH5 constructor for S3 class
 #' @export
 tofH5 <- function(tof.h5){
@@ -266,3 +271,28 @@ print.TofH5 <- function(th5){
 }
 
 
+#' reads the spec of a single tof scan from TofH5
+#' @export
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' spec <- read.spec.ind(tofblock, indexhelp, 40)
+#' plot(spec,type='l')
+readInd.TofH5 <- function(tofH, i){
+  with(tofH,{
+  pos <- indexhelp$calc.indices[i,]
+  H5Sselect_hyperslab(indexhelp$h5spaceFile, 
+                      start = c(1,1,pos$buf,pos$write), 
+                      count = c(indexhelp$dims[[1]],1,1,1) )                          
+  H5Dread(h5dataset = tofblock, 
+          h5spaceFile = indexhelp$h5spaceFile, 
+          h5spaceMem = indexhelp$h5spaceMem ) }
+  )}
+
+
+sumSpec.TofH5 <- function(tofH)
+  with(tofH, {
+		 gr <- H5Dopen(fid, 'FullSpectra/SumSpectrum')
+		 H5Dread(gr)
+  })
