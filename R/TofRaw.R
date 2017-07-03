@@ -1,4 +1,4 @@
-#' list to hold functions for a single H5 measurement
+#' class to hold raw tof access
 #' @export
 #' @param tof.h5 file path to relevant H5 file
 #' @return list of functions
@@ -6,9 +6,9 @@
 #' @examples
 #' \dontrun{
 #' tof.h5 <- file.path('data/',"2015.07.17-10h40m34 Ethanol deurated Karl .h5")
-#' curr.h5 <- h5.holder(tof.h5)
+#' curr.h5 <- TofRaw(tof.h5)
 #' }
-h5.holder <- function(tof.h5){
+TofRaw <- function(tof.h5){
   fid <-H5Fopen(tof.h5)
   tofblock <- get.raw.tofblock(fid)
   indexhelp <- tof.indexhelp(tofblock)
@@ -32,16 +32,17 @@ h5.holder <- function(tof.h5){
     mass.calib <<- rlm(pos ~ ion + sq3.mass + sq5.mass + sq.mass * ns(scan,knots=kn), pos.block, method='MM')
   }
   
-  list(close = function() H5close(),
-       readIndex = cr, 
-       sampleScans = sampleScans,
-       num.scan = function() indexhelp$N,
-       read.scan = read.scan,
-       read.bin = function (i, bin.vec) {
-         sc <- read.spec.ind(tofblock, indexhelp, i)
-         readScales(sc, bin.vec)
-       },
-       mass.calibrate = mass.calibrate,
-       get.mass.calib = function() mass.calib
-  )  
+  structure(list(close = function() H5close(),
+				 readIndex = cr, 
+				 sampleScans = sampleScans,
+				 num.scan = function() indexhelp$N,
+				 read.scan = read.scan,
+				 read.bin = function (i, bin.vec) {
+				   sc <- read.spec.ind(tofblock, indexhelp, i)
+				   readScales(sc, bin.vec)
+				 },
+				 mass.calibrate = mass.calibrate,
+				 get.mass.calib = function() mass.calib),
+			class='TofRaw'
+			)  
 }

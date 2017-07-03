@@ -1,5 +1,24 @@
 library(dplyr)
 library(purrr)
+library(S4Vectors)
+library(XVector)
+library(Matrix)
+
+
+sparseTof <- function(full.wave){
+  sp_spec <- sparse_spec(full.wave)
+  this <- list(semi_sparse=sp_spec,
+  			   length = length(full.wave))
+  structure(this, class="sparseTof")
+}
+
+display = function(obj) {
+  UseMethod("display", obj)
+}
+
+display.sparseTof = function(obj,...) {
+  cat("A semi-sparse Tof data set.\n")
+}
 
 #' create a sparse representation of the full TOF scan
 #'
@@ -17,26 +36,63 @@ library(purrr)
 #' @param minlen minimum lenght of series > 0 - 
 #'
 #' @return list of sparse regions where the spectrum is > `lower`	
-#'
-#' @export
 sparse_spec <- function(full.wave, lower=0, minlen=0){
   idx <- full.wave > lower
   renc <- rle(as.vector(idx))
 
-  tmp <- 
-  	data_frame(len = renc$lengths, 
-  			   g0  = renc$values) %>%
-	mutate( ends = cumsum(len),
-		    starts = 1 + c(0, ends[-nrow(.)]) 
-		    )
-
-  small0 <- tmp %>% filter(g0==F, len<3)
-
-  only_sig <- tmp %>% filter(g0) %>% select(starts, ends)
-  condensed_sig <- TibAccRed(mergeFun, only_sig, max_dif=20)
-
   extract_ts <- function(starts, ends) list(full.wave[starts:ends])
-  condensed_sig %>% rowwise() %>% mutate(v=extract_ts(starts,ends))
+  sparse_frame <- 
+  	with(renc, data_frame(lens=lengths,g0=values)) %>%
+  	mutate(ends=cumsum(lens), starts = lag(ends, default=0)+1) %>%
+  	filter(g0) %>% select(starts, ends) %>% 
+  	rowwise() %>% mutate(v=extract_ts(starts,ends), len=ends-starts+1) %>%
+  	ungroup()
+}
+
+orig_frame <- sparse_frame %>% filter(len>1)
+simp_frame <- simplify_semisparse(sparse_frame)
+
+join_lines <- function(dfi) {
+  if (nrow(dfi)==1) return(dfi)
+  else 
+  	with(dfi,{ 
+  			 start <- starts[[1]]
+			 end <- ends[[length(ends)]]
+			 vals <- numeric(end-start+1)
+			 add_val <- function(ddf)
+			   with(ddf,{ 
+					  vals[(starts-start+1) : (ends-start+1)] <<- 
+						vals[(starts-start+1) : (ends-start+1)] + v })
+			 dfi %>% rowwise() %>% do(tmp=add_val(.))
+  			 data_frame(starts=start, ends=end, v=list(vals),
+  			   len = end-start+1, inds = inds[[1]], join_pre=F)})
+}
+
+simplify_semisparse <- function(orig_frame, closeness = 10){
+	orig_frame %>% 
+	mutate( join_pre = lag(ends, default=0)+closeness >= (starts),
+		    inds = cumsum(!join_pre)
+		   )
+	w2 <- wip %>% group_by(inds) %>% do(join_lines(.)) %>% ungroup()
+}
+
+
+tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
+myTof <- tofH5(tof.h5)
+aSpec <- readInd.TofH5(myTof,10)
+spsp <- sparseSpec(aSpec)
+sparseSpec <- function(dense_spec){
+  semisparse <- sparse_spec(dense_spec)
+  g0 <- sum(sapply(semisparse$v, length))
+  structure(list(total_n=length(dense_spec),
+  				 greater0 = g0,
+  				 spec_table=semisparse), 
+  			class="sparseSpec")
+}
+
+print.SparseSpec <- function(spsp){
+  with(spsp, cat(paste0("Semi-sparse spec, ",total_n," entries, ",
+  						greater0,"(",round(greater0/total_n*100,1),"%) >0\n")))
 }
 
 #' revert sparse spectrum to dense
