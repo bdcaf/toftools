@@ -1,8 +1,5 @@
 library(dplyr)
 library(purrr)
-library(S4Vectors)
-library(XVector)
-library(Matrix)
 
 
 sparseTof <- function(full.wave){
@@ -50,14 +47,15 @@ sparse_spec <- function(full.wave, lower=0, minlen=0){
 }
 
 orig_frame <- sparse_frame %>% filter(len>1)
-simp_frame <- simplify_semisparse(sparse_frame)
+simp_frame <- simplify_semisparse(orig_frame)
+system.time(simp_frame2 <- simplify_semisparse(simp_frame))
 
 join_lines <- function(dfi) {
   if (nrow(dfi)==1) return(dfi)
   else 
   	with(dfi,{ 
   			 start <- starts[[1]]
-			 end <- ends[[length(ends)]]
+			 end <- max(ends)
 			 vals <- numeric(end-start+1)
 			 add_val <- function(ddf)
 			   with(ddf,{ 
@@ -74,6 +72,22 @@ simplify_semisparse <- function(orig_frame, closeness = 10){
 		    inds = cumsum(!join_pre)
 		   )
 	w2 <- wip %>% group_by(inds) %>% do(join_lines(.)) %>% ungroup()
+}
+
+alg.uwe <- function(DT){
+  DT[, gap := starts - shift(ends, fill = 0)]
+  DT[, inds := cumsum(gap > max_gap)]
+  # close gaps but only within groups
+  DT0 <- DT[between(gap, 2L, max_gap), .(starts = starts - (gap - 1L), ends = starts - 1L, 
+										 v = Vectorize(rep.int)(0L, gap - 1L), gap, inds)]
+  # bind rowwise (union in SQL), setkey on result to maintain sort order, 
+  # remove column gap as no longer needed
+  DT2 <- setkey(rbind(DT, DT0), starts, ends)[, gap := NULL][]
+  # aggregate groupwise, pick min/max, combine lists
+  result <- DT2[, .(starts = min(starts), ends = max(ends), v = list(Reduce(c, v))), by = inds]
+  # alternative code: pick first/last
+  result <- DT2[, .(starts = first(starts), ends = last(ends), v = list(Reduce(c, v))), by = inds]
+  result
 }
 
 
