@@ -60,17 +60,22 @@ semi_sparse <- simplified[1:5,]
 warp_line <- function(warp_fun, starts, ends, v){
   i_trans <- warp_fun((starts-1):(ends+1))
   cuv <- cumsum(v)
-  lastcu <- cuv[length(cuv)]
+  lastcu <- last(cuv)
   vc <- c(0,cuv,lastcu)
   i_new <- seq(from = floor(i_trans[[1]]), 
-  			   to = ceiling(i_trans[length(i_trans)]))
-  v_new <- diff( c(0,approx(i_trans, vc, i_new, yleft=0, yright=lastcu)$y))
-  list(i_new[1],  i_new[length(i_new)], v_new)
+  			   to = ceiling(last(i_trans)))
+  v_new <- diff( c(0,approx(i_trans, vc, 
+  							i_new, yleft=0, yright=lastcu)$y))
+  list(starts=i_new[1],  ends=i_new[length(i_new)], v=as.vector(v_new))
 }
 warp_spec <- function(semi_sparse, warpfun){
   vec_warp <- Vectorize( function(s,e,v) warp_line(warp_fun,s,e,v), SIMPLIFY=F)
-  vec_warp(c(1:3), c(4:6), list(c(1:4), c(2:5), c(3:6)))
-  wip <- semi_sparse[,c('an', 'nv', 'nn') := vec_warp(starts,ends,v), with=F ][]
+
+  v2 <- function(s,e,v) mapply( function(x,y,z) warp_line(warp_fun,x,y,z),s,e,v)
+  reorderer <- function(x,i) sapply(tmp, function(x) x[[i]])
+  order_vec <- function(tmp) lapply(1:3, function(a) reorderer(tmp,a))
+  vec_order_warp <- function(s,e,v) order_vec(vec_warp(s,e,v))
+  semi_sparse[, c('new_start', 'new_end', 'new_v') := vec_order_warp(starts,ends,v)]
 
 }
 
