@@ -1,5 +1,5 @@
 library(dplyr)
-library(purrr)
+library(data.table)
 
 
 sparseTof <- function(full.wave){
@@ -33,22 +33,24 @@ display.sparseTof = function(obj,...) {
 #' @param minlen minimum lenght of series > 0 - 
 #'
 #' @return list of sparse regions where the spectrum is > `lower`	
-sparse_spec <- function(full.wave, lower=0, minlen=0){
+sparse_spec <- function(full.wave, lower=0, minlen=1){
+  vex <- Vectorize(function(st,en) (full.wave[st:en]), SIMPLIFY=F)
+
   idx <- full.wave > lower
   renc <- rle(as.vector(idx))
 
-  extract_ts <- function(starts, ends) list(full.wave[starts:ends])
-  sparse_frame <- 
-  	with(renc, data_frame(lens=lengths,g0=values)) %>%
-  	mutate(ends=cumsum(lens), starts = lag(ends, default=0)+1) %>%
-  	filter(g0) %>% select(starts, ends) %>% 
-  	rowwise() %>% mutate(v=extract_ts(starts,ends), len=ends-starts+1) %>%
-  	ungroup()
+  edt <- data.table(lengths = renc$lengths, g0 = renc$values)
+  edt[,ends := cumsum(lengths)][, starts := shift(ends, fill=0)+1]
+
+  e2 <- edt[g0 == T & lengths >= minlen ,,]
+  setkey(e2, starts, ends)
+  e2[, ('g0'):=NULL]
+  e2[, v := (vex(st=starts, en=ends))]
+  e2
 }
 
-orig_frame <- sparse_frame %>% filter(len>1)
-simp_frame <- simplify_semisparse(orig_frame)
-system.time(simp_frame2 <- simplify_semisparse(simp_frame))
+full.wave <- aSpec
+spsp <- sparse_spec(full.wave, lower=1, minlen=3)
 
 join_lines <- function(dfi) {
   if (nrow(dfi)==1) return(dfi)
