@@ -1,7 +1,4 @@
-library(dplyr)
 library(data.table)
-
-
 
 #' create a sparse representation of the full TOF scan
 #'
@@ -55,34 +52,27 @@ simplify_sparse <- function(spec_pre, max_gap=10L){
   result
 }
 
-warp_fun <- function(x) 0.99*x + 0.0000001*x^2 - 0.3
-starts <- 75872
-ends <- 75881
-v <-c(1.00053060054779, 2.00164222717285, 2.00208926200867, 5.00980424880981,
-4.00963306427002, 5.01561975479126, 0, 4.01455307006836, 3.01183128356934,
-1.00410747528076)
-semi_sparse <- simplified[1:5,]
 warp_line <- function(warp_fun, starts, ends, v){
   i_trans <- warp_fun((starts-1):(ends+1))
   cuv <- cumsum(v)
   lastcu <- last(cuv)
   vc <- c(0,cuv,lastcu)
-  i_new <- seq(from = floor(i_trans[[1]]), 
-  			   to = ceiling(last(i_trans)))
+  i_new <- seq(from = ceiling(i_trans[[1]]), 
+  			   to = floor(last(i_trans)))
   v_new <- diff( c(0,approx(i_trans, vc, 
   							i_new, yleft=0, yright=lastcu)$y))
   list(starts=i_new[1],  ends=i_new[length(i_new)], v=as.vector(v_new))
 }
-warp_spec <- function(semi_sparse, warpfun){
-  vec_warp <- Vectorize( function(s,e,v) warp_line(warp_fun,s,e,v), SIMPLIFY=F)
 
-  v2 <- function(s,e,v) mapply( function(x,y,z) warp_line(warp_fun,x,y,z),s,e,v)
-  reorderer <- function(x,i) sapply(tmp, function(x) x[[i]])
-  order_vec <- function(tmp) lapply(1:3, function(a) reorderer(tmp,a))
-  vec_order_warp <- function(s,e,v) order_vec(vec_warp(s,e,v))
+
+seq_list <- function(x,i) sapply(x, function(x) x[[i]])
+seq_wf <- function(tmp) lapply(1:3, function(a) seq_list(tmp,a))
+warp_spec <- function(semi_sparse, warp_fun){
+  vec_warp <- Vectorize( function(s,e,v) warp_line(warp_fun,s,e,v), SIMPLIFY=F)
+  vec_order_warp <- function(s,e,v) seq_wf(vec_warp(s,e,v))
   warped <- semi_sparse[,vec_order_warp(starts,ends,v)]
   colnames(warped) <- c('starts','ends','v')
-
+  warped
 }
 
 
@@ -101,29 +91,10 @@ display.sparseTof = function(obj,...) {
   cat("A semi-sparse Tof data set.\n")
 }
 
-tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
-myTof <- tofH5(tof.h5)
-aSpec <- readInd.TofH5(myTof,10)
-full.wave <- aSpec
-system.time({
-spsp <- sparse_spec(full.wave, lower=0, minlen=10, max_gap=30)
-})
-spsp[len>1000]
-hist(spsp[len<100]$len)
-system.time({
-simplified <- simplify_sparse(spsp, max_gap=50L)
-})
-
-spt <- sparseTof(aSpec)
-totalSpec <- sumSpec.TofH5(myTof) # sparsity makes no sense here
-s
-
-cor.semisparse.full <- function(){
-  refSpec <- totalSpec
-  refEnergy <- sum(totalSpec^2)
-  spsp[, energy := Vectorize(function(x) sum(x^2))(v)]
-  spsp[, cor := Vectorize( function(st,en,v) v %*% refSpec[st:en])(starts, ends,v)]
-  agg <- spsp[, .(total_energy=sum(energy), total_sp=sum(cor)), by=NULL]
+cor.semisparse.full <- function(aSpec, refSpec, refEnergy){
+  aSpec[, energy := Vectorize(function(x) sum(x^2))(v)]
+  aSpec[, sp := Vectorize( function(st,en,v) v %*% refSpec[st:en])(starts, ends,v)]
+  agg <- aSpec[, .(total_energy=sum(energy), total_sp=sum(sp)), by=NULL]
   with(agg, total_sp/sqrt(total_energy)/sqrt(refEnergy))
 }
 
