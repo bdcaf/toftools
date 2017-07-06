@@ -38,3 +38,13 @@ opt_res <- optim(c(0,1), optim_fun)
 
 opt_res
 
+i_sel <- floor(seq(from =1 , to=myTof$indexhelp$N, length.out=20))
+optim_fun <- function(a,cspec){
+  wf <- warp0(a)
+  warped <- warp_spec(cspec, wf)
+  -cor.semisparse.full(warped, totalSpec, refEn)
+}
+cspec <- readInd.TofH5(myTof, i)
+spspec <- sparse_spec(cspec, lower=0, minlen=10, max_gap=30)
+opt_res <- optim(c(0,1), optim_fun, NULL, cspec)
+opt_res$par
