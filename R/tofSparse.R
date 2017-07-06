@@ -113,7 +113,20 @@ hist(spsp[len<100]$len)
 system.time({
 simplified <- simplify_sparse(spsp, max_gap=50L)
 })
+
 spt <- sparseTof(aSpec)
+totalSpec <- sumSpec.TofH5(myTof) # sparsity makes no sense here
+s
+
+cor.semisparse.full <- function(){
+  refSpec <- totalSpec
+  refEnergy <- sum(totalSpec^2)
+  spsp[, energy := Vectorize(function(x) sum(x^2))(v)]
+  spsp[, cor := Vectorize( function(st,en,v) v %*% refSpec[st:en])(starts, ends,v)]
+  agg <- spsp[, .(total_energy=sum(energy), total_sp=sum(cor)), by=NULL]
+  with(agg, total_sp/sqrt(total_energy)/sqrt(refEnergy))
+}
+
 
 #' revert sparse spectrum to dense
 #'
