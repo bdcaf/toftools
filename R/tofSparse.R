@@ -18,6 +18,7 @@ library(data.table)
 #' number
 #'
 #' @return list of sparse regions where the spectrum is > `lower`	
+#' @export
 semisparse_spec <- function(full.wave, lower=0L, minlen=1L, max_gap = 30L){
   tab <- data.table(id=seq_along(full.wave), wave=full.wave)[wave>lower]
   tab[, gap:= (id - shift(id, fill=0))]
