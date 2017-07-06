@@ -19,27 +19,32 @@ library(data.table)
 #' @param minlen minimum lenght of series > 0 - 
 #'
 #' @return list of sparse regions where the spectrum is > `lower`	
-sparse_spec <- function(full.wave, lower=0, minlen=1){
-  vex <- Vectorize(function(st,en) (full.wave[st:en]), SIMPLIFY=F)
+sparse_spec <- function(full.wave, lower=0, minlen=1, max_gap = 100){
+  tab <- data.table(id=seq_along(full.wave), wave=full.wave)[wave>lower]
+  tab[, gap:= (id - shift(id, fill=0))]
+  tab[, new_block := gap>max_gap]
+  tab[, id_block := cumsum(new_block)]
+  tab[new_block==F, 
+	  v := Vectorize(function(gap,wave) c(rep(0,gap-1L),wave))(gap,wave)
+  	  ]
+  tab[new_block==T, v:=as.list(wave)]
 
-  idx <- full.wave > lower
-  renc <- rle(as.vector(idx))
-
-  edt <- data.table(lengths = renc$lengths, g0 = renc$values)
-  edt[,ends := cumsum(lengths)][, starts := shift(ends, fill=0)+1]
-
-  e2 <- edt[g0 == T & lengths >= minlen ,,]
-  setkey(e2, starts, ends)
-  e2[, c('g0','lengths'):=NULL]
-  e2[, v := (vex(st=starts, en=ends))]
-  e2
+  fullT <- tab[,.(starts=min(id), 
+  				  ends=max(id), 
+  				  v=list(Reduce(c,v))), 
+  			   by=id_block]
+  fullT[, len := ends-starts+1]
+  fullT[ends>starts]
+  return( fullT[len>=minlen])
 }
 
 simplify_sparse <- function(spec_pre, max_gap=10L){
   spec_pre[, gap := starts - shift(ends, fill = 0)][, inds := cumsum(gap > max_gap)]
   # close gaps but only within groups
-  DT0 <- spec_pre[between(gap, 2L, max_gap), .(starts = starts - (gap - 1L), ends = starts - 1L, 
-										 v = Vectorize(rep.int)(0L, gap - 1L), gap, inds)]
+  DT0 <- spec_pre[between(gap, 2L, max_gap), 
+				  .(starts = starts - (gap - 1L), 
+					ends = starts - 1L, 
+					v = Vectorize(rep.int)(0L, gap - 1L), gap, inds)]
   # bind rowwise (union in SQL), setkey on result to maintain sort order, 
   # remove column gap as no longer needed
   DT2 <- setkey(rbind(spec_pre, DT0), starts, ends)[, gap := NULL][]
@@ -75,7 +80,8 @@ warp_spec <- function(semi_sparse, warpfun){
   reorderer <- function(x,i) sapply(tmp, function(x) x[[i]])
   order_vec <- function(tmp) lapply(1:3, function(a) reorderer(tmp,a))
   vec_order_warp <- function(s,e,v) order_vec(vec_warp(s,e,v))
-  semi_sparse[, c('new_start', 'new_end', 'new_v') := vec_order_warp(starts,ends,v)]
+  warped <- semi_sparse[,vec_order_warp(starts,ends,v)]
+  colnames(warped) <- c('starts','ends','v')
 
 }
 
@@ -100,8 +106,10 @@ myTof <- tofH5(tof.h5)
 aSpec <- readInd.TofH5(myTof,10)
 full.wave <- aSpec
 system.time({
-spsp <- sparse_spec(full.wave, lower=0, minlen=3)
+spsp <- sparse_spec(full.wave, lower=0, minlen=10, max_gap=30)
 })
+spsp[len>1000]
+hist(spsp[len<100]$len)
 system.time({
 simplified <- simplify_sparse(spsp, max_gap=50L)
 })
