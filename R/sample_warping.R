@@ -19,7 +19,7 @@ spsp <- semisparse_spec(full.wave, lower=0, minlen=10, max_gap=30)
 #})
 
 warp0 <- function(a) 
-  function(x) a[[1]] + a[[2]]*x # + a[[3]]*x^2
+  function(x) a[[1]]+x # + a[[2]]*x # + a[[3]]*x^2
 
 totalSpec <- sumSpec.TofH5(myTof)
 full.wave2 <- totalSpec / myTof$indexhelp$N
@@ -42,7 +42,7 @@ refEn <- sum(ref2^2)
 normSpec <- ref2/sqrt(refEn)
 
 assure_range <- function(f)
-   function(x) pmax(1,pmin(f(x),length(normSpec)))
+   function(x) pmax.int(pmin.int(f(x),length(normSpec)),1)
 
 
 
@@ -73,12 +73,13 @@ opt_res <- optim( startV, optim_fun, gr=NULL, spspec,
 #Rprof()
 #summaryRprof('work/profile')
 
-startV <- c(0,1)
+startV <- c(0)
 warp_par <- function(i){
   cspec <- readInd.TofH5(myTof, i)
   spspec <- semisparse_spec(cspec, lower=0, minlen=10, max_gap=30)
   sp2 <- sparse_remove_sat(spspec, sats)
-  opt_res <- optim(startV, optim_fun, NULL, sp2, method='Nelder-Mead')
+  opt_res <- optim(startV, optim_fun, NULL, sp2, method='Brent', lower = -1000, upper=1000)
+  #opt_res <- optim(startV, optim_fun, NULL, sp2, method='Nelder-Mead')
   list(index=i, opt=opt_res)
 }
 
@@ -89,6 +90,8 @@ system.time( ww <- lapply(i_sel, warp_par))
 # saturated peak make > 50% correlation
 sapply(ww, function(x) x$opt$value)
 pars <- sapply(ww, function(x) x$opt$par)
+plot(pars) # kein shift!!!
+
 plot(pars[1,])
 plot(pars[2,])
 
