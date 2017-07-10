@@ -124,6 +124,11 @@ extr_ref <- function(ref,st,en){
   res
 }
 
+spfun <- function(st,en,v, ref){
+  if (is.na(st) || is.na(en)) return(0)
+  else v %*% ref[st:en]
+}
+
 #' calculates distance between spectra
 #'
 #' @description calculates cosine distance between a semisparse spectrum
@@ -137,7 +142,7 @@ extr_ref <- function(ref,st,en){
 #'
 cor.semisparse.full <- function(aSpec, refSpec){
   aSpec[, energy := Vectorize(function(x) sum(x^2))(v)]
-  aSpec[, sp := Vectorize( function(st,en,v) v %*% refSpec[st:en])(starts, ends,v)]
+  aSpec[, sp := Vectorize( function(st,en,v) spfun(st,en,v, refSpec)(starts, ends,v)]
   agg <- aSpec[, .(total_energy=sum(energy), total_sp=sum(sp)), by=NULL]
   with(agg, total_sp/sqrt(total_energy))
 }
