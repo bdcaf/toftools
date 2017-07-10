@@ -66,6 +66,7 @@ simplify_sparse <- function(spec_pre, max_gap=10L){
 #' helper function for warping a single semisparse spectrum line
 warp_line <- function(warp_fun, starts, ends, v){
   i_trans <- warp_fun((starts-1):(ends+1))
+  if (any( diff(i_trans)<=0))  return(list(starts=NA,ends=NA, v=sum(v)))
   cuv <- cumsum(v)
   lastcu <- last(cuv)
   vc <- c(0,cuv,lastcu)
@@ -113,6 +114,16 @@ display.sparseTof = function(obj,...) {
   cat("A semi-sparse Tof data set.\n")
 }
 
+extr_ref <- function(ref,st,en){
+  if (is.na(st) || is.na(en)) return(0)
+  ran <- st:en
+  ran[ran<1] <- NA
+  ran[ran>length(ref)] <- NA
+  res <- ref[ran]
+  res[is.na(res)] <- 0
+  res
+}
+
 #' calculates distance between spectra
 #'
 #' @description calculates cosine distance between a semisparse spectrum
@@ -124,11 +135,11 @@ display.sparseTof = function(obj,...) {
 #' pre-calculated
 #' @return cosine distance of spectra
 #'
-cor.semisparse.full <- function(aSpec, refSpec, refEnergy=sum(refSpec^2)){
+cor.semisparse.full <- function(aSpec, refSpec){
   aSpec[, energy := Vectorize(function(x) sum(x^2))(v)]
   aSpec[, sp := Vectorize( function(st,en,v) v %*% refSpec[st:en])(starts, ends,v)]
   agg <- aSpec[, .(total_energy=sum(energy), total_sp=sum(sp)), by=NULL]
-  with(agg, total_sp/sqrt(total_energy)/sqrt(refEnergy))
+  with(agg, total_sp/sqrt(total_energy))
 }
 
 

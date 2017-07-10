@@ -1,11 +1,13 @@
 source('R/tofReader.R')
+source('R/tofSparse.R')
+library(smoother)
 #tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
 tof.h5 <- 'testdata/2017.06.22-11h13m23s ca valve open.h5'
 myTof <- tofH5(tof.h5)
 aSpec <- readInd.TofH5(myTof,10)
 full.wave <- aSpec
 system.time({
-spsp <- sparse_spec(full.wave, lower=0, minlen=10, max_gap=30)
+spsp <- semisparse_spec(full.wave, lower=0, minlen=10, max_gap=30)
 })
 #system.time({
 #simplified <- simplify_sparse(spsp, max_gap=50L)
@@ -14,18 +16,41 @@ spsp <- sparse_spec(full.wave, lower=0, minlen=10, max_gap=30)
 warp0 <- function(a) 
   function(x) a[[1]] + a[[2]]*x + a[[3]]*x^2
 
+totalSpec <- sumSpec.TofH5(myTof)
+#refSpec <- as.vector(smooth(totalSpec, twiceit=F))
 refSpec <- totalSpec
+#refSpec <- totalSpec
 refEn <- sum(refSpec^2)
 
-optim_fun <- function(a,cspec){
-  wf <- warp0(a)
-  warped <- warp_spec(cspec, wf)
-  -cor.semisparse.full(warped, totalSpec, refEn)
+normSpec <- refSpec/sqrt(refEn)
+
+assure_range <- function(normSpec)
+  function(x) pmax(1,pmin(x,length(normSpec)))
+
+optim_fun <- function(a,spspec){
+  wf <- assure_range(warp0(a))
+  warped <- warp_spec(spspec, wf)
+  -cor.semisparse.full(warped, normSpec)
 }
+
+i<-1
+a <- c(-10,1, -1.2/length(normSpec))
+cspec <- readInd.TofH5(myTof, i)
+spspec <- semisparse_spec(cspec, lower=0, minlen=10, max_gap=30)
+startV <- c(-10,1,0)
+Rprof('work/profile')
+opt_res <- optim( startV, optim_fun, gr=NULL, spspec, 
+				 #method='L-BFGS-B',
+				 #lower = c(-Inf,0,-1.2/length(normSpec)),
+				 #upper = c(Inf, 1.2, 1.2/length(normSpec)),
+				 hessian = F)
+Rprof()
+summaryRprof('work/profile')
+
 warp_par <- function(i){
   cspec <- readInd.TofH5(myTof, i)
-  spspec <- sparse_spec(cspec, lower=0, minlen=10, max_gap=30)
-  opt_res <- optim(c(0,1,0), optim_fun, NULL, spspec)
+  spspec <- semisparse_spec(cspec, lower=0, minlen=10, max_gap=30)
+  opt_res <- optim(c(0,1), optim_fun, NULL, spspec, method='SANN')
   opt_res$par
 }
 
