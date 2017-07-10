@@ -6,6 +6,11 @@ tof.h5 <- 'testdata/2017.06.22-11h13m23s ca valve open.h5'
 myTof <- tofH5(tof.h5)
 aSpec <- readInd.TofH5(myTof,10)
 full.wave <- aSpec
+which(diff(full.wave) < -1000)
+plot(full.wave, type='l')
+plot(diff(full.wave), type='l')
+plot((full.wave), type='l', xlim=c(79000,81000))
+plot(diff(full.wave), type='l', xlim=c(9.96e4, 9.98e4))
 system.time({
 spsp <- semisparse_spec(full.wave, lower=0, minlen=10, max_gap=30)
 })
@@ -17,8 +22,18 @@ warp0 <- function(a)
   function(x) a[[1]] + a[[2]]*x + a[[3]]*x^2
 
 totalSpec <- sumSpec.TofH5(myTof)
+full.wave2 <- totalSpec / myTof$indexhelp$N
+plot(full.wave2, type='l')
+which(diff(full.wave2) < -300)
+plot(diff(full.wave2), type='l')
+plot((full.wave), type='l', xlim=80007+c(-100,+200))
+plot((full.wave), type='l', xlim=99707+c(-100,+200))
+plot((full.wave), type='l', xlim=102855+c(-100,+200))
+
 refSpec <- smooth(totalSpec, twiceit=T)
-#refSpec <- rollmean(totalSpec, 1000)
+sats <- find_saturated(refSpec, N=myTof$indexhelp$N)
+ref2 <- dense_remove_sat(refSpec, sats)
+#refSpec <- rollmean(totalSpec, 10)
 #refSpec <- totalSpec
 #refSpec <- totalSpec
 refEn <- sum(refSpec^2)
@@ -57,16 +72,28 @@ opt_res <- optim( startV, optim_fun, gr=NULL, spspec,
 #Rprof()
 #summaryRprof('work/profile')
 
+startV <- c(0,1,0)
 warp_par <- function(i){
   cspec <- readInd.TofH5(myTof, i)
   spspec <- semisparse_spec(cspec, lower=0, minlen=10, max_gap=30)
-  opt_res <- optim(c(0,1,0), optim_fun, NULL, spspec, method='BFGS')
-  opt_res$par
+  sp2 <- sparse_remove_sat(spspec, sats)
+  opt_res <- optim(startV, optim_fun, NULL, sp2, method='Nelder-Mead')
+  list(index=i, opt=opt_res)
 }
 
 i_sel <- floor(seq(from =1 , to=myTof$indexhelp$N, length.out=20))
 system.time( ww <- lapply(i_sel, warp_par))
+
+(has_converged <- sapply(ww, function(x) x$opt$convergence))
+pars <- sapply(ww, function(x) x$opt$par)
+plot(pars[1,])
+plot(pars[2,])
+plot(pars[3,])
+
+
 offsets <- sapply(ww, function(x) x[[1]])
 slopes <- sapply(ww, function(x) x[[2]])
+curvature <- sapply(ww, function(x) x[[3]])
 plot(offsets)
 plot(slopes)
+plot(curvature)

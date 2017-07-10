@@ -142,7 +142,7 @@ spfun <- function(st,en,v, ref){
 #'
 cor.semisparse.full <- function(aSpec, refSpec){
   aSpec[, energy := Vectorize(function(x) sum(x^2))(v)]
-  aSpec[, sp := Vectorize( function(st,en,v) spfun(st,en,v, refSpec)(starts, ends,v)]
+  aSpec[, sp := Vectorize( function(st,en,v) spfun(st,en,v, refSpec))(starts, ends,v)]
   agg <- aSpec[, .(total_energy=sum(energy), total_sp=sum(sp)), by=NULL]
   with(agg, total_sp/sqrt(total_energy))
 }
@@ -163,3 +163,22 @@ cor.semisparse.full <- function(aSpec, refSpec){
   
   #out
 #}
+
+
+find_saturated <- function(v, N=1, slope_crit= -300){
+  vv <- v/N
+  which(diff(vv)<slope_crit)
+}
+
+dense_remove_sat <- function(densev, sats, hide_range = -100:300){
+  inds <- unique(sapply(sats, function(x) x+hide_range))
+  densev[inds] = 0
+  densev
+}
+
+sparse_remove_sat <- function(spspec, sats){
+  sa1 <- sats[[1]]
+  for (sa1 in sats)
+	spspec <- spspec[starts>sa1 | ends<sa1] # = not (starts<sa1 & ends>sa1)
+  spspec
+}
