@@ -19,7 +19,7 @@ spsp <- semisparse_spec(full.wave, lower=0, minlen=10, max_gap=30)
 #})
 
 warp0 <- function(a) 
-  function(x) a[[1]] + a[[2]]*x + a[[3]]*x^2
+  function(x) a[[1]] + a[[2]]*x # + a[[3]]*x^2
 
 totalSpec <- sumSpec.TofH5(myTof)
 full.wave2 <- totalSpec / myTof$indexhelp$N
@@ -73,7 +73,7 @@ opt_res <- optim( startV, optim_fun, gr=NULL, spspec,
 #Rprof()
 #summaryRprof('work/profile')
 
-startV <- c(0,1,0)
+startV <- c(0,1)
 warp_par <- function(i){
   cspec <- readInd.TofH5(myTof, i)
   spspec <- semisparse_spec(cspec, lower=0, minlen=10, max_gap=30)
@@ -86,8 +86,17 @@ i_sel <- floor(seq(from =1 , to=myTof$indexhelp$N, length.out=20))
 system.time( ww <- lapply(i_sel, warp_par))
 
 (has_converged <- sapply(ww, function(x) x$opt$convergence))
+# saturated peak make > 50% correlation
 sapply(ww, function(x) x$opt$value)
 pars <- sapply(ww, function(x) x$opt$par)
 plot(pars[1,])
 plot(pars[2,])
+
+# seem to have no drift
+plot(pars[1,], pars[2,])
+
+# pars 2 vs 3 klar linear -> 1 freiheitsgrad zu viel
 plot(pars[3,])
+plot(pars[3,], pars[2,])
+
+
