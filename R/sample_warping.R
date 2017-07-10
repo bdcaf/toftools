@@ -33,12 +33,13 @@ plot((full.wave), type='l', xlim=102855+c(-100,+200))
 refSpec <- smooth(totalSpec, twiceit=T)
 sats <- find_saturated(refSpec, N=myTof$indexhelp$N)
 ref2 <- dense_remove_sat(refSpec, sats)
+
 #refSpec <- rollmean(totalSpec, 10)
 #refSpec <- totalSpec
 #refSpec <- totalSpec
-refEn <- sum(refSpec^2)
+refEn <- sum(ref2^2)
 
-normSpec <- refSpec/sqrt(refEn)
+normSpec <- ref2/sqrt(refEn)
 
 assure_range <- function(f)
    function(x) pmax(1,pmin(f(x),length(normSpec)))
@@ -85,15 +86,8 @@ i_sel <- floor(seq(from =1 , to=myTof$indexhelp$N, length.out=20))
 system.time( ww <- lapply(i_sel, warp_par))
 
 (has_converged <- sapply(ww, function(x) x$opt$convergence))
+sapply(ww, function(x) x$opt$value)
 pars <- sapply(ww, function(x) x$opt$par)
 plot(pars[1,])
 plot(pars[2,])
 plot(pars[3,])
-
-
-offsets <- sapply(ww, function(x) x[[1]])
-slopes <- sapply(ww, function(x) x[[2]])
-curvature <- sapply(ww, function(x) x[[3]])
-plot(offsets)
-plot(slopes)
-plot(curvature)
