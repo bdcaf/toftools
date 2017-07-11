@@ -1,3 +1,4 @@
+library(baseline)
 library(zoo)
 
 source('R/tofReader.R')
@@ -11,15 +12,6 @@ tofB <- tofH5(tofB.h5)
 sumSpecA <- smooth(sumSpec.TofH5(tofA))
 sumSpecB <- smooth(sumSpec.TofH5(tofB))
 
-lss <- function(ss, col='black') lines(x=seq_along(ss), y=ss, col=col)
-
-#plot.new()
-# show shift
-plot(seq_along(sumSpecA), sumSpecA, type='l', xlim=c(9.7e4,10.5e4))
-#lss(sumSpecA)
-lss(sumSpecB, col='red')
-
-
 prep_spec <- function(sspec, atof, wid=30){
   sats <- find_saturated(sspec, N=atof$indexhelp$N)
   s1 <- dense_remove_sat(sspec, sats)
@@ -28,51 +20,58 @@ prep_spec <- function(sspec, atof, wid=30){
 clA <- prep_spec(sumSpecA, tofA)
 clB <- prep_spec(sumSpecB, tofB)
 
-plot(seq_along(clA), clA, type='l', xlim=c(11.1e4,13.5e4))
-lss(clB, col='red')
-
-
-refSpec <- clA
-refEn <- sum(refSpec^2)
-normSpec <- refSpec/sqrt(refEn)
-
-wid <- 30
-orientSpec <- rollmean(log1p(clA),wid)
-orientSpec <- orientSpec/sqrt(sum(orientSpec^2))
-checkSpec <- log1p(clB)
-checkSpec <- checkSpec/sqrt(sum(checkSpec^2))
+orientSpec <- smooth(log1p(clA))
+toOrient <- smooth(log1p(clB))
 plot(seq_along(orientSpec), orientSpec, type='l', xlim=c(11.1e4,13.5e4))
-lss(checkSpec, col='red')
+lines(toOrient, col='red')
 
-assure_range <- function(f)
-   function(x) pmax.int(pmin.int(f(x),length(normSpec)),1)
+#assure_range <- function(f)
+   #function(x) pmax.int(pmin.int(f(x),length(normSpec)),1)
 
-optim_generator <- function(orientSpec, wf)
+optim_generator <- function(orientSpec, wf){
+  reference <- orientSpec/sqrt(sum(orientSpec^2))
   function(a, dense_spec){
-	warp_fun <- assure_range(wf(a))
+	warp_fun <- wf(a)
 	warped <- warp_dense( dense_spec, warp_fun)
-	warped$v <- log1p(warped$v)
-	-cor.full.full(warped, orientSpec) 
+	#warped$v <- log1p(warped$v)
+	-cor.full.full(warped, reference) 
   }
+}
+
+
+#refSpec <- baseline(matrix(orientSpec, nrow=1), method= 'rollingBall', wm=100, ws=100)
+refSpec <- baseline(matrix(orientSpec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,] # gut und generell
+checkSpec <- baseline(matrix(toOrient, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,] # gut und generell
+
+refSpec <- pmax(refSpec,0)
+checkSpec <- pmax(checkSpec,0)
+wid <- 100
+r2 <- stats::filter(as.numeric(refSpec), rep(1/wid, wid))
+
+plot(refSpec, type='l', xlim=c(12.1e4,12.8e4))
+lines(r2, col='green')
+lines(checkSpec, col='red')
+
+optim_fun <- optim_generator(r2, warp0)
 
 warp0 <- function(a) 
   function(x) a[[1]]+x # + a[[2]]*x # + a[[3]]*x^2
-
-optim_fun <- optim_generator(orientSpec, warp0)
-
-opt_res <- optim( 0, optim_fun, gr=NULL, clB, hessian = F, method='Brent', lower=-1000, upper=1000)
-warped <- warp_dense( clB, warp0(opt_res$par))
-warped$logv <-log1p(warped$v)
-plot(seq_along(orientSpec), orientSpec, type='l', xlim=c(11.1e4,13.5e4))
-lines(seq_along(clB), log1p(clB)/sqrt(sum(log1p(clB)^2)), col='red')
-with(warped, lines(starts:ends, logv/sqrt(sum(logv^2)), col='blue'))
+opt_res <- optim( 0, optim_fun, gr=NULL, checkSpec, hessian = F, method='Brent', lower=-1000, upper=1000)
+warped <- warp_dense( checkSpec, warp0(opt_res$par))
+plot(seq_along(refSpec), refSpec, type='l', xlim=c(12.1e4,13.5e4))
+lines(seq_along(checkSpec), (checkSpec), col='red')
+with(warped, lines(starts:ends, v, col='blue'))
 #Rprof()
 #summaryRprof('work/profile')
 warp1 <- function(a) 
   function(x) a[[1]] + a[[2]]*x # + a[[3]]*x^2
-optim_fun1 <- optim_generator(orientSpec, warp1)
-opt_res1 <- optim( c(0,1), optim_fun1, gr=NULL, clB, hessian = F, 
+optim_fun1 <- optim_generator(refSpec, warp1)
+#opt_res1 <- optim( c(10,1), optim_fun1, gr=NULL, checkSpec, hessian = F)
+opt_res1 <- optim( c(0,1), optim_fun1, gr=NULL, checkSpec, hessian = F, 
 				  method = 'L-BFGS-B', 
-				  lower = c(-10000, 0.5),
-				  upper = c(10000, 1.5))
-
+				  lower = c(-1000, 0.7),
+				  upper = c(1000, 1.3))
+warped <- warp_dense( checkSpec, warp0(opt_res$par))
+plot(seq_along(refSpec), refSpec, type='l', xlim=c(12.1e4,13.5e4))
+lines(seq_along(checkSpec), checkSpec, col='red')
+with(warped, lines(starts:ends, v, col='blue'))

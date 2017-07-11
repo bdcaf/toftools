@@ -68,7 +68,7 @@ warp_line <- function(warp_fun, starts, ends, v, check=T){
   i_trans <- warp_fun((starts-1):(ends+1))
   if (check) {
 	ditrans <- diff(i_trans)
-	if (any(ditrans <0 ))  return(list(starts=NA,ends=NA, v=sum(v)))
+	if (any(ditrans <= 0 ))  return(list(starts=NA,ends=NA, v=sum(v)))
   }
   cuv <- cumsum(v)
   lastcu <- last(cuv)
@@ -155,7 +155,12 @@ cor.semisparse.full <- function(aSpec, refSpec){
 }
 
 cor.full.full <- function(fullWarp, refSpec){
-  sp <- with(fullWarp, sum(refSpec[starts:ends] * v, na.rm=T))
+  effective_range <- with(fullWarp, starts:ends)
+  effective_range[effective_range<1] <- NA
+  effective_range[effective_range>length(refSpec)] <- NA
+  #effective_range[effective_range<1] <- NA
+  #effective_range[effective_range>length(refSpec)] <- NA
+  sp <- with(fullWarp, sum(refSpec[effective_range] * v, na.rm=T))
   total_energy <- with(fullWarp, sum(v^2,na.rm=T))
   sp[[1]]/sqrt(total_energy)
 }
