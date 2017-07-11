@@ -64,9 +64,14 @@ simplify_sparse <- function(spec_pre, max_gap=10L){
 }
 
 #' helper function for warping a single semisparse spectrum line
-warp_line <- function(warp_fun, starts, ends, v){
+warp_line <- function(warp_fun, starts, ends, v, check=T){
   i_trans <- warp_fun((starts-1):(ends+1))
-  if (any( diff(i_trans)<=0))  return(list(starts=NA,ends=NA, v=sum(v)))
+  if check {
+	ditrans <- diff(i_trans)
+	if (any(ditrans))  return(list(starts=NA,ends=NA, v=sum(v)))
+	good <- c(T, ditrans>0)
+	i_trans <- i_trans[good] 
+  }
   cuv <- cumsum(v)
   lastcu <- last(cuv)
   vc <- c(0,cuv,lastcu)
@@ -96,6 +101,10 @@ warp_spec <- function(semi_sparse, warp_fun){
   warped <- semi_sparse[,vec_order_warp(starts,ends,v)]
   colnames(warped) <- c('starts','ends','v')
   warped
+}
+
+warp_dense <- function(dense_spec, warp_fun){
+  warp_line(warp_fun, 1, length(dense_spec), dense_spec)
 }
 
 
@@ -147,6 +156,11 @@ cor.semisparse.full <- function(aSpec, refSpec){
   with(agg, total_sp/sqrt(total_energy))
 }
 
+cor.full.full <- function(fullWarp, refSpec){
+  sp <- with(fullWarp, refSpec[starts:ends] %*% v)
+  total_energy <- with(fullWarp, sum(v^2))
+  sp[[1]]/sqrt(total_energy)
+}
 
 ##' revert sparse spectrum to dense
 ##'
