@@ -132,8 +132,7 @@ extr_ref <- function(ref,st,en){
 }
 
 spfun <- function(st,en,v, ref){
-  if (is.na(st) || is.na(en)) return(0)
-  else v %*% ref[st:en]
+  sum(v * ref[st:en], na.rm=T)
 }
 
 #' calculates distance between spectra

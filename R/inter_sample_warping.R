@@ -37,6 +37,15 @@ optim_generator <- function(orientSpec, wf){
 	-cor.full.full(warped, reference) 
   }
 }
+optim_generator_sp <- function(orientSpec, wf){
+  reference <- orientSpec/sqrt(sum(orientSpec^2))
+  function(a, sp_spec){
+	warp_fun <- wf(a)
+	warped <- warp_spec( sp_spec, warp_fun)
+	#warped$v <- log1p(warped$v)
+	-cor.full.full(warped, reference) 
+  }
+}
 
 
 #refSpec <- baseline(matrix(orientSpec, nrow=1), method= 'rollingBall', wm=100, ws=100)
@@ -47,6 +56,8 @@ refSpec[refSpec < 0.1] <- 0
 checkSpec[checkSpec < 0.1] <- 0
 wid <- 100
 r2 <- rollmean(refSpec, wid)
+
+spcheck <- semisparse_spec(checkSpec)
 
 plot(refSpec, type='l', xlim=c(12.1e4,12.8e4))
 lines(r2, col='green')
