@@ -66,11 +66,9 @@ simplify_sparse <- function(spec_pre, max_gap=10L){
 #' helper function for warping a single semisparse spectrum line
 warp_line <- function(warp_fun, starts, ends, v, check=T){
   i_trans <- warp_fun((starts-1):(ends+1))
-  if check {
+  if (check) {
 	ditrans <- diff(i_trans)
-	if (any(ditrans))  return(list(starts=NA,ends=NA, v=sum(v)))
-	good <- c(T, ditrans>0)
-	i_trans <- i_trans[good] 
+	if (any(ditrans <0 ))  return(list(starts=NA,ends=NA, v=sum(v)))
   }
   cuv <- cumsum(v)
   lastcu <- last(cuv)
@@ -157,8 +155,8 @@ cor.semisparse.full <- function(aSpec, refSpec){
 }
 
 cor.full.full <- function(fullWarp, refSpec){
-  sp <- with(fullWarp, refSpec[starts:ends] %*% v)
-  total_energy <- with(fullWarp, sum(v^2))
+  sp <- with(fullWarp, sum(refSpec[starts:ends] * v, na.rm=T))
+  total_energy <- with(fullWarp, sum(v^2,na.rm=T))
   sp[[1]]/sqrt(total_energy)
 }
 
