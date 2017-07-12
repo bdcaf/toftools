@@ -69,19 +69,6 @@ prep_spec <- function(sspec, atof, wid=30){
   log1p(workspec)
 }
 @
-
-<<wscleansum, cache=T, fig.cap='peak log1p profile of two measurements'>>=
-ssa <- prep_spec(sumSpecA)
-ssb <- prep_spec(sumSpecB)
-plot(ssa, type='l', 
-	 xlim=c(12.5e4, 13.5e4),
-	 xlab='index',
-	 ylim=c(0,2),
-	 ylab='cps'
-	 )
-lines(ssb, type='l', col='red')
-@
-
 The aim is to find a warp that will adjust the position of peaks in the
 sample spectrum to the one in the reference spectrum.  This often is
 done by means of mass calibration.  Although in order for this to work
@@ -107,8 +94,72 @@ guaranteed.  Fortunately there is a simple correction by instead
 interpolating the cumulative sum and calculating differences over the
 new values.
 
-The spectra are also dominated by large peaks.  In order to reduce their
-influence the signal is \textt{log1p} transformed.
+It is worth stressing that even if the parametric function describing
+the reindexing is simple and differentiable the warping function is not.
 
-Example text outside R code here; we know the value of
-pi is \Sexpr{pi}.
+The spectra are also dominated by large peaks.  In order to reduce their
+influence the signal is \texttt{log1p} transformed. An exemplary
+presentation is shown in figure \ref{fig:wscleansum}.
+
+<<wscleansum, cache=T, fig.cap='peak log1p profile of two measurements'>>=
+ssa <- prep_spec(sumSpecA)
+ssb <- prep_spec(sumSpecB)
+plot(ssa, type='l', 
+	 xlim=c(12.5e4, 13.5e4),
+	 xlab='index',
+	 ylim=c(0,2),
+	 ylab='cps'
+	 )
+lines(ssb, type='l', col='red')
+@
+
+<<, include=F>>=
+optim_generator <- function(orientSpec, wf){
+  reference <- orientSpec/sqrt(sum(orientSpec^2))
+  function(a, dense_spec){
+	warp_fun <- wf(a)
+	warped <- warp_dense( dense_spec, warp_fun)
+	cor.full.full(warped, reference) 
+  }
+}
+
+warp0 <- function(a) 
+  function(x) a[[1]]+x # + a[[2]]*x # + a[[3]]*x^2
+
+warp1 <- function(a) 
+  function(x) a[[1]]+ a[[2]]*x # + a[[2]]*x # + a[[3]]*x^2
+
+@
+
+An exemplary warping based on shifting the spectrum is shown in figure
+\ref{wsshiftplot}.  There is an optimal warping shifting the spectrum
+around 500 indices to the left.  But it is also visible there are locale
+maxima shifting spectra to other full masses.  This makes finding the
+globaly best warping demanding.
+
+<<wscalcshifts,include=F, cache=T>>=
+og <- optim_generator(ssa, warp0)
+#og(1,ssb)
+shifts <- seq(from=-3000, to=2000, length.out=99)
+val <- sapply(shifts, function(x) og(x,ssb))
+@
+
+<<wsshiftplot, cache=T, fig.cap="distance to reference measurement on shifted spectrum", dependson="wscalcshifts">>=
+plot(shifts,val, type='l', xlab='shift', ylab='agreement')
+@
+
+<<wscalcshift2,include=F, cache=T>>=
+og <- optim_generator(ssa, warp1)
+#og(1,ssb)
+wif <- Vectorize(function(a,b) og(c(a,b),ssb))
+xs <- seq(from=-1000, to=-200, length.out=17)
+ys <- seq(from=0.6, to=1.4, length.out=21)
+vals <- outer(xs, ys, FUN=wif )
+@
+
+<<wsshiftplot2, cache=T, fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+image(xs,ys,log(vals), xlab='shift', ylab='scale')
+@
+
+
+
