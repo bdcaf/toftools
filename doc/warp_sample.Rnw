@@ -19,19 +19,37 @@ sumSpecB <- smooth(sumSpec.TofH5(tofB))
 
 Immediate results hinted that in single measurements the drift is small.
 To formulate the procedure warping between measurements was chosen.
-Concretely the samples \Sexpr{tofA.h5} and \Sexpr{tofB.h5} are selected
-and the sum spectra will be examined.
+Concretely the samples \texttt{\Sexpr{tofA.h5}} and
+\texttt{\Sexpr{tofB.h5}} are selected and the sum spectra will be
+examined. A subsection of the spectra are shown in figure \ref{fig:wssumspec}.
 
-<<fig_plain_sumspec, fig.cap='Comparing the unprocessed sum spectra of two samples, the shift corresponds to about 0.5 amu at m/z 60'>>=
-plot(sumSpecA, type='l', xlim=c(10.5e4, 13.5e4),
+Sum spectra are different to the spectra of individual scans in the
+sense that even in the range between molecular masses noise adds up to a
+smooth signal.  To keep alignment simple the baseline is cleaned useing
+the baseline package from \citet{Lil2015}.  A regional plot is shown in
+figure \ref{fig:wsbaseline}.
+
+<<wssumspec, cache=T,fig.cap='Comparing the unprocessed sum spectra of two samples, the shift corresponds to about 0.5 amu at m/z 60'>>=
+plot(sumSpecA, type='l', 
+	 xlim=c(11.5e4, 13.5e4),
+	 ylim=c(0, 1e5),
 	 xlab='index',
 	 ylab='cps'
 	 )
 lines(sumSpecB, type='l', col='red')
 @
-<<>>=
+
+<<wsbaseline, fig.cap='baseline correction in sum spectrum.', cache=T>>=
 sspec <- sumSpecA
 refSpec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
+refSpec[refSpec<100]<-0
+plot(sumSpecA, type='l', 
+	 xlim=c(11.5e4, 13.5e4),
+	 ylim=c(0, 1e4),
+	 xlab='index',
+	 ylab='cps'
+	 )
+lines(refSpec, type='l', col='red')
 @
 
 <<>>=
