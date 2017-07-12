@@ -154,6 +154,7 @@ cor.semisparse.full <- function(aSpec, refSpec){
 }
 
 cor.full.full <- function(fullWarp, refSpec){
+  if (is.na(fullWarp$starts)) return(0)
   effective_range <- with(fullWarp, starts:ends)
   effective_range[effective_range<1] <- NA
   effective_range[effective_range>length(refSpec)] <- NA

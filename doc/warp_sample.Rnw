@@ -1,0 +1,46 @@
+\section{Notes on warping between samples}
+
+<<setup, include=F>>=
+library(BB)
+library(baseline)
+library(zoo)
+
+source('R/tofReader.R')
+source('R/tofSparse.R')
+
+#tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
+tofA.h5 <- 'testdata/2017.06.22-11h13m23s ca valve open.h5'
+tofB.h5 <- 'testdata/2017.06.20-15h04m22s Aurelio valve off.h5'
+tofA <- tofH5(tofA.h5)
+tofB <- tofH5(tofB.h5)
+sumSpecA <- smooth(sumSpec.TofH5(tofA))
+sumSpecB <- smooth(sumSpec.TofH5(tofB))
+@
+
+Immediate results hinted that in single measurements the drift is small.
+To formulate the procedure warping between measurements was chosen.
+Concretely the samples \Sexpr{tofA.h5} and \Sexpr{tofB.h5} are selected
+and the sum spectra will be examined.
+
+<<fig_plain_sumspec, fig.cap='Comparing the unprocessed sum spectra of two samples, the shift corresponds to about 0.5 amu at m/z 60'>>=
+plot(sumSpecA, type='l', xlim=c(10.5e4, 13.5e4),
+	 xlab='index',
+	 ylab='cps'
+	 )
+lines(sumSpecB, type='l', col='red')
+@
+<<>>=
+sspec <- sumSpecA
+refSpec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
+@
+
+<<>>=
+prep_spec <- function(sspec, atof, wid=30){
+  refSpec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
+  sats <- find_saturated(sspec, N=atof$indexhelp$N)
+  s1 <- dense_remove_sat(sspec, sats)
+}
+@
+
+Example text outside R code here; we know the value of
+pi is \Sexpr{pi}.
