@@ -27,7 +27,11 @@ Sum spectra are different to the spectra of individual scans in the
 sense that even in the range between molecular masses noise adds up to a
 smooth signal.  To keep alignment simple the baseline is cleaned useing
 the baseline package from \citet{Lil2015}.  A regional plot is shown in
-figure \ref{fig:wsbaseline}.
+figure \ref{fig:wsbaseline}. Most algorithm in this package work
+sufficiently well.  Although the default \texttt{als} algorithm requires
+construction of a matrix with dimension of lenght sample $\times$ lenght
+sampl, which fails due to memory constraints as these spectra are
+typical \num{400000} entries.
 
 <<wssumspec, cache=T,fig.cap='Comparing the unprocessed sum spectra of two samples, the shift corresponds to about 0.5 amu at m/z 60'>>=
 plot(sumSpecA, type='l', 
