@@ -13,8 +13,8 @@ tofA.h5 <- 'testdata/2017.06.22-11h13m23s ca valve open.h5'
 tofB.h5 <- 'testdata/2017.06.20-15h04m22s Aurelio valve off.h5'
 tofA <- tofH5(tofA.h5)
 tofB <- tofH5(tofB.h5)
-sumSpecA <- smooth(sumSpec.TofH5(tofA))
-sumSpecB <- smooth(sumSpec.TofH5(tofB))
+sumSpecA <- (sumSpec.TofH5(tofA))/tofA$indexhelp$N
+sumSpecB <- (sumSpec.TofH5(tofB))/tofB$indexhelp$N
 @
 
 Immediate results hinted that in single measurements the drift is small.
@@ -36,7 +36,7 @@ typical \num{400000} entries.
 <<wssumspec, cache=T,fig.cap='Comparing the unprocessed sum spectra of two samples, the shift corresponds to about 0.5 amu at m/z 60'>>=
 plot(sumSpecA, type='l', 
 	 xlim=c(11.5e4, 13.5e4),
-	 ylim=c(0, 1e5),
+	 ylim=c(0, 1e2),
 	 xlab='index',
 	 ylab='cps'
 	 )
@@ -46,23 +46,69 @@ lines(sumSpecB, type='l', col='red')
 <<wsbaseline, fig.cap='baseline correction in sum spectrum.', cache=T>>=
 sspec <- sumSpecA
 refSpec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
-refSpec[refSpec<100]<-0
+refSpec[refSpec<0.1]<-0
 plot(sumSpecA, type='l', 
-	 xlim=c(11.5e4, 13.5e4),
-	 ylim=c(0, 1e4),
+	 xlim=c(12.0e4, 13.0e4),
+	 ylim=c(0, 3),
 	 xlab='index',
 	 ylab='cps'
 	 )
 lines(refSpec, type='l', col='red')
 @
 
-<<>>=
+<<wssat, cache=T, depends=c('wsbaseline'), fig.cap='saturated peaks'>>=
+par(mfrow=c(1,2))
+ plot(refSpec, type='l', xlim=c(7.998e4, 8.01e4), ylim=c(0,5e3), ylab='cps')
+ plot(refSpec, type='l', xlim=c(9.966e4, 9.98e4), ylim=c(0,5e3), ylab='cps')
+@
+
+<<,include = F>>=
 prep_spec <- function(sspec, atof, wid=30){
-  refSpec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
-  sats <- find_saturated(sspec, N=atof$indexhelp$N)
-  s1 <- dense_remove_sat(sspec, sats)
+  workspec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
+  workspec[workspec<0.1]<- 0
+  log1p(workspec)
 }
 @
+
+<<wscleansum, cache=T, fig.cap='peak log1p profile of two measurements'>>=
+ssa <- prep_spec(sumSpecA)
+ssb <- prep_spec(sumSpecB)
+plot(ssa, type='l', 
+	 xlim=c(12.5e4, 13.5e4),
+	 xlab='index',
+	 ylim=c(0,2),
+	 ylab='cps'
+	 )
+lines(ssb, type='l', col='red')
+@
+
+The aim is to find a warp that will adjust the position of peaks in the
+sample spectrum to the one in the reference spectrum.  This often is
+done by means of mass calibration.  Although in order for this to work
+peaks of known mass need to be identified in the spectrum.  It is
+generally not easy to find a sufficient number of peaks whose mass is
+known and are present in sufficient quality.  Usually this is a manual
+identification task which makes it hard to automate.  Typically these peaks are
+directly related to precursor ions and of low mass - generally it is
+hard to identify peaks at high masses.  In presented workflow we don't
+identify peaks, but instead search for a warp that transforms the
+spectrum best.
+
+There are several warping functions available.  As TOF spectrometry has
+a simple structure we find the parametric time warp most promising.  The
+most common dynamic time warp is unsuitable, as we can not guarantee all
+peaks to be present in each spectrum.
+The resampling algorithm presented in \citet{Eilers2004a} is not
+suitable for our approach as we need AUC of peaks maintained over the
+transformation.   The problem is that presented algorithm only works
+well if within every original bin there is a single new coordinate.
+However starting with linear transformations this is no longer
+guaranteed.  Fortunately there is a simple correction by instead
+interpolating the cumulative sum and calculating differences over the
+new values.
+
+The spectra are also dominated by large peaks.  In order to reduce their
+influence the signal is \textt{log1p} transformed.
 
 Example text outside R code here; we know the value of
 pi is \Sexpr{pi}.
