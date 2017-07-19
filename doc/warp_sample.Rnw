@@ -1,7 +1,7 @@
 \section{Notes on warping between samples}
 
 <<setup, include=F>>=
-library(BB)
+library("DEoptim")
 library(baseline)
 library(zoo)
 
@@ -18,21 +18,23 @@ sumSpecB <- (sumSpec.TofH5(tofB))/tofB$indexhelp$N
 
 mcfun <- recMassCal.TofH5(tofA)
 
-plotComp <- function(refspec, otherspec, from, to, ylim=c(0,1e2)){
+
+plotComp <- function(refspec, otherspec = NULL, from, to, ylim=c(0,1e2)){
   plot(refspec, type='l', 
 	   xlim=c(from, to),
 	   ylim=ylim,
 	   xlab='index',
 	   ylab='cps'
 	   )
-  lines(otherspec, type='l', col='red')
-
-  leftMass <- with(mcfun, ceiling(toMass(from)))
-  rightMass <- with(mcfun, floor(toMass(to)))
-  massRange <- seq(from = leftMass, to = rightMass)
+  if (!is.null(otherspec)) lines(otherspec, type='l', col='red')
+  massRange <- pretty(with(mcfun, c( toMass(from), toMass(to))),n=10)
   indRange <- with(mcfun, toIndex(massRange))
-  axis(1,indRange, labels=massRange,line=1,col="red",col.ticks="red",col.axis="red")
+  bad <- indRange < from | indRange > to
+  massRange <- massRange[!bad]
+  indRange <- indRange[!bad]
+  axis(3,indRange, labels=massRange,line=1,col="red",col.ticks="red",col.axis="red")
 }
+
 @
 
 Immediate results hinted that in single measurements the drift is small.
@@ -57,25 +59,28 @@ plotComp(sumSpecA, sumSpecB, from=11.5e4, to=13.5e4)
 
 <<wsbaseline, fig.cap='baseline correction in sum spectrum.', cache=T>>=
 sspec <- sumSpecA
-refSpec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
-refSpec[refSpec<0.1]<-0
+refSpec <- baseline(matrix(sspec, nrow=1), 
+					method= 'rollingBall', 
+					wm=100, ws=100)@corrected[1,]
+refSpec[refSpec<0.005]<-0
 
-plotComp(sumSpecA, refSpec, from=12.0e4, to=13.0e4, ylim=c(0,3))
+plotComp(sumSpecA, refSpec, from=12.0e4, to=13.0e4, ylim=c(0,2))
 @
 
 <<wssat, cache=T, depends=c('wsbaseline'), fig.cap='saturated peaks'>>=
-par(mfrow=c(1,2))
- plot(refSpec, type='l', xlim=c(7.998e4, 8.01e4), ylim=c(0,5e3), ylab='cps')
- plot(refSpec, type='l', xlim=c(9.966e4, 9.98e4), ylim=c(0,5e3), ylab='cps')
+par(mfrow=c(1,2)) 
+plotComp(refSpec, from=7.99e4, to=8.02e4)
+plotComp(refSpec, from=9.96e4, to=9.98e4)
 @
 
 <<,include = F>>=
 prep_spec <- function(sspec, atof, wid=30){
   workspec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
-  workspec[workspec<0.1]<- 0
+  workspec[workspec<0.001]<- 0
   log1p(workspec)
 }
 @
+
 The aim is to find a warp that will adjust the position of peaks in the
 sample spectrum to the one in the reference spectrum.  This often is
 done by means of mass calibration.  Although in order for this to work
@@ -111,13 +116,7 @@ presentation is shown in figure \ref{fig:wscleansum}.
 <<wscleansum, cache=T, fig.cap='peak log1p profile of two measurements'>>=
 ssa <- prep_spec(sumSpecA)
 ssb <- prep_spec(sumSpecB)
-plot(ssa, type='l', 
-	 xlim=c(12.5e4, 13.5e4),
-	 xlab='index',
-	 ylim=c(0,2),
-	 ylab='cps'
-	 )
-lines(ssb, type='l', col='red')
+plotComp(ssa, ssb, from=12.0e4, to=13.0e4, ylim=c(0,4))
 @
 
 <<, include=F>>=
@@ -146,13 +145,31 @@ globaly best warping demanding.
 
 <<wscalcshifts,include=F, cache=T>>=
 og <- optim_generator(ssa, warp0)
+og2 <- function(...) -og(...)
 #og(1,ssb)
 shifts <- seq(from=-3000, to=2000, length.out=99)
 val <- sapply(shifts, function(x) og(x,ssb))
+
+est.shi <- DEoptim(og2, 
+				   lower=-3000,
+				   upper = 3000,
+				   dense_spec=ssb,
+				   control=list(VTR=-0.9)
+				   )
+
+bestbest <- optim(est.shi$optim$bestmem, 
+				  og2, 
+				  gr=NULL, 
+				  ssb,
+				  lower=-3000, 
+				  upper=3000,
+				  method='Brent')
 @
 
 <<wsshiftplot, cache=T, fig.cap="distance to reference measurement on shifted spectrum", dependson="wscalcshifts">>=
 plot(shifts,val, type='l', xlab='shift', ylab='agreement')
+abline(v=bestbest$par)
+text(x=bestbest$par, y=0.1, sprintf("%3.1f",bestbest$par), pos=4)
 @
 
 <<wscalcshift2,include=F, cache=T>>=
