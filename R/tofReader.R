@@ -299,5 +299,8 @@ sumSpec.TofH5 <- function(tofH)
 
 recMassCal.TofH5 <- function(tofH){
   gr <- h5readAttributes(tofH$fid, 'FullSpectra')
-  with(gr, function(i) ((i-`MassCalibration p2`)/`MassCalibration p1`)^2)
+  with(gr, 
+  	   list( toMass = Vectorize(function(i) ((i-`MassCalibration p2`)/`MassCalibration p1`)^2),
+  	   		 toIndex = Vectorize(function(m) `MassCalibration p2` + `MassCalibration p1`*sqrt(m))
+  	   		 ))
 }

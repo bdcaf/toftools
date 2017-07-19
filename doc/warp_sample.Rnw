@@ -17,6 +17,22 @@ sumSpecA <- (sumSpec.TofH5(tofA))/tofA$indexhelp$N
 sumSpecB <- (sumSpec.TofH5(tofB))/tofB$indexhelp$N
 
 mcfun <- recMassCal.TofH5(tofA)
+
+plotComp <- function(refspec, otherspec, from, to, ylim=c(0,1e2)){
+  plot(refspec, type='l', 
+	   xlim=c(from, to),
+	   ylim=ylim,
+	   xlab='index',
+	   ylab='cps'
+	   )
+  lines(otherspec, type='l', col='red')
+
+  leftMass <- with(mcfun, ceiling(toMass(from)))
+  rightMass <- with(mcfun, floor(toMass(to)))
+  massRange <- seq(from = leftMass, to = rightMass)
+  indRange <- with(mcfun, toIndex(massRange))
+  axis(1,indRange, labels=massRange,line=1,col="red",col.ticks="red",col.axis="red")
+}
 @
 
 Immediate results hinted that in single measurements the drift is small.
@@ -36,26 +52,15 @@ sampl, which fails due to memory constraints as these spectra are
 typical \num{400000} entries.
 
 <<wssumspec, cache=T,fig.cap='Comparing the unprocessed sum spectra of two samples, the shift corresponds to about 0.5 amu at m/z 60'>>=
-plot(sumSpecA, type='l', 
-	 xlim=c(11.5e4, 13.5e4),
-	 ylim=c(0, 1e2),
-	 xlab='index',
-	 ylab='cps'
-	 )
-lines(sumSpecB, type='l', col='red')
+plotComp(sumSpecA, sumSpecB, from=11.5e4, to=13.5e4)
 @
 
 <<wsbaseline, fig.cap='baseline correction in sum spectrum.', cache=T>>=
 sspec <- sumSpecA
 refSpec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
 refSpec[refSpec<0.1]<-0
-plot(sumSpecA, type='l', 
-	 xlim=c(12.0e4, 13.0e4),
-	 ylim=c(0, 3),
-	 xlab='index',
-	 ylab='cps'
-	 )
-lines(refSpec, type='l', col='red')
+
+plotComp(sumSpecA, refSpec, from=12.0e4, to=13.0e4, ylim=c(0,3))
 @
 
 <<wssat, cache=T, depends=c('wsbaseline'), fig.cap='saturated peaks'>>=
