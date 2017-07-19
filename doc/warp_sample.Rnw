@@ -15,6 +15,8 @@ tofA <- tofH5(tofA.h5)
 tofB <- tofH5(tofB.h5)
 sumSpecA <- (sumSpec.TofH5(tofA))/tofA$indexhelp$N
 sumSpecB <- (sumSpec.TofH5(tofB))/tofB$indexhelp$N
+
+mcfun <- recMassCal.TofH5(tofA)
 @
 
 Immediate results hinted that in single measurements the drift is small.

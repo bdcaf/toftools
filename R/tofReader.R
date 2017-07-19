@@ -296,3 +296,8 @@ sumSpec.TofH5 <- function(tofH)
 		 gr <- H5Dopen(fid, 'FullSpectra/SumSpectrum')
 		 H5Dread(gr)
   })
+
+recMassCal.TofH5 <- function(tofH){
+  gr <- h5readAttributes(tofH$fid, 'FullSpectra')
+  with(gr, function(i) ((i-`MassCalibration p2`)/`MassCalibration p1`)^2)
+}
