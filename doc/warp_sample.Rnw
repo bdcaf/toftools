@@ -154,7 +154,7 @@ est.shi <- DEoptim(og2,
 				   lower=-3000,
 				   upper = 3000,
 				   dense_spec=ssb,
-				   control=list(VTR=-0.9)
+				   control=list(VTR=-0.5)
 				   )
 
 bestbest <- optim(est.shi$optim$bestmem, 
@@ -174,15 +174,32 @@ text(x=bestbest$par, y=0.1, sprintf("%3.1f",bestbest$par), pos=4)
 
 <<wscalcshift2,include=F, cache=T>>=
 og <- optim_generator(ssa, warp1)
+og2 <- function(...) -og(...)
 #og(1,ssb)
 wif <- Vectorize(function(a,b) og(c(a,b),ssb))
 xs <- seq(from=-1000, to=-200, length.out=17)
-ys <- seq(from=0.6, to=1.4, length.out=21)
+ys <- seq(from=0.9, to=1.1, length.out=17)
 vals <- outer(xs, ys, FUN=wif )
+
+est.shi <- DEoptim(og2, 
+				   lower=c(-2000, 0.9),
+				   upper = c(2000, 1.1),
+				   dense_spec=ssb,
+				   control=list(VTR=-0.5)
+				   )
+
+bestbest <- optim(est.shi$optim$bestmem, 
+				  og2, 
+				  gr=NULL, 
+				  ssb)
 @
 
-<<wsshiftplot2, cache=T, fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+<<wsshiftplot2, cache=T, dependson="wscalcshift2",fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
 image(xs,ys,log(vals), xlab='shift', ylab='scale')
+with(bestbest, {
+	   points(x=par[[1]], y=par[[2]])
+	   text(x=par[[1]], y=par[[2]], sprintf("(%3.1f, %1.3f)",par[[1]], par[[2]]), pos=2) 
+	   			  })
 @
 
 
