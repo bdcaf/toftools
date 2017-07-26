@@ -177,13 +177,8 @@ text(x=bestbest$par, y=0.1, sprintf("%3.1f",bestbest$par), pos=4)
 <<>>=
 og <- optim_generator(ssa, warp1)
 og2 <- function(...) -og(...)
-#og(1,ssb)
-@
-<<wscalcshift2,include=F, cache=T>>=
 wif <- Vectorize(function(a,b) og(c(a,b),ssb))
-xs <- seq(from=-800, to=-200, length.out=31)
-ys <- seq(from=0.98, to=1.02, length.out=41)
-vals <- outer(xs, ys, FUN=wif )
+#og(1,ssb)
 @
 
 <<wshift_opt2, cache=T, include=F>>=
@@ -199,15 +194,42 @@ bestbest <- optim(est.shi$optim$bestmem,
 				  gr=NULL, 
 				  ssb)
 @
-In figure \ref{fig:wsshiftplot2} the two dimensional case is shown.  We
-see that there is a comb of agreement with a local maximum.  This makes
-finding the best location sensitive to the start location.  Only few
-optimization algorithm deal with such a situation sufficiently.  Here a
-genetic algorithm is applied.  Ultimately this search is done in two
-steps.  First using a genetic algorithm to locate a correlation > 0.5
-and in a second step conjugate gradient optimization to locate the
-maximum.  This is significantly faster than using the genetic algorithm
-exclusively as it only slowly converges to the maximum. 
+
+<<wscalcshift2,include=F, dependson="wshift_opt2", cache=T>>=
+xs <- sort(c(bestbest$par[[1]],seq(from=-800, to=-200, length.out=31)))
+ys <- sort(c(bestbest$par[[2]],seq(from=0.98, to=1.02, length.out=31)))
+vals <- outer(xs, ys, FUN=wif )
+@
+
+<<wscalcshift2local,include=F, cache=T>>=
+xs_local <- sort(c(bestbest$par[[1]],seq(from=-700, to=-300, length.out=31)))
+ys_local <- sort(c(bestbest$par[[2]],seq(from=0.995, to=1.005, length.out=31)))
+vals_local <- outer(xs_local, ys_local, FUN=wif )
+@
+<<wscalcshift2locallocal,include=F, cache=T>>=
+xs_local2<- sort(c(bestbest$par[[1]],seq(from=-600, to=-400, length.out=31)))
+ys_local2<- sort(c(bestbest$par[[2]],seq(from=0.998, to=1.002, length.out=31)))
+vals_local2 <- outer(xs_local2, ys_local2, FUN=wif )
+@
+
+In figure \ref{fig:wsshiftplot2} the two dimensional case is shown.  It
+seems similar looking peaks form a lines. If we zoom into the region
+around the maximum in figure \ref{fig:wsshiftplot2local} and
+\ref{fig:wsshiftplot2locallocal} we see that the peaks along these lines
+actually form a connected smooth \textit{ridge}. Still finding the
+maximum is sensitive to the start location.  Only few optimization
+algorithm deal with such a situation sufficiently.  Here a genetic
+algorithm is applied.  Ultimately this search is done in two steps.
+First using a genetic algorithm to locate a correlation > 0.5 and in a
+second step conjugate gradient optimization to locate the maximum.  This
+is significantly faster than using the genetic algorithm exclusively as
+it only slowly converges to the maximum. 
+
+Although there may be a second approach.  Since the \textit{ridges} seem
+to stretch next to each other it should be possible to identify the
+correct one in one dimensional genetic search and in a second step do
+the high dimensional search for the maximum using conjugate gradient
+search.
 
 <<wsshiftplot2, cache=T, dependson=c("wscalcshift2",'wshift_opt2'),fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
 par(mar=c(1,0,0,0))
@@ -219,7 +241,51 @@ pm <- persp(x=xs,y=ys,z=vals,
 			theta=30, 
 			d=2,
 			xaxs="i",
-			yaxs="i"
+			yaxs="i",
+			ticktype="detailed"
+			)
+with(bestbest, {
+	   nc <- trans3d(x=par[[1]], y=par[[2]], z=-value, pm)
+	   points(nc, col='red')
+	   text(x=nc$x, y=nc$y, sprintf("cor %1.2f\n(%3.1f, %1.5f)",
+									-value, par[[1]], par[[2]]-1), 
+	   		pos=4, col='red') 
+			})
+@
+
+<<wsshiftplot2local, cache=T, dependson=c("wscalcshift2local",'wshift_opt2'),fig.cap="local distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+par(mar=c(1,0,0,0))
+pm <- persp(x=xs_local,y=ys_local,z=vals_local, 
+			xlab='shift', 
+			ylab='scale',
+			zlab='agreement', 
+			phi=30,
+			theta=30, 
+			d=2,
+			xaxs="i",
+			yaxs="i",
+			ticktype="detailed"
+			)
+with(bestbest, {
+	   nc <- trans3d(x=par[[1]], y=par[[2]], z=-value, pm)
+	   points(nc, col='red')
+	   text(x=nc$x, y=nc$y, sprintf("cor %1.2f\n(%3.1f, %1.5f)",
+									-value, par[[1]], par[[2]]-1), 
+	   		pos=4, col='red') 
+			})
+@
+<<wsshiftplot2locallocal, cache=T, dependson=c("wscalcshift2locallocal",'wshift_opt2'),fig.cap="local distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+par(mar=c(1,0,0,0))
+pm <- persp(x=xs_local2,y=ys_local2,z=vals_local2, 
+			xlab='shift', 
+			ylab='scale',
+			zlab='agreement', 
+			phi=30,
+			theta=30, 
+			d=2,
+			xaxs="i",
+			yaxs="i",
+			ticktype="detailed"
 			)
 with(bestbest, {
 	   nc <- trans3d(x=par[[1]], y=par[[2]], z=-value, pm)
