@@ -10,7 +10,7 @@ all: reports
 data/sample_ions.Rdata: dev_only/make_data.R
 	Rscript '$<'
 
-tmp/documented: $(wildcard *.R) attributes
+work/documented: $(wildcard *.R) attributes
 	R -e 'library(devtools);document()'
 	touch $@
 
@@ -24,6 +24,9 @@ build: tofTools_0.2.tar.gz data/sample_ions.Rdata
 
 install: data/sample_ions.Rdata attributes
 	R CMD install --build .
+
+prep_libs:
+	$R -e "install.packages(c('DEoptim','BB','MALDIquant','MASS','Matrix','PeakSegDP','baseline','data.table','dplyr','ggplot2','nloptr','ptw','purrr','tidyr','zoo'))"
 
 artifacts/%.pdf: $(REPORT_DIR)/%.pdf
 	cp $< $@
