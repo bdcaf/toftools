@@ -4,6 +4,7 @@
 library("DEoptim")
 library(baseline)
 library(zoo)
+library(grDevices)
 
 source('R/tofReader.R')
 source('R/tofSparse.R')
@@ -19,12 +20,13 @@ sumSpecB <- (sumSpec.TofH5(tofB))/tofB$indexhelp$N
 mcfun <- recMassCal.TofH5(tofA)
 
 
-plotComp <- function(refspec, otherspec = NULL, from, to, ylim=c(0,1e2)){
+plotComp <- function(refspec, otherspec = NULL, from, to, 
+					 ylim=c(0,1e2), ylab='signal'){
   plot(refspec, type='l', 
 	   xlim=c(from, to),
 	   ylim=ylim,
 	   xlab='index',
-	   ylab='cps'
+	   ylab=ylab
 	   )
   if (!is.null(otherspec)) lines(otherspec, type='l', col='red')
   massRange <- pretty(with(mcfun, c( toMass(from), toMass(to))),n=10)
@@ -93,7 +95,7 @@ hard to identify peaks at high masses.  In presented workflow we don't
 identify peaks, but instead search for a warp that transforms the
 spectrum best.
 
-There are several warping functions available.  As TOF spectrometry has
+Various warp functions are available.  As TOF spectrometry has
 a simple structure we find the parametric time warp most promising.  The
 most common dynamic time warp is unsuitable, as we can not guarantee all
 peaks to be present in each spectrum.
@@ -116,7 +118,7 @@ presentation is shown in figure \ref{fig:wscleansum}.
 <<wscleansum, cache=T, fig.cap='peak log1p profile of two measurements'>>=
 ssa <- prep_spec(sumSpecA)
 ssb <- prep_spec(sumSpecB)
-plotComp(ssa, ssb, from=12.0e4, to=13.0e4, ylim=c(0,4))
+plotComp(ssa, ssb, from=12.0e4, to=13.0e4, ylim=c(0,4), ylab='log1p signal')
 @
 
 <<, include=F>>=
@@ -172,18 +174,22 @@ abline(v=bestbest$par)
 text(x=bestbest$par, y=0.1, sprintf("%3.1f",bestbest$par), pos=4)
 @
 
-<<wscalcshift2,include=F, cache=T>>=
+<<>>=
 og <- optim_generator(ssa, warp1)
 og2 <- function(...) -og(...)
 #og(1,ssb)
+@
+<<wscalcshift2,include=F, cache=T>>=
 wif <- Vectorize(function(a,b) og(c(a,b),ssb))
-xs <- seq(from=-1000, to=-200, length.out=17)
-ys <- seq(from=0.9, to=1.1, length.out=17)
+xs <- seq(from=-800, to=-200, length.out=31)
+ys <- seq(from=0.98, to=1.02, length.out=41)
 vals <- outer(xs, ys, FUN=wif )
+@
 
+<<wshift_opt2, cache=T, include=F>>=
 est.shi <- DEoptim(og2, 
-				   lower=c(-2000, 0.9),
-				   upper = c(2000, 1.1),
+				   lower=c(-1000, 0.95),
+				   upper = c(1000, 1.05),
 				   dense_spec=ssb,
 				   control=list(VTR=-0.5)
 				   )
@@ -193,13 +199,35 @@ bestbest <- optim(est.shi$optim$bestmem,
 				  gr=NULL, 
 				  ssb)
 @
+In figure \ref{fig:wsshiftplot2} the two dimensional case is shown.  We
+see that there is a comb of agreement with a local maximum.  This makes
+finding the best location sensitive to the start location.  Only few
+optimization algorithm deal with such a situation sufficiently.  Here a
+genetic algorithm is applied.  Ultimately this search is done in two
+steps.  First using a genetic algorithm to locate a correlation > 0.5
+and in a second step conjugate gradient optimization to locate the
+maximum.  This is significantly faster than using the genetic algorithm
+exclusively as it only slowly converges to the maximum. 
 
-<<wsshiftplot2, cache=T, dependson="wscalcshift2",fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
-image(xs,ys,log(vals), xlab='shift', ylab='scale')
+<<wsshiftplot2, cache=T, dependson=c("wscalcshift2",'wshift_opt2'),fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+par(mar=c(1,0,0,0))
+pm <- persp(x=xs,y=ys,z=vals, 
+			xlab='shift', 
+			ylab='scale',
+			zlab='agreement', 
+			phi=30,
+			theta=30, 
+			d=2,
+			xaxs="i",
+			yaxs="i"
+			)
 with(bestbest, {
-	   points(x=par[[1]], y=par[[2]])
-	   text(x=par[[1]], y=par[[2]], sprintf("(%3.1f, %1.3f)",par[[1]], par[[2]]), pos=2) 
-	   			  })
+	   nc <- trans3d(x=par[[1]], y=par[[2]], z=-value, pm)
+	   points(nc, col='red')
+	   text(x=nc$x, y=nc$y, sprintf("cor %1.2f\n(%3.1f, %1.5f)",
+									-value, par[[1]], par[[2]]-1), 
+	   		pos=4, col='red') 
+			})
 @
 
 

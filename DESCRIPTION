@@ -18,11 +18,11 @@ Imports:
 Suggests:
     OrgMassSpecR
 Depends:
-    rhdf5,
     MALDIquant,
     MASS,
-    splines,
-    dplyr
+    data.table,
+    dplyr,
+    rhdf5
 Collate:
     'RcppExports.R'
     'TofMeasurementClass.R'
