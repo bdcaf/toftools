@@ -2,14 +2,14 @@
 
 Unwarping a lengthy measurement is a complex task.  
 
-A typical TOF spectrum is extremely sparse. From the typical 398999 bins
+A typical TOF spectrum is extremely sparse.  From the typical 398999 bins
 collected only less than 2500 contain numbers greater zero (obtained
   from a breath sample).
 
 The currently most widely used warping correction --- the dynamic time
 warp (dtw) performs in its original implementation under such conditions
 rather poorly and is easily confused as the traces of individual peaks
-are very similar.
+are similar.
 
 Here we consider two variants:
 \begin{itemize}
