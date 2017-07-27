@@ -140,10 +140,10 @@ warp1 <- function(a)
 @
 
 An exemplary warping based on shifting the spectrum is shown in figure
-\ref{wsshiftplot}.  There is an optimal warping shifting the spectrum
-around 500 indices to the left.  But it is also visible there are locale
-maxima shifting spectra to other full masses.  This makes finding the
-globaly best warping demanding.
+\ref{fig:wsshiftplot}.  There is an optimal warping shifting the
+spectrum around 500 indices to the left.  But it is also visible there
+are locale maxima shifting spectra to other full masses.  This makes
+finding the globaly best warping demanding.
 
 <<wscalcshifts,include=F, cache=T>>=
 og <- optim_generator(ssa, warp0)
