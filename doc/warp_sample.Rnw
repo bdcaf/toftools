@@ -174,7 +174,7 @@ abline(v=bestbest$par)
 text(x=bestbest$par, y=0.1, sprintf("%3.1f",bestbest$par), pos=4)
 @
 
-<<>>=
+<<,include=F>>=
 og <- optim_generator(ssa, warp1)
 og2 <- function(...) -og(...)
 wif <- Vectorize(function(a,b) og(c(a,b),ssb))
