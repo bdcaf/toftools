@@ -1,4 +1,4 @@
-\section{Notes on warping between samples}
+\subsection{Notes on warping between samples}
 
 <<setup, include=F>>=
 library("DEoptim")
@@ -43,13 +43,13 @@ Immediate results hinted that in single measurements the drift is small.
 To formulate the procedure warping between measurements was chosen.
 Concretely the samples \texttt{\Sexpr{tofA.h5}} and
 \texttt{\Sexpr{tofB.h5}} are selected and the sum spectra will be
-examined. A subsection of the spectra are shown in figure \ref{fig:wssumspec}.
+examined.  A subsection of the spectra are shown in figure \ref{fig:wssumspec}.
 
 Sum spectra are different to the spectra of individual scans in the
 sense that even in the range between molecular masses noise adds up to a
 smooth signal.  To keep alignment simple the baseline is cleaned useing
 the baseline package from \citet{Lil2015}.  A regional plot is shown in
-figure \ref{fig:wsbaseline}. Most algorithm in this package work
+figure \ref{fig:wsbaseline}.  Most algorithm in this package work
 sufficiently well.  Although the default \texttt{als} algorithm requires
 construction of a matrix with dimension of lenght sample $\times$ lenght
 sampl, which fails due to memory constraints as these spectra are
@@ -95,13 +95,13 @@ hard to identify peaks at high masses.  In presented workflow we don't
 identify peaks, but instead search for a warp that transforms the
 spectrum best.
 
-Various warp functions are available.  As TOF spectrometry has
+Some warp functions are available.  As TOF spectrometry has
 a simple structure we find the parametric time warp most promising.  The
 most common dynamic time warp is unsuitable, as we can not guarantee all
 peaks to be present in each spectrum.
 The resampling algorithm presented in \citet{Eilers2004a} is not
 suitable for our approach as we need AUC of peaks maintained over the
-transformation.   The problem is that presented algorithm only works
+transformation.  The problem is that presented algorithm only works
 well if within every original bin there is a single new coordinate.
 However starting with linear transformations this is no longer
 guaranteed.  Fortunately there is a simple correction by instead
@@ -112,7 +112,7 @@ It is worth stressing that even if the parametric function describing
 the reindexing is simple and differentiable the warping function is not.
 
 The spectra are also dominated by large peaks.  In order to reduce their
-influence the signal is \texttt{log1p} transformed. An exemplary
+influence the signal is \texttt{log1p} transformed.  An exemplary
 presentation is shown in figure \ref{fig:wscleansum}.
 
 <<wscleansum, cache=T, fig.cap='peak log1p profile of two measurements'>>=
@@ -207,23 +207,24 @@ ys_local <- sort(c(bestbest$par[[2]],seq(from=0.995, to=1.005, length.out=31)))
 vals_local <- outer(xs_local, ys_local, FUN=wif )
 @
 <<wscalcshift2locallocal,include=F, cache=T>>=
-xs_local2<- sort(c(bestbest$par[[1]],seq(from=-600, to=-400, length.out=31)))
-ys_local2<- sort(c(bestbest$par[[2]],seq(from=0.998, to=1.002, length.out=31)))
+xs_local2<- sort(c(bestbest$par[[1]],seq(from=-550, to=-450, length.out=31)))
+ys_local2<- sort(c(bestbest$par[[2]],seq(from=0.999, to=1.001, length.out=31)))
 vals_local2 <- outer(xs_local2, ys_local2, FUN=wif )
 @
 
 In figure \ref{fig:wsshiftplot2} the two dimensional case is shown.  It
-seems similar looking peaks form a lines. If we zoom into the region
+seems similar looking peaks form a lines.  If we zoom into the region
 around the maximum in figure \ref{fig:wsshiftplot2local} and
 \ref{fig:wsshiftplot2locallocal} we see that the peaks along these lines
-actually form a connected smooth \textit{ridge}. Still finding the
-maximum is sensitive to the start location.  Only few optimization
-algorithm deal with such a situation sufficiently.  Here a genetic
-algorithm is applied.  Ultimately this search is done in two steps.
-First using a genetic algorithm to locate a correlation > 0.5 and in a
-second step conjugate gradient optimization to locate the maximum.  This
-is significantly faster than using the genetic algorithm exclusively as
-it only slowly converges to the maximum. 
+actually form a connected smooth \textit{ridge} and the apparent
+separation is just an artifact from aliasing at peculiar points.  Still
+finding the maximum is sensitive to the start location.  Only particular
+optimization algorithm deal with such a situation sufficiently.  Here a
+genetic algorithm is applied.  Ultimately this search is done in two
+steps.  First using a genetic algorithm to locate a correlation > 0.5
+and in a second step conjugate gradient optimization to locate the
+maximum.  This is faster than using the genetic algorithm
+exclusively as it only slowly converges to the maximum. 
 
 Although there may be a second approach.  Since the \textit{ridges} seem
 to stretch next to each other it should be possible to identify the
@@ -274,7 +275,7 @@ with(bestbest, {
 	   		pos=4, col='red') 
 			})
 @
-<<wsshiftplot2locallocal, cache=T, dependson=c("wscalcshift2locallocal",'wshift_opt2'),fig.cap="local distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+<<wsshiftplot2locallocal, cache=T, dependson=c("wscalcshift2locallocal",'wshift_opt2'),fig.cap="direct environment around maximum of distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
 par(mar=c(1,0,0,0))
 pm <- persp(x=xs_local2,y=ys_local2,z=vals_local2, 
 			xlab='shift', 
