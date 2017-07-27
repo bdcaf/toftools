@@ -9,8 +9,8 @@ library(nloptr)
 
 tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
 myTof <- tofH5(tof.h5)
-aSpec <- readInd.TofH5(myTof,10)
-bSpec <- readInd.TofH5(myTof,10000)
+aSpec <- readInd.TofH5(myTof, 10)
+bSpec <- readInd.TofH5(myTof, 10000)
 totalSpec <- sumSpec.TofH5(myTof)
 a2 <- aSpec/max(aSpec)
 b2 <- bSpec/max(bSpec)
@@ -27,15 +27,16 @@ tosum <- ( rowSums(tof.spectra))
 
 # split matrix
 rescale.prep <- list(inds = seq_along(tosum), sqind = sqrt(seq_along(tosum)))
-re.index <- with(rescale.prep, function(ll)  ll[[1]] + ll[[2]]*sqind + ll[[3]]*inds)
-ap.spec <- function(spc){ 
+re.index <- with(rescale.prep,
+                 function(ll)  ll[[1]] + ll[[2]]*sqind + ll[[3]]*inds)
+ap.spec <- function(spc){
   cusp <- cumsum(spc)
   approxfun(x=seq_along(cusp), y=cusp, yleft=0, yright=cusp[length(cusp)])
 }
 
 prep.ref <- c(as.array(diff(tosum)),0)
 
-ssRef = sqrt(sum(tosum^2))
+ssRef <- sqrt(sum(tosum ^ 2))
 nspec <- ncol(tof.spectra)
 nsplits <- 7
 
@@ -43,7 +44,6 @@ dsplit <- ceiling(nspec/nsplits)
 seqs <- seq(dsplit, nspec-1, by=dsplit)
 ranges <- mapply(function(a,b) list(a:b),c(1,seqs+1), c(seqs,nspec))
 specs <- lapply(ranges, function(x) rowSums(tof.spectra[,x]))
-#data.frame(starts=c(1,seqs+1), ends=c(seqs,nspec))
 pr <- 77700:78000
 plot(pr,tosum[pr], type='l')
 lines(pr,specs[[3]][pr], col='red')
@@ -53,19 +53,19 @@ aspec <- specs[[4]]
 op_spec <- function(aspec){
   spec.fun <- ap.spec( aspec)
   warper <- function(ll){ diff(c(0,spec.fun(re.index(ll)))) }
-  optfun <- function(ll){ 
-  	wspc <- warper(ll) 
-  	ssw <- sqrt(sum(wspc^2))
-	-crossprod(tosum, wspc)/ssw/ssRef 
+  optfun <- function(ll){
+    wspc <- warper(ll)
+    ssw <- sqrt(sum(wspc^2))
+    -crossprod(tosum, wspc)/ssw/ssRef
   }
 
   # see: http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
-  #op.ra <- nloptr(c(0,0,1), optfun, 
-				  #opts = list("algorithm"="NLOPT_LN_COBYLA", 
-								#ftol_rel=1e-6, xtol_rel=1e-6, maxeval=1000),
-				  #lb=c(-1e6,-1e4,0), ub=c(1e6,1e4,2))
+  #op.ra <- nloptr(c(0,0,1), optfun,
+                  #opts = list("algorithm"="NLOPT_LN_COBYLA",
+                                #ftol_rel=1e-6, xtol_rel=1e-6, maxeval=1000),
+                  #lb=c(-1e6,-1e4,0), ub=c(1e6,1e4,2))
 
-  op.rao <- optim(c(0,0,1), optfun) 
+  op.rao <- optim(c(0,0,1), optfun)
   ws <- warper(op.rao$par)
 
 #pr <- 230000:240000
@@ -73,7 +73,7 @@ op_spec <- function(aspec){
 #lines(pr,ws[pr], col='blue')
 
   list(parameter = op.rao$par,
-  	   warped = ws)
+       warped = ws)
 }
 
 system.time(
@@ -101,9 +101,9 @@ plot(wf[,3])
 
 
 #global
-#op.ra <- nloptr(c(0,1,0), optfun, 
-				#opts = list("algorithm"="NLOPT_GN_DIRECT_L", ftol_rel=1e-4),
-				#lb=c(-1e6,0,0), ub=c(1e6,2,1e-3))
+#op.ra <- nloptr(c(0,1,0), optfun,
+                #opts = list("algorithm"="NLOPT_GN_DIRECT_L", ftol_rel=1e-4),
+                #lb=c(-1e6,0,0), ub=c(1e6,2,1e-3))
 
 # ---NLOPT_GN_DIRECT_L
 #split.at <- floor(ncol(tof.spectra)/2)
@@ -180,10 +180,10 @@ resampe <- function(ll){
   i2 <- newind(ll)
   diff(master.app(i2))
 }
-opt_shift <- function(n){ 
+opt_shift <- function(n){
   sa <- as(tof.spectra[,n,drop=F], 'sparseVector')
   optim.fun <- function(ll){
-	-crossprod(sa*resampe(ll))[1]
+    -crossprod(sa*resampe(ll))[1]
   }
 
   best <- optim(c(0.,1,0.), optim.fun, control=list())
@@ -196,7 +196,6 @@ system.time(
 )
 
 vs <- sapply(v, as.numeric)
-#vs <- do.call(rbind, v2)
 par(mfrow=c(3,1))
 plot(vs[1,] ,type='l')
 plot(vs[2,] ,type='l')
