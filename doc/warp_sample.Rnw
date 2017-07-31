@@ -3,7 +3,6 @@
 <<setup, include=F>>=
 library("DEoptim")
 library(baseline)
-library(zoo)
 library(grDevices)
 
 source('R/tofReader.R')
@@ -79,7 +78,7 @@ plotComp(refSpec, from=9.96e4, to=9.98e4)
 prep_spec <- function(sspec, atof, wid=30){
   workspec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
   workspec[workspec<0.001]<- 0
-  log1p(workspec)
+  zapsmall(log1p(workspec), digits=2)
 }
 @
 
@@ -124,9 +123,9 @@ plotComp(ssa, ssb, from=12.0e4, to=13.0e4, ylim=c(0,4), ylab='log1p signal')
 <<, include=F>>=
 optim_generator <- function(orientSpec, wf){
   reference <- orientSpec/sqrt(sum(orientSpec^2))
-  function(a, dense_spec){
+  function(a, generated_w){
 	warp_fun <- wf(a)
-	warped <- warp_dense( dense_spec, warp_fun)
+	warped <- generated_w(warp_fun)
 	cor.full.full(warped, reference) 
   }
 }
@@ -148,21 +147,22 @@ finding the globaly best warping demanding.
 <<wscalcshifts,include=F, cache=T>>=
 og <- optim_generator(ssa, warp0)
 og2 <- function(...) -og(...)
+generated_w <- make_densewarp(ssb, 1, length(ssb))
 #og(1,ssb)
 shifts <- seq(from=-3000, to=2000, length.out=99)
-val <- sapply(shifts, function(x) og(x,ssb))
+val <- sapply(shifts, function(x) og(x,generated_w))
 
 est.shi <- DEoptim(og2, 
 				   lower=-3000,
 				   upper = 3000,
-				   dense_spec=ssb,
+				   generated_w=generated_w,
 				   control=list(VTR=-0.5)
 				   )
 
 bestbest <- optim(est.shi$optim$bestmem, 
 				  og2, 
 				  gr=NULL, 
-				  ssb,
+				  generated_w=generated_w,
 				  lower=-3000, 
 				  upper=3000,
 				  method='Brent')
@@ -170,14 +170,14 @@ bestbest <- optim(est.shi$optim$bestmem,
 
 <<wsshiftplot, cache=T, fig.cap="distance to reference measurement on shifted spectrum", dependson="wscalcshifts">>=
 plot(shifts,val, type='l', xlab='shift', ylab='agreement')
-abline(v=bestbest$par)
-text(x=bestbest$par, y=0.1, sprintf("%3.1f",bestbest$par), pos=4)
+abline(v=bestbest$par, lty=2)
+text(x=bestbest$par, y=0.5, sprintf("%3.1f",bestbest$par), pos=4)
 @
 
 <<,include=F>>=
 og <- optim_generator(ssa, warp1)
 og2 <- function(...) -og(...)
-wif <- Vectorize(function(a,b) og(c(a,b),ssb))
+wif <- Vectorize(function(a,b) og(c(a,b), generated_w))
 #og(1,ssb)
 @
 
@@ -185,14 +185,15 @@ wif <- Vectorize(function(a,b) og(c(a,b),ssb))
 est.shi <- DEoptim(og2, 
 				   lower=c(-1000, 0.95),
 				   upper = c(1000, 1.05),
-				   dense_spec=ssb,
+				   generated_w=generated_w,
 				   control=list(VTR=-0.5)
 				   )
 
 bestbest <- optim(est.shi$optim$bestmem, 
 				  og2, 
 				  gr=NULL, 
-				  ssb)
+				   generated_w=generated_w
+				  )
 @
 
 <<wscalcshift2,include=F, dependson="wshift_opt2", cache=T>>=
@@ -226,11 +227,6 @@ and in a second step conjugate gradient optimization to locate the
 maximum.  This is faster than using the genetic algorithm
 exclusively as it only slowly converges to the maximum. 
 
-Although there may be a second approach.  Since the \textit{ridges} seem
-to stretch next to each other it should be possible to identify the
-correct one in one dimensional genetic search and in a second step do
-the high dimensional search for the maximum using conjugate gradient
-search.
 
 <<wsshiftplot2, cache=T, dependson=c("wscalcshift2",'wshift_opt2'),fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
 par(mar=c(1,0,0,0))
@@ -298,3 +294,51 @@ with(bestbest, {
 @
 
 
+\subsubsection{Algortithm Candidate}
+
+
+Although there may be a second approach.  Since the \textit{ridges} seem
+to stretch next to each other it should be possible to identify the
+correct one in one dimensional genetic search and in a second step do
+the high dimensional search for the maximum using conjugate gradient
+search.
+
+<<wscalcshift1f,include=F, cache=T, eval=F>>=
+warp0 <- function(a) 
+  function(x) a[[1]]+x # + a[[2]]*x # + a[[3]]*x^2
+
+warp1 <- function(a) 
+  function(x) a[[1]]+ a[[2]]*x # + a[[2]]*x # + a[[3]]*x^2
+
+warp2 <- function(a) 
+  function(x) a[[1]]+ a[[2]]*x + a[[3]]*x^2
+
+og <- optim_generator(ssa, warp0)
+og2 <- function(...) -og(...)
+
+est.shi <- DEoptim(og2, 
+				   lower=-3000,
+				   upper = 3000,
+				   dense_spec=ssb,
+				   control=list(VTR=-0.7)
+				   )
+
+startv <- c(est.shi$optim$bestmem,1,0)
+
+generated_w <- make_densewarp(v, 1, length(v))
+warp_fun <- warp2(c(est.shi$optim$bestmem, 0.992, 0.0000001))
+starts <- 1
+ends <- length(ssb)
+v <- ssb
+check <- T
+warp_res <- warper(warp_fun)
+
+og_fin <- optim_generator(ssa, warp2)
+og_fin2 <- function(...) -og_fin(...)
+
+bestbest <- optim(startv, 
+				  og_fin2, 
+				  gr=NULL, 
+				  method='Nelder-Mead',
+				  ssb)
+@

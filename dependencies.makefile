@@ -1,3 +1,5 @@
+read: $(REPORT_DIR)/report_warping.pdf
+	open -a Skim.app  $<
 reports: $(addprefix artifacts/,report_warping.pdf)
 
 $(REPORT_DIR)/%.pdf: doc/knitr_preamble.tex doc/acronyms.tex

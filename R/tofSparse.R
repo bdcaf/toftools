@@ -13,32 +13,32 @@ library(data.table)
 #'
 #' @param full.wave a full dense TOF spectrum
 #' @param lower parameter setting the lower number of counts
-#' @param minlen minimum lenght of series > 0 - 
+#' @param minlen minimum lenght of series > 0 -
 #' @param max_gap to further simplify densly store gaps below this
 #' number
 #'
-#' @return list of sparse regions where the spectrum is > `lower`	
+#' @return list of sparse regions where the spectrum is > `lower`
 #' @export
 semisparse_spec <- function(full.wave, lower=0L, minlen=1L, max_gap = 30L){
-  tab <- data.table(id=seq_along(full.wave), wave=full.wave)[wave>lower]
-  tab[, gap:= (id - shift(id, fill=0))]
+  tab <- data.table(id = seq_along(full.wave), wave = full.wave)[wave > lower]
+  tab[, gap := (id - shift(id, fill = 0))]
   tab[, new_block := gap>max_gap]
   tab[, id_block := cumsum(new_block)]
-  tab[new_block==F, 
-	  v := Vectorize(function(gap,wave) c(rep(0,gap-1L),wave))(gap,wave)
-  	  ]
+  tab[new_block==F,
+      v := Vectorize(function(gap,wave) c(rep(0,gap-1L),wave))(gap,wave)
+      ]
   tab[new_block==T, v:=as.list(wave)]
 
-  fullT <- tab[,.(starts=min(id), 
-  				  ends=max(id), 
-  				  v=list(Reduce(c,v))), 
-  			   by=id_block]
+  fullT <- tab[,.(starts=min(id),
+                  ends=max(id),
+                  v=list(Reduce(c,v))),
+               by=id_block]
   fullT[, len := ends-starts+1]
   fullT[ends>starts]
   return( fullT[len>=minlen])
 }
 
-#' helper function to simplify sparse spectra 
+#' helper function to simplify sparse spectra
 #'
 #' @description simplifies spectra by closing gaps smaller than max_gap.
 #' In the end it will not be usefull for correlation finding.  But it
@@ -49,11 +49,11 @@ semisparse_spec <- function(full.wave, lower=0L, minlen=1L, max_gap = 30L){
 simplify_sparse <- function(spec_pre, max_gap=10L){
   spec_pre[, gap := starts - shift(ends, fill = 0)][, inds := cumsum(gap > max_gap)]
   # close gaps but only within groups
-  DT0 <- spec_pre[between(gap, 2L, max_gap), 
-				  .(starts = starts - (gap - 1L), 
-					ends = starts - 1L, 
-					v = Vectorize(rep.int)(0L, gap - 1L), gap, inds)]
-  # bind rowwise (union in SQL), setkey on result to maintain sort order, 
+  DT0 <- spec_pre[between(gap, 2L, max_gap),
+                  .(starts = starts - (gap - 1L),
+                    ends = starts - 1L,
+                    v = Vectorize(rep.int)(0L, gap - 1L), gap, inds)]
+  # bind rowwise (union in SQL), setkey on result to maintain sort order,
   # remove column gap as no longer needed
   DT2 <- setkey(rbind(spec_pre, DT0), starts, ends)[, gap := NULL][]
   # aggregate groupwise, pick min/max, combine lists
@@ -63,20 +63,42 @@ simplify_sparse <- function(spec_pre, max_gap=10L){
   result
 }
 
+make_densewarp <- function(v, starts, ends){
+  vc <- local({
+    cuv <- cumsum(v)
+    lastcu <- last(cuv)
+    c(0, cuv, lastcu)
+  })
+  function(warp_fun, check=T){
+    i_trans <- warp_fun( seq(from = starts - 1, to = ends + 1))
+    if (check) {
+      ditrans <- diff(i_trans)
+      if (any(ditrans <= 0 ))  return(list(starts = NA, ends = NA, v = sum(v)))
+    }
+    left <- max(1, ceiling(i_trans[[1]]))
+    right <- min(length(v), ceiling(last(i_trans)))
+    i_new <- seq(from = left, to = right)
+    v_new <- diff( c(0, approx(i_trans, vc, i_new,
+                               yleft = 0, yright = last(vc))$y))
+    list(starts = i_new[1],
+         ends = i_new[length(i_new)],
+         v = as.vector(v_new))
+  }
+}
 #' helper function for warping a single semisparse spectrum line
 warp_line <- function(warp_fun, starts, ends, v, check=T){
-  i_trans <- warp_fun((starts-1):(ends+1))
+  i_trans <- warp_fun( (starts - 1):(ends + 1))
   if (check) {
-	ditrans <- diff(i_trans)
-	if (any(ditrans <= 0 ))  return(list(starts=NA,ends=NA, v=sum(v)))
+    ditrans <- diff(i_trans)
+    if (any(ditrans <= 0 ))  return(list(starts = NA, ends = NA, v = sum(v)))
   }
   cuv <- cumsum(v)
   lastcu <- last(cuv)
   vc <- c(0,cuv,lastcu)
-  i_new <- seq(from = ceiling(i_trans[[1]]), 
-  			   to = floor(last(i_trans)))
-  v_new <- diff( c(0,approx(i_trans, vc, 
-  							i_new, yleft=0, yright=lastcu)$y))
+  i_new <- seq(from = ceiling(i_trans[[1]]),
+               to = floor(last(i_trans)))
+  v_new <- diff( c(0,approx(i_trans, vc,
+                            i_new, yleft=0, yright=lastcu)$y))
   list(starts=i_new[1],  ends=i_new[length(i_new)], v=as.vector(v_new))
 }
 
@@ -109,7 +131,7 @@ warp_dense <- function(dense_spec, warp_fun){
 sparseTof <- function(full.wave){
   sp_spec <- sparse_spec(full.wave)
   this <- list(semi_sparse=sp_spec,
-  			   length = length(full.wave))
+               length = length(full.wave))
   structure(this, class="sparseTof")
 }
 
@@ -147,7 +169,7 @@ spfun <- function(st,en,v, ref){
 #' @return cosine distance of spectra
 #'
 cor.semisparse.full <- function(aSpec, refSpec){
-  aSpec[, energy := Vectorize(function(x) sum(x^2))(v)]
+  aSpec[, energy := Vectorize(function(x) sum(x ^ 2))(v)]
   aSpec[, sp := Vectorize( function(st,en,v) spfun(st,en,v, refSpec))(starts, ends,v)]
   agg <- aSpec[, .(total_energy=sum(energy), total_sp=sum(sp)), by=NULL]
   with(agg, total_sp/sqrt(total_energy))
@@ -177,7 +199,7 @@ cor.full.full <- function(fullWarp, refSpec){
   #out <- vector(mode='numeric', length=full.len)
   #sparse.spec %>% rowwise() %>%
       #do( x=with(., out[starts:ends] <<- c(unlist(v))))
-  
+
   #out
 #}
 
@@ -196,6 +218,6 @@ dense_remove_sat <- function(densev, sats, hide_range = -100:300){
 sparse_remove_sat <- function(spspec, sats){
   sa1 <- sats[[1]]
   for (sa1 in sats)
-	spspec <- spspec[starts>sa1 | ends<sa1] # = not (starts<sa1 & ends>sa1)
+    spspec <- spspec[starts>sa1 | ends<sa1] # = not (starts<sa1 & ends>sa1)
   spspec
 }
