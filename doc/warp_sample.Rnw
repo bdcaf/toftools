@@ -95,12 +95,12 @@ hard to identify peaks at high masses.  In presented workflow we don't
 identify peaks, but instead search for a warp that transforms the
 spectrum best.
 
-Some warp functions are available.  As TOF spectrometry has
+Some warp functions are available.  As \ac{TOF} spectrometry has
 a simple structure we find the parametric time warp most promising.  The
 most common dynamic time warp is unsuitable, as we can not guarantee all
 peaks to be present in each spectrum.
 The resampling algorithm presented in \citet{Eilers2004a} is not
-suitable for our approach as we need AUC of peaks maintained over the
+suitable for our approach as we need \ac{AUC} of peaks maintained over the
 transformation.  The problem is that presented algorithm only works
 well if within every original bin there is a single new coordinate.
 However starting with linear transformations this is no longer
@@ -296,6 +296,5 @@ with(bestbest, {
 	   		pos=4, col='red') 
 			})
 @
-
 
 

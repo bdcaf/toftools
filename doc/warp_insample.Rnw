@@ -52,13 +52,16 @@ individual scans are much noisier and have >90 \% zero signal.  Second
 there are up to some thousand spectra to align with each other.  On
 the other hand it is plausible that from one spectrum to the next the
 shift should be small.  Figures \ref{fig:plotoverw45} and
-\ref{fig:plotoverw32} shows a sum spectrum together with seven equally
+\ref{fig:plotoverw34} shows a sum spectrum together with seven equally
 spaced spectra along the measurement that compromise it.  Although the
 individual scans are noisy it is noticable that the center of the first
 spectrum is to the left of the sum spectrum while the later are not so
 clear right of the sum spectrum.  For the \si{300}{s} and \si{900}{s}
 spectrum finding the peak is not pronounced so aligning them with their
-maximum is error prone.
+maximum is error prone.  The shifts seem small -- visually maybe 1/30
+amu at maximum.  However the peaks are  notable wider than the peak in
+sum spectrum.  Considering the \ac{FWHM} it seems that the sum spec has
+about half the width of individual specs.
 
 The sum spectrum makes a natural reference to which the individual
 spectra should be aligned.  Although it may be useful to recalculate the
@@ -66,21 +69,23 @@ sum spectrum after alignment.
 
 
 <<plotoverw45, fig.cap="Spectrum of a peak at m/z 45 in sum spectrum as well as in seven individual scans.  A slight drift to the right is noticable">>= 
-from=12.195e4
-to=12.2025e4
+from=12.1969e4
+to=12.2005e4
 ggplot(rbind(ref,dt1) %>% filter(pos>from & pos<to), 
 	   aes(x=mass, y=variable, height=value)) + 
-  geom_joy(mapping=aes(fill=variable), stat='identity') + theme_joy()  + 
-  theme(legend.position = "none") 
+  geom_joy(stat='identity', fill=NA) + theme_joy()  + 
+  theme(legend.position = "none", 
+  		axis.text = element_text(size = 8, colour="black")) 
 
 
 @
 
 <<plotoverw34, fig.cap="Spectrum of peak at m/z 34 in sum spectrum as well as in seven individual scans.  A slight drift to the right is noticable">>= 
-from=10.642e4
-to=10.648e4
+from=10.6435e4
+to=10.6465e4
 ggplot(rbind(ref,dt1) %>% filter(pos>from & pos<to), 
 	   aes(x=mass, y=variable, height=value)) + 
-  geom_joy(mapping=aes(fill=variable), stat='identity') + theme_joy()  + 
-  theme(legend.position = "none") 
+  geom_joy(stat='identity', fill=NA) + theme_joy()  + 
+  theme(legend.position = "none", 
+  		axis.text = element_text(size = 8, colour="black")) 
 @

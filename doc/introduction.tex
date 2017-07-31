@@ -1,8 +1,6 @@
 \section{Introduction}
 
-In this paper a modern work flow is shown.
-
-Currently most user work with the TOF data analysis tool
+Currently most user work with the \ac{TOF} data analysis tool
 \citep{Muller2013a} provided by Ionicon.  Here another work flow is
 developed based on a set of principles.
 
@@ -21,12 +19,12 @@ checksum and even cryptographic signatures to guarantee authenticity.
 For larger measurement campaigns a reproducible work flow is essential.
 This means that every measurement must be processed exactly the same
 way.  This sounds like a non-issue, but in practice is difficult to
-achieve.  Usually during the course of any campaign issues appear which
+achieve.  Usually the course of any campaign issues appear which
 require adjusting the evaluation.
 
 Doing this manually one file at a time is not only laborious, but also a
-great risk of error. A tool that will allow for reevaluation of a large
-set of measurements with clearly spelled out parameter can help in this
+great risk of error.  A tool that will allow for reevaluation of a large
+set of measurements with spelled out parameter can help in this
 process.
 
 
@@ -34,29 +32,29 @@ process.
 
 Making the evaluation modular has two great benefits.  For one users can
 replace any module with one that suits their need; especially as modules
-can be created directly by the user. Second the intermediate
+can be created directly by the user.  Second the intermediate
 results between modules may be stored for reuse.  The latter requires
 dependency tracking, but we will show how this can easily be achieved.
 
 \paragraph{Mass calibration}
 
-I am not very happy with the way mass calibration is currently
-performed.  For one it uses the buf as smallest unit, although this
-averages over a number of scans.  The next issue is that peaks are
-actually fit to a curve; This does not seem reasonable for noisy peaks.
-Third when plotted the coefficients of the calibration function do not
-follow a smooth curve, my personal interpretation is that here noise
-in the estimation of these coefficients manifests.  Lastly I am worried
-that the whole calibration hangs on just a few masses.  
+The state of mass calibration provided leaves some room for improvement.
+For one it uses the buf as smallest unit, although this averages over a
+number of scans.  The next issue is that peaks are actually fit to a
+curve; This does not seem reasonable for noisy peaks.  Third when
+plotted the coefficients of the calibration function do not follow a
+smooth curve, my personal interpretation is that here noise in the
+estimation of these coefficients manifests.  Lastly I am worried that
+the whole calibration hangs on singular masses.  
 
 \subsection{outline}
 
-The mass calibration actually performs two tasks. One it corrects for
+The mass calibration actually performs two tasks.  One it corrects for
 drifts in the flight time; and two it translates flight time to mass.
 
 It is difficult to correct for drifts, but recently a family of
 corrections were introduced under the name of \emph{time warping}.  For
-TOF spectra the parametric time warp \citep{Eilers2004a} is appropriate.
+\ac{TOF} spectra the parametric time warp \citep{Eilers2004a} is appropriate.
 
 Once the drift has been eliminated mass calibration can be performed on
 recalculated sum spectra, which contain peaks that may be absent from
