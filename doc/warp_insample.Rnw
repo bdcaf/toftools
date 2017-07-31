@@ -61,7 +61,10 @@ spectrum finding the peak is not pronounced so aligning them with their
 maximum is error prone.  The shifts seem small -- visually maybe 1/30
 amu at maximum.  However the peaks are  notable wider than the peak in
 sum spectrum.  Considering the \ac{FWHM} it seems that the sum spec has
-about half the width of individual specs.
+about half the width of individual specs.  Approximatel we are looking
+in the sum spec at \ac{FWHM} resolution of 1/10000 where for individual
+peaks it's aroung 3/10000.  The correction for drift is also around
+1/10000.
 
 The sum spectrum makes a natural reference to which the individual
 spectra should be aligned.  Although it may be useful to recalculate the
