@@ -73,7 +73,7 @@ from=12.1969e4
 to=12.2005e4
 ggplot(rbind(ref,dt1) %>% filter(pos>from & pos<to), 
 	   aes(x=mass, y=variable, height=value)) + 
-  geom_joy(stat='identity', fill=NA) + theme_joy()  + 
+  geom_joy(stat='identity', alpha=0.3) + theme_joy()  + 
   theme(legend.position = "none", 
   		axis.text = element_text(size = 8, colour="black")) 
 
@@ -85,7 +85,7 @@ from=10.6435e4
 to=10.6465e4
 ggplot(rbind(ref,dt1) %>% filter(pos>from & pos<to), 
 	   aes(x=mass, y=variable, height=value)) + 
-  geom_joy(stat='identity', fill=NA) + theme_joy()  + 
+  geom_joy(stat='identity', alpha=0.3) + theme_joy()  + 
   theme(legend.position = "none", 
   		axis.text = element_text(size = 8, colour="black")) 
 @
