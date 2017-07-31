@@ -3,22 +3,30 @@
 <<setup, include=F>>=
 library("DEoptim")
 library(baseline)
-library(zoo)
 library(grDevices)
+library(ggjoy)
 
 source('R/tofReader.R')
 source('R/tofSparse.R')
 
 #tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
-tofA.h5 <- 'testdata/2017.06.22-11h13m23s ca valve open.h5'
-tofB.h5 <- 'testdata/2017.06.20-15h04m22s Aurelio valve off.h5'
+tofA.h5 <- 'testdata/2017.06.20-15h04m22s Aurelio valve off.h5'
 tofA <- tofH5(tofA.h5)
-tofB <- tofH5(tofB.h5)
 sumSpecA <- (sumSpec.TofH5(tofA))/tofA$indexhelp$N
-sumSpecB <- (sumSpec.TofH5(tofB))/tofB$indexhelp$N
-
+ntest <- 7
+scan_indices <- floor(seq(from=1, to=tofA$indexhelp$N, length.out=ntest))
+specs <- lapply(scan_indices, function(i) readInd.TofH5(tofA,i))
 mcfun <- recMassCal.TofH5(tofA)
 
+dt0 <- data.table(do.call(cbind, specs))
+colnames(dt0) <- paste(round((scan_indices-1)/5), 's')
+dt0[, pos:=seq_along(`0 s`)]
+dt0[, mass:=mcfun$toMass(pos)]
+dt1 <- melt(dt0,c('pos','mass'))
+
+ref <- data.table(value=sumSpecA, 
+				  pos = seq_along(sumSpecA), variable="Sum Spec")
+ref[, mass:=mcfun$toMass(pos)]
 
 plotComp <- function(refspec, otherspec = NULL, from, to, 
 					 ylim=c(0,1e2), ylab='signal'){
@@ -43,8 +51,26 @@ The situation inside a single measurement file is different.  First
 individual scans are much noisier and have >90 \% zero signal.  Second
 there are up to some thousand spectra to align with each other.  On
 the other hand it is plausible that from one spectrum to the next the
-shift should be small.
+shift should be small.  Figure \ref{fig:plot_overw} shows a sum spectrum
+together with seven equally spaced spectra along the measurement that
+compromise it.  Although the individual scans are noisy it is noticable
+that the center of the first spectrum is to the left of the sum
+spectrum while the later are not so clear right of the sum spectrum.
+For the \si{300}{s} and \si{900}{s} spectrum finding the peak is not
+pronounced so aligning them with their maximum is error prone.
 
 The sum spectrum makes a natural reference to which the individual
 spectra should be aligned.  Although it may be useful to recalculate the
 sum spectrum after alignment.
+
+
+<<plot_overw, fig.cap="Spectrum of a peak in sum spectrum as well as in seven individual scans.  A slight drift to the right is noticable">>= 
+from=12.195e4
+to=12.2025e4
+ggplot(rbind(ref,dt1) %>% filter(pos>from & pos<to), 
+	   aes(x=mass, y=variable, height=value)) + 
+  geom_joy(mapping=aes(fill=variable), stat='identity') + theme_joy()  + 
+  theme(legend.position = "none") 
+
+
+@
