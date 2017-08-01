@@ -231,7 +231,7 @@ maximum.  This is faster than using the genetic algorithm
 exclusively as it only slowly converges to the maximum. 
 
 
-<<wsshiftplot2, cache=T, dependson=c("wscalcshift2",'wshift_opt2'),fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+<<wsshiftplot2, cache=T, dependson=c("wscalcshift2",'wshift_opt2'), fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
 par(mar=c(1,0,0,0))
 pm <- persp(x=xs,y=ys,z=vals, 
 			xlab='shift', 
@@ -310,38 +310,51 @@ search.
 warp0 <- function(a) 
   function(x) a[[1]]+x # + a[[2]]*x # + a[[3]]*x^2
 
-warp1 <- function(a) 
-  function(x) a[[1]]+ a[[2]]*x # + a[[2]]*x # + a[[3]]*x^2
-
 warp2 <- function(a) 
   function(x) a[[1]]+ a[[2]]*x + a[[3]]*x^2
 
-og <- optim_generator(ssa, warp0)
+warp3 <- function(a) 
+  function(x) a[[1]]+ a[[2]]*x + a[[3]]*x^2 + a[[4]]*x^3
+
+generated_w <- make_densewarp(v)
+og <- optim_generator(ssa,generated_w, warp0)
 og2 <- function(...) -og(...)
 
 est.shi <- DEoptim(og2, 
 				   lower=-3000,
 				   upper = 3000,
-				   dense_spec=ssb,
 				   control=list(VTR=-0.7)
 				   )
 
+
 startv <- c(est.shi$optim$bestmem,1,0)
-
-generated_w <- make_densewarp(v, 1, length(v))
-warp_fun <- warp2(c(est.shi$optim$bestmem, 0.992, 0.0000001))
-starts <- 1
-ends <- length(ssb)
-v <- ssb
-check <- T
-warp_res <- warper(warp_fun)
-
-og_fin <- optim_generator(ssa, warp2)
+og_fin <- optim_generator(ssa, generated_w, warp2)
 og_fin2 <- function(...) -og_fin(...)
+bestbest <- optim(startv, og_fin2)
 
-bestbest <- optim(startv, 
-				  og_fin2, 
-				  gr=NULL, 
-				  method='Nelder-Mead',
-				  ssb)
+startv <- c(est.shi$optim$bestmem,1,0,0)
+og_fin <- optim_generator(ssa, generated_w, warp3)
+og_fin2 <- function(...) -og_fin(...)
+bestbest <- optim(startv, og_fin2)
+@
+
+<<, eval=F, include=F>>=
+warp_searcher <- function(ref,new,warper){
+  generated_w <- make_densewarp(new)
+  og <- optim_generator(ref, make_densewarp(new), warp0)
+  og2 <-   function(...) -og(...)
+  est.shi <- DEoptim(og2, 
+					 lower=-3000,
+					 upper = 3000,
+					 control=list(VTR=-0.7)
+					 )
+
+  startv <- c(est.shi$optim$bestmem,1,0)
+  og_fin <- optim_generator(ssa, generated_w, warp2)
+  og_fin2 <- function(...) -og_fin(...)
+
+  bestbest <- optim(startv, og_fin2)
+}
+
+
 @
