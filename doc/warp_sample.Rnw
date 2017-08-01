@@ -18,6 +18,15 @@ sumSpecB <- (sumSpec.TofH5(tofB))/tofB$indexhelp$N
 
 mcfun <- recMassCal.TofH5(tofA)
 
+optim_generator <- function(reference_spec, generated_w, warp_fun){
+  reference <- reference_spec/sqrt(sum(reference_spec^2))
+  function(a){
+	warped <- generated_w(warp_fun(a), 
+						  where=seq_along(reference))
+	nw <- sqrt(sum(warped^2))
+	sum(reference * warped)/nw
+  }
+}
 
 plotComp <- function(refspec, otherspec = NULL, from, to, 
 					 ylim=c(0,1e2), ylab='signal'){
@@ -80,6 +89,8 @@ prep_spec <- function(sspec, atof, wid=30){
   workspec[workspec<0.001]<- 0
   zapsmall(log1p(workspec), digits=2)
 }
+ssa <- prep_spec(sumSpecA)
+ssb <- prep_spec(sumSpecB)
 @
 
 The aim is to find a warp that will adjust the position of peaks in the
@@ -115,21 +126,10 @@ influence the signal is \texttt{log1p} transformed.  An exemplary
 presentation is shown in figure \ref{fig:wscleansum}.
 
 <<wscleansum, cache=T, fig.cap='peak log1p profile of two measurements'>>=
-ssa <- prep_spec(sumSpecA)
-ssb <- prep_spec(sumSpecB)
 plotComp(ssa, ssb, from=12.0e4, to=13.0e4, ylim=c(0,4), ylab='log1p signal')
 @
 
 <<, include=F>>=
-optim_generator <- function(orientSpec, wf){
-  reference <- orientSpec/sqrt(sum(orientSpec^2))
-  function(a, generated_w){
-	warp_fun <- wf(a)
-	warped <- generated_w(warp_fun)
-	cor.full.full(warped, reference) 
-  }
-}
-
 warp0 <- function(a) 
   function(x) a[[1]]+x # + a[[2]]*x # + a[[3]]*x^2
 
@@ -142,27 +142,31 @@ An exemplary warping based on shifting the spectrum is shown in figure
 \ref{fig:wsshiftplot}.  There is an optimal warping shifting the
 spectrum around 500 indices to the left.  But it is also visible there
 are locale maxima shifting spectra to other full masses.  This makes
-finding the globaly best warping demanding.
+finding the globaly best warping demanding.  Comparing with figure
+\ref{fig:wscleansum} we see that in this mass range there are around
+\num{1500} indices corresponding one amu step.  The neighbouring maxima
+therefore correspond shifting the peak comb by about one amu.  As the
+peaks are not regulary spaced in time axis these secondary peaks have
+much poorer match.
 
 <<wscalcshifts,include=F, cache=T>>=
-og <- optim_generator(ssa, warp0)
-og2 <- function(...) -og(...)
-generated_w <- make_densewarp(ssb, 1, length(ssb))
+generated_w <- make_densewarp(ssb)
 #og(1,ssb)
 shifts <- seq(from=-3000, to=2000, length.out=99)
-val <- sapply(shifts, function(x) og(x,generated_w))
+
+og <- optim_generator(ssa, generated_w, warp0)
+og2 <- function(...) -og(...)
+val <- sapply(shifts, og)
 
 est.shi <- DEoptim(og2, 
 				   lower=-3000,
 				   upper = 3000,
-				   generated_w=generated_w,
-				   control=list(VTR=-0.5)
+				   control=list(VTR=-0.7)
 				   )
 
 bestbest <- optim(est.shi$optim$bestmem, 
 				  og2, 
 				  gr=NULL, 
-				  generated_w=generated_w,
 				  lower=-3000, 
 				  upper=3000,
 				  method='Brent')
@@ -175,9 +179,9 @@ text(x=bestbest$par, y=0.5, sprintf("%3.1f",bestbest$par), pos=4)
 @
 
 <<,include=F>>=
-og <- optim_generator(ssa, warp1)
+og <- optim_generator(ssa, generated_w, warp1)
 og2 <- function(...) -og(...)
-wif <- Vectorize(function(a,b) og(c(a,b), generated_w))
+wif <- Vectorize(function(a,b) og(c(a,b)))
 #og(1,ssb)
 @
 
@@ -185,14 +189,12 @@ wif <- Vectorize(function(a,b) og(c(a,b), generated_w))
 est.shi <- DEoptim(og2, 
 				   lower=c(-1000, 0.95),
 				   upper = c(1000, 1.05),
-				   generated_w=generated_w,
 				   control=list(VTR=-0.5)
 				   )
 
 bestbest <- optim(est.shi$optim$bestmem, 
 				  og2, 
-				  gr=NULL, 
-				   generated_w=generated_w
+				  gr=NULL
 				  )
 @
 
@@ -207,6 +209,7 @@ xs_local <- sort(c(bestbest$par[[1]],seq(from=-700, to=-300, length.out=31)))
 ys_local <- sort(c(bestbest$par[[2]],seq(from=0.995, to=1.005, length.out=31)))
 vals_local <- outer(xs_local, ys_local, FUN=wif )
 @
+
 <<wscalcshift2locallocal,include=F, cache=T>>=
 xs_local2<- sort(c(bestbest$par[[1]],seq(from=-550, to=-450, length.out=31)))
 ys_local2<- sort(c(bestbest$par[[2]],seq(from=0.999, to=1.001, length.out=31)))
