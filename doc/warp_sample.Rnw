@@ -306,15 +306,18 @@ correct one in one dimensional genetic search and in a second step do
 the high dimensional search for the maximum using conjugate gradient
 search.
 
+As now polynoms of higher degree can be fitted we see the corrections
+are small compared to the shift.  It may be sufficient to correct just
+for a linear shift.
+
 <<wscalcshift1f,include=F, cache=T, eval=F>>=
+#plot(ssa,type='l')
 warp0 <- function(a) 
   function(x) a[[1]]+x # + a[[2]]*x # + a[[3]]*x^2
 
 warp2 <- function(a) 
   function(x) a[[1]]+ a[[2]]*x + a[[3]]*x^2
 
-warp3 <- function(a) 
-  function(x) a[[1]]+ a[[2]]*x + a[[3]]*x^2 + a[[4]]*x^3
 
 generated_w <- make_densewarp(v)
 og <- optim_generator(ssa,generated_w, warp0)
@@ -333,9 +336,51 @@ og_fin2 <- function(...) -og_fin(...)
 bestbest <- optim(startv, og_fin2)
 
 startv <- c(est.shi$optim$bestmem,1,0,0)
+warp3 <- function(a) function(x) a[[1]]+ a[[2]]*x + a[[3]]*x^2 + a[[4]]*x^3
 og_fin <- optim_generator(ssa, generated_w, warp3)
 og_fin2 <- function(...) -og_fin(...)
 bestbest <- optim(startv, og_fin2)
+
+res <- warp3(bestbest$par)
+res(1)
+res(length(ssa)) - length(ssa)
+
+rv <- res(seq_along(ssa))
+dif <- rv - seq_along(ssa)
+
+max(dif)
+min(dif)
+which.min(dif)
+which.max(dif)
+
+
+startv <- c(est.shi$optim$bestmem, 1, 0, 0)
+warp3 <- function(a) function(x) a[[1]]+ a[[2]]*x + a[[3]]*sqrt(x) + a[[4]]*x^1.5
+og_fin <- optim_generator(ssa, generated_w, warp3)
+og_fin2 <- function(...) -og_fin(...)
+bestbest <- optim(startv, og_fin2)
+
+res <- warp3(bestbest$par)
+rv <- res(seq_along(ssa))
+dif <- rv - seq_along(ssa)
+plot(dif, type='l')
+
+res0 <- warp0(-500)
+
+orig <- seq(2e4, 2e5)
+rv0 <- res0(orig)
+rv <- res(orig)
+mv_orig <- mcfun$toMass(orig)
+mv_new <- mcfun$toMass(rv)
+mv_new0 <- mcfun$toMass(rv0)
+md <- mv_new-mv_orig
+md0 <- mv_new0-mv_orig
+plot(mv_orig, md, type='l')
+lines(mv_orig, md0, type='l', col='green')
+
+plot(mv_orig, mv_new-mv_new0, type='l')
+plot(mv_orig, (mv_new-mv_new0)/mv_orig, type='l')
+plot(mv_orig, ssa, type='l')
 @
 
 <<, eval=F, include=F>>=
@@ -355,6 +400,4 @@ warp_searcher <- function(ref,new,warper){
 
   bestbest <- optim(startv, og_fin2)
 }
-
-
 @
