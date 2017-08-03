@@ -310,37 +310,74 @@ As now polynoms of higher degree can be fitted we see the corrections
 are small compared to the shift.  It may be sufficient to correct just
 for a linear shift.
 
-<<wscalcshift1f,include=F, cache=T, eval=F>>=
-#plot(ssa,type='l')
-warp0 <- function(a) 
-  function(x) a[[1]]+x # + a[[2]]*x # + a[[3]]*x^2
+<<wscalcshift1f,include=F, cache=T>>=
+vander <- function(xs, nmax) 
+  outer(xs, seq(from=0, to=nmax), function(x,i) x^i)
 
-warp2 <- function(a) 
-  function(x) a[[1]]+ a[[2]]*x + a[[3]]*x^2
+reference <- ssb
+tofit <- ssa
+generated_w <- make_densewarp(tofit)
 
+optim_generator <- function(reference_spec, generated_w, warp_fun){
+  reference <- reference_spec/sqrt(sum(reference_spec^2))
+  function(a){
+	warped <- generated_w(warp_fun(a), 
+						  where=seq_along(reference))
+	nw <- sqrt(sum(warped^2))
+	-sum(reference * warped)/nw
+  }
+}
 
-generated_w <- make_densewarp(v)
-og <- optim_generator(ssa,generated_w, warp0)
-og2 <- function(...) -og(...)
+make_polywarp <- function(n) function(a) function(x) vander(x, n) %*% a
+ninit <- function(n, f0) c(f0, 1, rep(0, n-1))
+warp0 <- function(a) function(x) a[[1]]+x
 
-est.shi <- DEoptim(og2, 
-				   lower=-3000,
-				   upper = 3000,
-				   control=list(VTR=-0.7)
-				   )
+og <- optim_generator(reference, generated_w, warp0)
 
+est0_pre <- DEoptim(og, 
+					lower=-3000,
+					upper = 3000,
+					control=list(VTR=-0.7)
+					)
+est0 <- optim(est0_pre$optim$bestmem, og,
+				  gr=NULL, 
+				  lower=-3000, 
+				  upper=3000,
+				  method='Brent')
 
-startv <- c(est.shi$optim$bestmem,1,0)
-og_fin <- optim_generator(ssa, generated_w, warp2)
-og_fin2 <- function(...) -og_fin(...)
-bestbest <- optim(startv, og_fin2)
+ni <- 2
+ni_fit <- function(ni, preval){
+  starta <- if (length(preval)>1) c(preval,0) else c(preval,1)
+  polywarp <- make_polywarp(ni)
+  og_fin <- optim_generator(reference, generated_w, polywarp)
+  bestbest <- optim(starta, og_fin, method="Nelder-Mead")
+}
 
-startv <- c(est.shi$optim$bestmem,1,0,0)
-warp3 <- function(a) function(x) a[[1]]+ a[[2]]*x + a[[3]]*x^2 + a[[4]]*x^3
-og_fin <- optim_generator(ssa, generated_w, warp3)
-og_fin2 <- function(...) -og_fin(...)
-bestbest <- optim(startv, og_fin2)
+bb <- list(est0)
+r <- est0
+for (i in 1:5) {
+  r0 <- ni_fit(i, r$par)
+  bb <- c(bb, list(r0))
+  r <- r0
+}
+@
 
+We see in fig. \ref{fig:ws:qual:dim} that with increasing polynomial the
+improvement after the linear term is disappearing.  It seems reasonable
+that the time shift is compromised of only a constant and linear term.
+Even at logarithmic scale improvement beyond the linear term is
+inconceivable.  And probably can be argued away considering the extra
+degree of freedom.
+
+<<ws:qual:dim, dependson='wscalcshift1f', cache=T, fig.cap="improvent in distance by increasing warp polynomial.">>=
+qs <- -sapply(bb, function(x) x$value)
+lik <- qs/(1-qs)
+ll <- log(lik)
+
+plot(seq_along(qs)-1, log(1-qs), xlab='poly coef', ylab='log cosine distance', type='p')
+@
+
+<<, eval=F, include=F>>=
 res <- warp3(bestbest$par)
 res(1)
 res(length(ssa)) - length(ssa)
