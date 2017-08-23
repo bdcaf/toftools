@@ -147,7 +147,7 @@ warp_search2 <- function(ref,new){
   							  "maxeval" = 200))
   with(res2, c(objective, solution))
 }
-n_calibs <- 50
+n_calibs <- 100
 cal_indices <- unique(floor(seq(from=1, to=tofA$indexhelp$N, length.out=n_calibs)))
 wfs <- lapply(cal_indices, function(i) warp_search2(sumSpecA, readInd.TofH5(tofA,i)))
 @
