@@ -63,6 +63,14 @@ simplify_sparse <- function(spec_pre,  max_gap=10L){
   result
 }
 
+fast_warp0 <- function(v) {
+  index_along <- seq_along(v)
+  function(warp_fun, where){
+    i_trans <- warp_fun(index_along)
+    approx(i_trans, v, where, yleft=0, yright=0)$y
+  }
+}
+
 make_densewarp <- function(v,  starts=1,  ends=starts+length(v)-1){
   vc <- local({
     cuv <- cumsum(v)
