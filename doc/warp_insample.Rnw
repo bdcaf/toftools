@@ -1,10 +1,10 @@
 \subsection{Notes on warping in sample}
 
 <<setup, include=F>>=
-library("DEoptim")
 library(baseline)
 library(grDevices)
 library(ggjoy)
+library(nloptr)
 
 source('R/tofReader.R')
 source('R/tofSparse.R')
@@ -92,3 +92,74 @@ ggplot(rbind(ref,dt1) %>% filter(pos>from & pos<to),
   theme(legend.position = "none", 
   		axis.text = element_text(size = 8, colour="black")) 
 @
+
+<<searchFunctions, include=F>>=
+optim_generator <- function(reference_spec, generated_w, warp_fun){
+  reference <- reference_spec/sqrt(sum(reference_spec^2))
+  function(a){
+	warped <- generated_w(warp_fun(a), 
+						  where=seq_along(reference))
+	nw <- sqrt(sum(warped^2))
+	-sum(reference * warped)/nw
+  }
+}
+
+warp0 <- function(a) function(x) a[[1]]+x
+
+warp1 <- function(a) function(x) a[[1]]+ a[[2]]*x
+
+@
+
+
+A number of spectra is analysed for the optimal shift and it seems the
+optimum is close to the unshifted spectrum inside the measurement.
+
+<<shift_match, cache=T, fig.cap="Maximum of shift along the measurement.">>=
+matches <- function(i){
+  ss <- readInd.TofH5(tofA,i)
+  generated_w <- make_densewarp(ss)
+  og <- optim_generator(sumSpecA, generated_w, warp0)
+  sh_pos <- seq(-100, 100,length.out= 61)
+  sh_data <- sapply(sh_pos, Vectorize(og))
+  data.frame(ind=i/5, x=sh_pos, mv=-sh_data)
+}
+
+md <- lapply(scan_indices, matches)
+md2 <- do.call(rbind, md)
+md2$ind <- as.factor(md2$ind)
+
+ggplot(md2, aes(x=x, y=ind, height=mv)) + 
+  geom_joy(stat='identity', alpha=0.3) + theme_joy()  + 
+  theme(legend.position = "none", 
+  		axis.text = element_text(size = 8, colour="black")) 
+#plot(sh_pos, -sh_data, type='l')
+@
+
+<<searchFits, include=F, eval=T, cache=T, dependson='searchFunctions'>>=
+warp_search2 <- function(ref,new){
+  generated_w <- make_densewarp(new)
+  og_fin <- optim_generator(ref, generated_w, warp1)
+
+  # Note author advises against using ftol or xtol for global!
+  res2 <- nloptr(x0=c(0,1), eval_f=og_fin, lb=c(-100,0.9), ub=c(100,1.1),
+  				opts = list("algorithm" = "NLOPT_LN_NELDERMEAD", 
+  							  "ftol_abs" = 1e-4,
+  							  "maxeval" = 200))
+  with(res2, c(objective, solution))
+}
+n_calibs <- 50
+cal_indices <- unique(floor(seq(from=1, to=tofA$indexhelp$N, length.out=n_calibs)))
+wfs <- lapply(cal_indices, function(i) warp_search2(sumSpecA, readInd.TofH5(tofA,i)))
+@
+
+<<plot_fits, fig.cap="Parameter fluctuation in warp", dependson="searchFits">>=
+par(mfrow=c(1,2)) 
+ti <- cal_indices/5
+plot(x = ti, y=sapply(wfs, function(x) x[[2]]),
+	 xlab='time', ylab="shift")
+plot(x = ti, y=sapply(wfs, function(x) x[[3]]),
+	 xlab='time', ylab="slope")
+@
+
+In figure \ref{fig:plot_fits} we see a how the warp parameter change during the measurement.
+The slope does not seem significantly different from \num{1.0}.

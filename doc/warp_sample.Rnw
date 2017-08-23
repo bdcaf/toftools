@@ -423,18 +423,16 @@ plot(mv_orig, ssa, type='l')
 <<, eval=F, include=F>>=
 warp_searcher <- function(ref,new,warper){
   generated_w <- make_densewarp(new)
-  og <- optim_generator(ref, make_densewarp(new), warp0)
-  og2 <-   function(...) -og(...)
-  est.shi <- DEoptim(og2, 
+  og <- optim_generator(ref, generated_w, warp0)
+  est.shi <- DEoptim(og, 
 					 lower=-3000,
 					 upper = 3000,
 					 control=list(VTR=-0.7)
 					 )
 
   startv <- c(est.shi$optim$bestmem,1,0)
-  og_fin <- optim_generator(ssa, generated_w, warp2)
-  og_fin2 <- function(...) -og_fin(...)
+  og_fin <- optim_generator(ref, generated_w, warper)
 
-  bestbest <- optim(startv, og_fin2)
+  bestbest <- optim(startv, og_fin)
 }
 @
