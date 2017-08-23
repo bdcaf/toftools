@@ -2,7 +2,7 @@ R:=Rscript
 REPORT_DIR:=work/report
 FIGURE_DIR= figures
 CACHEDIR= cache
-LMK=latexmk  -pdf -f --interaction=nonstopmode -outdir=$(REPORT_DIR)
+LMK=latexmk -pdf -f --interaction=nonstopmode -outdir=$(REPORT_DIR)
 .PHONY= all clean
 
 .DEFAULT_GOAL := all
@@ -51,11 +51,9 @@ $(REPORT_DIR)/%.tex: doc/%.Rnw
 		-e "knitr::knit('$<', output='$@')"
 
 $(REPORT_DIR)/%.pdf: $(REPORT_DIR)/%.tex
-	echo $+ > what
 	$(LMK) $<
 
 $(REPORT_DIR)/%.tex: doc/%.tex
-	echo $+ > what
 	$(LMK) $<
 
 clean: work_clean
@@ -65,6 +63,5 @@ work_clean:
 almost_clean:
 	find work -iname "*.tex" -delete
 	find work -iname "*.aux" -delete
-	find work -iname "*.pdf" -delete
 	find work -iname "*.bib" -delete
 

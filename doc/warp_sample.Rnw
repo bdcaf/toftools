@@ -43,7 +43,8 @@ plotComp <- function(refspec, otherspec = NULL, from, to,
   bad <- indRange < from | indRange > to
   massRange <- massRange[!bad]
   indRange <- indRange[!bad]
-  axis(3,indRange, labels=massRange,line=1,col="red",col.ticks="red",col.axis="red")
+  axis(3,indRange, labels=massRange, line=1,
+  	   col="red",col.ticks="red",col.axis="red")
 }
 
 @
@@ -52,13 +53,13 @@ Immediate results hinted that in single measurements the drift is small.
 To formulate the procedure warping between measurements was chosen.
 Concretely the samples \texttt{\Sexpr{tofA.h5}} and
 \texttt{\Sexpr{tofB.h5}} are selected and the sum spectra will be
-examined.  A subsection of the spectra are shown in figure \ref{fig:wssumspec}.
+examined.  A subsection of the spectra are shown in \fref{fig:wssumspec}.
 
 Sum spectra are different to the spectra of individual scans in the
 sense that even in the range between molecular masses noise adds up to a
 smooth signal.  To keep alignment simple the baseline is cleaned useing
 the baseline package from \citet{Lil2015}.  A regional plot is shown in
-figure \ref{fig:wsbaseline}.  Most algorithm in this package work
+\fref{fig:wsbaseline}.  Most algorithm in this package work
 sufficiently well.  Although the default \texttt{als} algorithm requires
 construction of a matrix with dimension of lenght sample $\times$ lenght
 sampl, which fails due to memory constraints as these spectra are
@@ -99,22 +100,19 @@ the reindexing is simple and differentiable the warping function is not.
 
 The spectra are also dominated by large peaks.  In order to reduce their
 influence the signal is \texttt{log1p} transformed.  An exemplary
-presentation is shown in figure \ref{fig:wscleansum}.
+presentation is shown in \fref{fig:wscleansum}.
 
 <<wsbaseline, fig.cap='baseline correction in sum spectrum.', cache=T>>=
-local({
-  sspec <- sumSpecA
-  wm <- 200
-  ws <- 200
-  refSpec <- matrix(sspec, nrow=1) %>% 
-	baseline(spectra = ., method= 'rollingBall', wm=wm, ws=ws) %>%
-	slot("corrected") %>% t %>%
-	pmax(0)
-  plotComp(sumSpecA, refSpec, from=12.0e4, to=13.0e4, ylim=c(0,2))
-})
+refSpec <- matrix(sumSpecA, nrow=1) %>% 
+  baseline(spectra = ., method= 'rollingBall', 
+  		   wm=200, ws=200) %>%
+  slot("corrected") %>% t %>%
+  pmax(0)
+
+plotComp(sumSpecA, refSpec, from=12.0e4, to=13.0e4, ylim=c(0,2))
 @
 
-<<wssat, cache=T, depends=c('wsbaseline'), fig.cap='saturated peaks'>>=
+<<wssat, cache=F, depends=c('wsbaseline'), fig.cap='saturated peaks'>>=
 par(mfrow=c(1,2)) 
 plotComp(refSpec, from=7.99e4, to=8.02e4)
 plotComp(refSpec, from=9.96e4, to=9.98e4)
@@ -142,12 +140,12 @@ prep_spec <- function(sspec, wid=30, wm=200, ws=200)
 @
 
 
-An exemplary warping based on shifting the spectrum is shown in figure
-\ref{fig:wsshiftplot}.  There is an optimal warping shifting the
+An exemplary warping based on shifting the spectrum is shown in
+\fref{fig:wsshiftplot}.  There is an optimal warping shifting the
 spectrum around 500 indices to the left.  But it is also visible there
 are locale maxima shifting spectra to other full masses.  This makes
-finding the globaly best warping demanding.  Comparing with figure
-\ref{fig:wscleansum} we see that in this mass range there are around
+finding the globaly best warping demanding.  Comparing with
+\fref{fig:wscleansum} we see that in this mass range there are around
 \num{1500} indices corresponding one amu step.  The neighbouring maxima
 therefore correspond shifting the peak comb by about one amu.  As the
 peaks are not regulary spaced in time axis these secondary peaks have
@@ -254,10 +252,10 @@ plot_match <- function(match_surf) {
 @
 
 
-In figure \ref{fig:wsshiftplot2} the two dimensional case is shown.  It
+In \fref{fig:wsshiftplot2} the two dimensional case is shown.  It
 seems similar looking peaks form a lines.  If we zoom into the region
-around the maximum in figure \ref{fig:wsshiftplot2local} and
-\ref{fig:wsshiftplot2locallocal} we see that the peaks along these lines
+around the maximum in \fref{fig:wsshiftplot2local} and
+\fref{fig:wsshiftplot2locallocal} we see that the peaks along these lines
 actually form a connected smooth \textit{ridge} and the apparent
 separation is just an artifact from aliasing at peculiar points.  Still
 finding the maximum is sensitive to the start location.  Only particular
@@ -387,7 +385,7 @@ warp_orders <- local({
 })
 @
 
-We see in fig. \ref{fig:wsqualdim} that with increasing polynomial
+We see in \fref{fig:wsqualdim} that with increasing polynomial
 order the cosine distance is initially not improved.  At higher orders
 there are two problems: 1) numeric accuracy as powers like \num{4e5}
 need to be taken to this power and 2) to guarantee the warp function is
