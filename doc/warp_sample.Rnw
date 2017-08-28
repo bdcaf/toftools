@@ -360,18 +360,20 @@ pre <- 0
 warp_orders <- list()
 for (i in 1:5){
   nr <- ni_fit(i, pre)
-  out <- c(out, list(nr))
+  out <- c(warp_orders, list(nr))
   pre <- nr$solution
 }
 @
 
 We see in fig. \ref{fig:ws:qual:dim} that with increasing polynomial order the
-<<ws:qual:dim, dependson='wscalcshift1f', cache=T, fig.cap="improvent in distance by increasing warp polynomial.">>=
+<<ws:qual:dim, dependson=c('wscalcshift1f',"calc_orders"), cache=T, fig.cap="improvent in distance by increasing warp polynomial.">>=
+local({
 qs <- -sapply(warp_orders, function(x) x$objective)
 lik <- qs/(1-qs)
 ll <- log(lik)
 
 plot(seq_along(qs)-1, log(1-qs), xlab='poly coef', ylab='log cosine distance', type='p')
+})
 @
 
 <<, dependson=c("calc_orders")>>=
