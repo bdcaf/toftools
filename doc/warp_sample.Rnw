@@ -357,7 +357,7 @@ ni_fit <- function(ni, pre){
 
 <<calc_orders, include=F, cache=T>>=
 pre <- 0
-out <- list()
+warp_orders <- list()
 for (i in 1:5){
   nr <- ni_fit(i, pre)
   out <- c(out, list(nr))
