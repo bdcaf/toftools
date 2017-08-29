@@ -1,6 +1,7 @@
 \subsection{Notes on warping between samples}
 
 <<setup, include=F>>=
+
 library(baseline)
 library(grDevices)
 library(nloptr)
@@ -67,32 +68,6 @@ typical \num{400000} entries.
 plotComp(sumSpecA, sumSpecB, from=11.5e4, to=13.5e4)
 @
 
-<<wsbaseline, fig.cap='baseline correction in sum spectrum.', cache=T>>=
-sspec <- sumSpecA
-refSpec <- baseline(matrix(sspec, nrow=1), 
-					method= 'rollingBall', 
-					wm=100, ws=100)@corrected[1,]
-refSpec[refSpec<0.005]<-0
-
-plotComp(sumSpecA, refSpec, from=12.0e4, to=13.0e4, ylim=c(0,2))
-@
-
-<<wssat, cache=T, depends=c('wsbaseline'), fig.cap='saturated peaks'>>=
-par(mfrow=c(1,2)) 
-plotComp(refSpec, from=7.99e4, to=8.02e4)
-plotComp(refSpec, from=9.96e4, to=9.98e4)
-@
-
-<<,include = F>>=
-prep_spec <- function(sspec, atof, wid=30){
-  workspec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
-  workspec[workspec < 0.001]<- 0
-  workspec <- zapsmall(log1p(workspec), digits=2)
-  workspec <- ksmooth(seq_along(workspec), workspec, kernel='normal', bandwidth=16)$y
-}
-ssa <- prep_spec(sumSpecA)
-ssb <- prep_spec(sumSpecB)
-@
 
 The aim is to find a warp that will adjust the position of peaks in the
 sample spectrum to the one in the reference spectrum.  This often is
@@ -126,18 +101,46 @@ The spectra are also dominated by large peaks.  In order to reduce their
 influence the signal is \texttt{log1p} transformed.  An exemplary
 presentation is shown in figure \ref{fig:wscleansum}.
 
+<<wsbaseline, fig.cap='baseline correction in sum spectrum.', cache=T>>=
+local({
+  sspec <- sumSpecA
+  wm <- 200
+  ws <- 200
+  refSpec <- matrix(sspec, nrow=1) %>% 
+	baseline(spectra = ., method= 'rollingBall', wm=wm, ws=ws) %>%
+	slot("corrected") %>% t %>%
+	pmax(0)
+  plotComp(sumSpecA, refSpec, from=12.0e4, to=13.0e4, ylim=c(0,2))
+})
+@
+
+<<wssat, cache=T, depends=c('wsbaseline'), fig.cap='saturated peaks'>>=
+par(mfrow=c(1,2)) 
+plotComp(refSpec, from=7.99e4, to=8.02e4)
+plotComp(refSpec, from=9.96e4, to=9.98e4)
+@
+
+<<prep_function,include = F>>=
+prep_spec <- function(sspec, wid=30, wm=200, ws=200) 
+  matrix(sspec, nrow=1) %>% 
+	baseline(spectra = ., method= 'rollingBall', wm=wm, ws=ws) %>%
+	slot("corrected") %>% t %>%
+	pmax(0) %>%
+	log1p %>% 
+	zapsmall(digits=6) %>% 
+	ksmooth(seq_along(.), ., kernel='normal', bandwidth=16) %>%
+	`[[`("y")
+@
+
+<<calc_preps, include=F, cache=T>>=
+  ssa <- prep_spec(sumSpecA)
+  ssb <- prep_spec(sumSpecB)
+@
+
 <<wscleansum, cache=T, fig.cap='peak log1p profile of two measurements'>>=
-plotComp(ssa, ssb, from=12.0e4, to=13.0e4, ylim=c(0,4), ylab='log1p signal')
+  plotComp(ssa, ssb, from=12.0e4, to=13.0e4, ylim=c(0,4), ylab='log1p signal')
 @
 
-<<, include=F>>=
-warp0 <- function(a) 
-  function(x) a[[1]]+x # + a[[2]]*x # + a[[3]]*x^2
-
-warp1 <- function(a) 
-  function(x) a[[1]]+ a[[2]]*x # + a[[2]]*x # + a[[3]]*x^2
-
-@
 
 An exemplary warping based on shifting the spectrum is shown in figure
 \ref{fig:wsshiftplot}.  There is an optimal warping shifting the
@@ -150,28 +153,40 @@ therefore correspond shifting the peak comb by about one amu.  As the
 peaks are not regulary spaced in time axis these secondary peaks have
 much poorer match.
 
-<<wscalcshifts,include=F, cache=T>>=
-generated_w <- make_densewarp(ssb)
-#og(1,ssb)
-shifts <- seq(from=-3000, to=2000, length.out=99)
+<<, include=F>>=
+warp0 <- function(a) 
+  function(x) a[[1]]+x
 
-og <- optim_generator(ssa, generated_w, warp0)
+warp1 <- function(a) 
+  function(x) a[[1]]+ a[[2]]*x 
+og <- local({
+  generated_w <- make_densewarp(ssb)
+  optim_generator(ssa, generated_w, warp0)
+})
+@
+
+<<ws:calc:shifts,include=F, cache=T>>=
+shifts <- seq(from=-6000, to=3000, length.out=99)
 val <- sapply(shifts, og)
+@
 
-first_shift <- nloptr( x0 = 0,
-					  eval_f = og, 
-					  lb =-3000,
-					  ub = 3000,
-					  opts = list(algorithm="NLOPT_GN_DIRECT_L",
-								  maxeval = 100)
-					  )
+<<ws:calc:opt:shift, include=F, cache=T>>=
+best_shift <- local({
+  first_shift <- nloptr( x0 = 0,
+						eval_f = og, 
+						lb =-3000,
+						ub = 3000,
+						opts = list(algorithm="NLOPT_GN_DIRECT_L",
+									maxeval = 100)
+						)
 
-best_shift <- nloptr( x0 = first_shift$solution,
-					 eval_f = og, 
-					 lb=-3000,
-					 ub = 3000,
-					 opts = list(algorithm="NLOPT_LN_BOBYQA", xtol_abs=0.01)
-					 )
+  nloptr( x0 = first_shift$solution,
+		 eval_f = og, 
+		 lb=-3000,
+		 ub = 3000,
+		 opts = list(algorithm="NLOPT_LN_BOBYQA", xtol_abs=0.01)
+		 )
+})
 @
 
 <<wsshiftplot, cache=T, fig.cap="distance to reference measurement on shifted spectrum", dependson="wscalcshifts">>=
@@ -180,27 +195,27 @@ abline(v=best_shift$solution, lty=2)
 text(x=best_shift$solution, y=0.5, sprintf("%3.1f",best_shift$solution), pos=4)
 @
 
-<<,include=F>>=
-og1 <- optim_generator(ssa, generated_w, warp1)
-#og(1,ssb)
-@
 
 <<wshift_opt2, cache=T, include=F>>=
+og1 <- optim_generator(ssa, make_densewarp(ssb), warp1)
 wif1 <- Vectorize(function(a,b) og1(c(a,b)))
-first_shift <- nloptr( x0 = c(0,1),
-					  eval_f = og1, 
-					  lb = c(-1000,0.95),
-					  ub = c(1000, 1.05),
-					  opts = list(algorithm="NLOPT_GN_DIRECT_L",
-								  maxeval = 100)
-					  )
-best_shift <- nloptr( x0 = first_shift$solution,
-					  eval_f = og1, 
-					  lb = c(-1000,0.95),
-					  ub = c(1000, 1.05),
-					  opts = list(algorithm="NLOPT_LN_BOBYQA", 
-					  			  xtol_abs=c(0.001, 1e-9))
-					  )
+
+best_shift <- local({
+  first_shift <- nloptr( x0 = c(0,1),
+						eval_f = og1, 
+						lb = c(-1000,0.95),
+						ub = c(1000, 1.05),
+						opts = list(algorithm="NLOPT_GN_DIRECT_L",
+									maxeval = 100)
+						)
+  nloptr( x0 = first_shift$solution,
+		 eval_f = og1, 
+		 lb = c(-1000,0.95),
+		 ub = c(1000, 1.05),
+		 opts = list(algorithm="NLOPT_LN_BOBYQA", 
+					 xtol_abs=c(0.001, 1e-9))
+		 )
+})
 
 make_match_surf <- function(xs,ys) {
   xsc <- sort(unique(c(best_shift$solution[[1]],xs)))
@@ -324,6 +339,7 @@ ni_fit <- function(ni, pre){
   starta <- c(pre,ifelse(ni==1, 1, 0))
   ubs <- 10^(10-7* seq(ni+1))
   lbs <- -ubs
+  lbs[2:(ni+1)]  <- 0
   tols <- ubs/1e5
   
   if (ni>0) {
@@ -355,29 +371,34 @@ ni_fit <- function(ni, pre){
 @
 
 <<calc_orders, include=F, cache=T>>=
-pre <- 0
-warp_orders <- list()
-for (i in 1:5){
-  nr <- ni_fit(i, pre)
-  out <- c(warp_orders, list(nr))
-  pre <- nr$solution
-}
+warp_orders <- local({
+  pre <- 0
+  warp_orders <- list()
+  for (i in 1:5){
+	nr <- ni_fit(i, pre)
+	warp_orders <- c(warp_orders, list(nr))
+	pre <- nr$solution
+  }
+  warp_orders
+})
 @
 
-We see in fig. \ref{fig:ws:qual:dim} that with increasing polynomial order the
+We see in fig. \ref{fig:ws:qual:dim} that with increasing polynomial order the cosine distance is initially not improved. 
+
 <<ws:qual:dim, dependson=c('wscalcshift1f',"calc_orders"), cache=T, fig.cap="improvent in distance by increasing warp polynomial.">>=
 local({
 qs <- -sapply(warp_orders, function(x) x$objective)
 lik <- qs/(1-qs)
 ll <- log(lik)
 
-plot(seq_along(qs)-1, log(1-qs), xlab='poly coef', ylab='log cosine distance', type='p')
+plot(seq_along(qs), log(1-qs), xlab='poly order', ylab='log cosine distance', type='p')
 })
 @
 
 <<, dependson=c("calc_orders")>>=
 local({
 pars <- lapply(warp_orders, function(x) x$solution)
+})
 @
 
 <<, eval=F, include=F>>=
