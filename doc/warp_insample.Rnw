@@ -138,7 +138,7 @@ matches <- function(i,sh_pos){
 }
 @
 
-<<shift:match, cache=T, fig.cap="Maximum of shift along the measurement.">>=
+<<shiftmatch, cache=T, fig.cap="Maximum of shift along the measurement.">>=
 local({
 sh_pos <- seq(-3500, 3500,length.out= 121)
 md <- lapply(scan_indices, function(i) matches(i,sh_pos))
@@ -153,7 +153,7 @@ ggplot(md2, aes(x=x, y=ind, height=mv)) +
 #plot(sh_pos, -sh_data, type='l')
 @
 
-<<shift:match:local, cache=T, fig.cap="local of shift along the measurement.">>=
+<<shiftmatchlocal, cache=T, fig.cap="local of shift along the measurement.">>=
 local({
 sh_pos <- seq(-150, 150,length.out= 31)
 md <- lapply(scan_indices, function(i) matches(i,sh_pos))
@@ -187,7 +187,7 @@ cal_indices <- unique(floor(seq(from=1, to=tofA$indexhelp$N, length.out=n_calibs
 wfs <- lapply(cal_indices, function(i) warp_search2(inner_reference, readInd.TofH5(tofA,i)))
 @
 
-<<plot:fits, fig.cap="Local warp parameter.", dependson="searchFits">>=
+<<plotfits, fig.cap="Local warp parameter.", dependson="searchFits">>=
 par(mfrow=c(1,2)) 
 ti <- cal_indices/5
 plot(x = ti, y=sapply(wfs, function(x) x[[2]]),
@@ -196,7 +196,7 @@ plot(x = ti, y=sapply(wfs, function(x) x[[3]]),
 	 xlab='time', ylab="slope")
 @
 
-In figure \ref{fig:plot:fits} we see a how the warp parameter change during the measurement.
+In figure \ref{fig:plotfits} we see a how the warp parameter change during the measurement.
 The slope does not seem significantly different from \num{1.0}.  There doesn't apper to be a structure.  So maybe even just a plain shift will be enough.
 
 <<, include = F, eval=F>>=
@@ -235,7 +235,7 @@ cal_indices <- unique(floor(seq(from=1, to=tofA$indexhelp$N, length.out=n_calibs
 wfs1 <- lapply(cal_indices, function(i) warp_search1(inner_reference, readInd.TofH5(tofA,i)))
 @
 
-<<plot:fit1, fig.cap="Local warp parameter just shift.", dependson="searchFits">>=
+<<plotfit1, fig.cap="Local warp parameter just shift.", dependson="searchFits">>=
 ti <- cal_indices/5
 plot(x = ti, y=sapply(wfs1, function(x) x[[2]]),
 	 xlab='time', ylab="shift")

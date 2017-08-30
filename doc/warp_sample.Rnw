@@ -165,12 +165,12 @@ og <- local({
 })
 @
 
-<<ws:calc:shifts,include=F, cache=T>>=
+<<wscalcshifts,include=F, cache=T>>=
 shifts <- seq(from=-6000, to=3000, length.out=99)
 val <- sapply(shifts, og)
 @
 
-<<ws:calc:opt:shift, include=F, cache=T>>=
+<<wscalcoptshift, include=F, cache=T>>=
 best_shift <- local({
   first_shift <- nloptr( x0 = 0,
 						eval_f = og, 
@@ -310,7 +310,7 @@ As global method the method \ac{DIRECT-L} is applied, as mentioned by
 \citet{JohNlopt} for global search it is not advisable to have an
 objective in terms of step size or change in value of objective
 function, instead a fixed number of iterations (at the moment 100) is
-set.  Local search is done using the \ac{COBYLA} here the objective is
+set.  Local search is done using the \ac{BOBYQA} here the objective is
 set by considering step size, as the data is provided in steps
 optimizing for steps smaller than \num{1e-2} is not necessary.
 
@@ -387,13 +387,13 @@ warp_orders <- local({
 })
 @
 
-We see in fig. \ref{fig:ws:qual:dim} that with increasing polynomial
+We see in fig. \ref{fig:wsqualdim} that with increasing polynomial
 order the cosine distance is initially not improved.  At higher orders
 there are two problems: 1) numeric accuracy as powers like \num{4e5}
 need to be taken to this power and 2) to guarantee the warp function is
 monotonic.
 
-<<ws:qual:dim, dependson=c('wscalcshift1f',"calc_orders"), cache=T, fig.cap="improvent in distance by increasing warp polynomial.">>=
+<<wsqualdim, dependson=c('wscalcshift1f',"calc_orders"), cache=T, fig.cap="improvent in distance by increasing warp polynomial.  Lower is a better match.">>=
 local({
 qs <- -sapply(warp_orders, function(x) x$objective)
 lik <- qs/(1-qs)
@@ -465,10 +465,10 @@ warp_searcher <- function(ref,new,warper){
   startv <- c(est.shi$optim$bestmem,1,0)
   og_fin <- optim_generator(ref, generated_w, warper)
 
-for (i in 1:4){
-  vs <- sapply(pars, function(x) x[i])
-  xs <- seq_along(vs)+i-1
-  plot(xs,vs)
+  for (i in 1:4){
+	vs <- sapply(pars, function(x) x[i])
+	xs <- seq_along(vs)+i-1
+	plot(xs,vs)
+  }
 }
-})
 @
