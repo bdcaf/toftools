@@ -1,5 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+*.bak
 *.dll
+*.sav
 man/

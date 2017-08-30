@@ -5,10 +5,16 @@ CACHEDIR= cache
 LMK=latexmk  -pdf -f --interaction=nonstopmode -outdir=$(REPORT_DIR)
 .PHONY= all clean
 
+.DEFAULT_GOAL := all
+
 all: reports
 
-data/sample_ions.Rdata: dev_only/make_data.R
-	Rscript '$<'
+-include dependencies.makefile
+
+$(REPORT_DIR): 
+	mkdir -p $@
+
+$(REPORT_DIR)/%: | $(REPORT_DIR)
 
 work/documented: $(wildcard *.R) attributes
 	R -e 'library(devtools);document()'
@@ -36,7 +42,6 @@ artifacts/%.pdf: $(REPORT_DIR)/%.pdf
 	cp $< $@
 
 $(REPORT_DIR)/%.tex: doc/%.Rnw
-	-mkdir -p $(REPORT_DIR)	
 	$R  -e "require(knitr)" \
 		-e "knitr::opts_knit[['set']](root.dir = normalizePath('./'))" \
 		-e "knitr::opts_chunk[['set']](cache.path='$(REPORT_DIR)/$(basename $(@F))/')" \
@@ -45,17 +50,13 @@ $(REPORT_DIR)/%.tex: doc/%.Rnw
 		-e "knitr::opts_chunk[['set']](echo=FALSE, warning=FALSE, results='asis', dpi=144, fig.width=4, fig.height=3)" \
 		-e "knitr::knit('$<', output='$@')"
 
-$(REPORT_DIR)/%.bib: doc/%.bib
-	-mkdir -p $(REPORT_DIR)	
-	cp $< $@
-
 $(REPORT_DIR)/%.pdf: $(REPORT_DIR)/%.tex
+	echo $+ > what
 	$(LMK) $<
 
-$(REPORT_DIR)/%.pdf: doc/%.tex
+$(REPORT_DIR)/%.tex: doc/%.tex
+	echo $+ > what
 	$(LMK) $<
-
-$(REPORT_DIR)/%.pdf: $(addprefix $(REPORT_DIR)/,bibliograpy.tex)
 
 clean: work_clean
 work_clean: 
@@ -67,4 +68,3 @@ almost_clean:
 	find work -iname "*.pdf" -delete
 	find work -iname "*.bib" -delete
 
-include dependencies.makefile
