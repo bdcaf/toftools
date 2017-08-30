@@ -49,15 +49,19 @@ $(REPORT_DIR)/%.bib: doc/%.bib
 	-mkdir -p $(REPORT_DIR)	
 	cp $< $@
 
-
-$(REPORT_DIR)/%.pdf: $(REPORT_DIR)/%.tex $(REPORT_DIR)/bibliography.bib
+$(REPORT_DIR)/%.pdf: $(REPORT_DIR)/%.tex
 	$(LMK) $<
 
-$(REPORT_DIR)/%.pdf: doc/%.tex $(REPORT_DIR)/bibliography.bib
+$(REPORT_DIR)/%.pdf: doc/%.tex
 	$(LMK) $<
+
+$(REPORT_DIR)/%.pdf: $(addprefix $(REPORT_DIR)/,bibliograpy.tex)
 
 clean: work_clean
 work_clean: 
 	rm -rf work/*
+
+almost_clean:
+	find work -iname "*.tex" -delete
 
 include dependencies.makefile

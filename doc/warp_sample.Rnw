@@ -300,16 +300,20 @@ plot_match(small_scale)
 
 \subsubsection{Algortithm Candidate}
 
+In order to achieve any fit careful optimization is necessary.  The
+algorithms provided by \citet{JohNlopt} was used.  Two optimizations
+were changed first a global gradient free method to estimate the general
+location of the maximum and second a local method with constructed
+gradient to quickly reach the maximum.
 
-Although there may be a second approach.  Since the \textit{ridges} seem
-to stretch next to each other it should be possible to identify the
-correct one in one dimensional genetic search and in a second step do
-the high dimensional search for the maximum using conjugate gradient
-search.
+As global method the method \ac{DIRECT-L} is applied, as mentioned by
+\citet{JohNlopt} for global search it is not advisable to have an
+objective in terms of step size or change in value of objective
+function, instead a fixed number of iterations (at the moment 100) is
+set.  Local search is done using the \ac{COBYLA} here the objective is
+set by considering step size, as the data is provided in steps
+optimizing for steps smaller than \num{1e-2} is not necessary.
 
-As now polynoms of higher degree can be fitted we see the corrections
-are small compared to the shift.  It may be sufficient to correct just
-for a linear shift.
 
 <<wscalcshift1f,include=F, cache=T>>=
 vander <- function(xs, nmax) 
@@ -383,7 +387,11 @@ warp_orders <- local({
 })
 @
 
-We see in fig. \ref{fig:ws:qual:dim} that with increasing polynomial order the cosine distance is initially not improved. 
+We see in fig. \ref{fig:ws:qual:dim} that with increasing polynomial
+order the cosine distance is initially not improved.  At higher orders
+there are two problems: 1) numeric accuracy as powers like \num{4e5}
+need to be taken to this power and 2) to guarantee the warp function is
+monotonic.
 
 <<ws:qual:dim, dependson=c('wscalcshift1f',"calc_orders"), cache=T, fig.cap="improvent in distance by increasing warp polynomial.">>=
 local({
