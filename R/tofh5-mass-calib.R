@@ -13,7 +13,7 @@ setGeneric("mass.calib", function(object,ions,...) {
 })
 
 #' @rdname mass.calib-methods
-setMethod('mass.calib', signature(object = 'TofH5', ions = 'data.frame'), 
+setMethod('mass.calib', signature(object = 'tof_h5', ions = 'data.frame'), 
           function(object, ions, 
                    preliminary.coeff=init.mass.calib(object), n.samp=100, num.knots=3) {
   scl <- sample.scans(object, n.samp=n.samp)
@@ -38,7 +38,7 @@ setGeneric("sample.scans", function(object, ...) {
 })
 
 #' @rdname sample.scans-methods
-setMethod('sample.scans', signature(object = 'TofH5'), function(object, n.samp=100) {
+setMethod('sample.scans', signature(object = 'tof_h5'), function(object, n.samp=100) {
   with(object@.indexhelp, 
        if(N > 2*n.samp) { floor(seq(from=1,to=N, length.out=n.samp))}
        else {  seq(from=1,to=N)}
@@ -59,7 +59,7 @@ setGeneric("init.mass.calib", function(object,...) {
 
 
 #' @rdname init.mass.calib-methods
-setMethod('init.mass.calib', signature(object = 'TofH5'), function(object) {
+setMethod('init.mass.calib', signature(object = 'tof_h5'), function(object) {
   gr <- H5Gopen(object@.meas.reader,"FullSpectra")
   ao1 <- H5Aopen(gr,'MassCalibration a')
   ao2 <- H5Aopen(gr,'MassCalibration b')

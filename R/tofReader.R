@@ -235,9 +235,9 @@ h5ToSqlite <- function(path, tof.h5){
 # S3 class for easier working #
 ###############################
 
-#" tofH5 constructor for S3 class
+#" tof_h5 constructor for S3 class
 #" @export
-tofH5 <- function(tof.h5){
+tof_h5 <- function(tof.h5){
   fid <-H5Fopen(tof.h5)
   tofblock <- get.raw.tofblock(fid)
   indexhelp <- tof.indexhelp(tofblock)
@@ -245,12 +245,12 @@ tofH5 <- function(tof.h5){
                   fid = fid,
                   tofblock = tofblock,
                   indexhelp = indexhelp),
-            class = "TofH5")
+            class = "tof_h5")
 }
 
-#" print TofH5 class
+#" print tof_h5 class
 #" @export
-print.TofH5 <- function(th5){
+print.tof_h5 <- function(th5){
   with(th5, cat(sep="\n",
                 "H5 TOF measurement",
                 paste("file:",filename),
@@ -259,7 +259,7 @@ print.TofH5 <- function(th5){
 }
 
 
-#" reads the spec of a single tof scan from TofH5
+#" reads the spec of a single tof scan from tof_h5
 #" @export
 #" @examples
 #" fid <-H5Fopen(tof.h5)
@@ -267,7 +267,7 @@ print.TofH5 <- function(th5){
 #" indexhelp <- tof.indexhelp(tofblock)
 #" spec <- read.spec.ind(tofblock, indexhelp, 40)
 #" plot(spec,type="l")
-readInd.TofH5 <- function(tofH, i){
+read_spec_ind.tof_h5 <- function(tofH, i){
   with(tofH,{
   pos <- indexhelp$calc.indices[i,]
   H5Sselect_hyperslab(indexhelp$h5spaceFile,
@@ -279,16 +279,16 @@ readInd.TofH5 <- function(tofH, i){
   )}
 
 
-sumSpec.TofH5 <- function(tofH)
+sum_spec.tof_h5 <- function(tofH)
   with(tofH, {
          gr <- H5Dopen(fid, "FullSpectra/SumSpectrum")
          H5Dread(gr)
   })
 
-recMassCal.TofH5 <- function(tofH){
+stored_mass_cal.tof_h5 <- function(tofH){
   gr <- h5readAttributes(tofH$fid, "FullSpectra")
   with(gr,
-       list( toMass = Vectorize(function(i) ((i-`MassCalibration p2`)/`MassCalibration p1`)^2),
-             toIndex = Vectorize(function(m) `MassCalibration p2` + `MassCalibration p1`*sqrt(m))
+       list( to_mass = Vectorize(function(i) ((i-`MassCalibration p2`)/`MassCalibration p1`)^2),
+             to_index = Vectorize(function(m) `MassCalibration p2` + `MassCalibration p1`*sqrt(m))
              ))
 }

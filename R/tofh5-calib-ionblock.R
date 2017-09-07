@@ -10,7 +10,7 @@ setGeneric("find.ion.block", function(object,ions,...) {
 })
 
 #' @rdname find.ion.block-methods
-setMethod('find.ion.block', signature(object = 'TofH5', ions = 'data.frame'), 
+setMethod('find.ion.block', signature(object = 'tof_h5', ions = 'data.frame'), 
           function(object, ions, 
                    preliminary.coeff=init.mass.calib(object), n.samp=100, num.knots=3) {
             scl <- sample.scans(object, n.samp=n.samp)

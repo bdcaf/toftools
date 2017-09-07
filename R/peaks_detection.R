@@ -6,9 +6,9 @@ library(PeakSegDP)
 
 #tof.h5 <- 'testdata/Ac just breath after C (2014-10-23T11h34m53_#).h5'
 tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
-myTof <- tofH5(tof.h5)
-aSpec <- readInd.TofH5(myTof,10)
-totalSpec <- sumSpec.TofH5(myTof)
+myTof <- tof_h5(tof.h5)
+aSpec <- read_spec_ind.tof_h5(myTof,10)
+totalSpec <- sum_spec.tof_h5(myTof)
 
 plot(totalSpec/max(totalSpec), type='l')
 lines(aSpec/max(aSpec), col='red')

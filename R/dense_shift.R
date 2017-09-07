@@ -7,10 +7,10 @@ library(parallel)
 library(nloptr)
 
 tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
-myTof <- tofH5(tof.h5)
-aSpec <- readInd.TofH5(myTof,10)
-bSpec <- readInd.TofH5(myTof,10000)
-totalSpec <- sumSpec.TofH5(myTof)
+myTof <- tof_h5(tof.h5)
+aSpec <- read_spec_ind.tof_h5(myTof,10)
+bSpec <- read_spec_ind.tof_h5(myTof,10000)
+totalSpec <- sum_spec.tof_h5(myTof)
 
 a2 <- aSpec/max(aSpec)
 b2 <- bSpec/max(bSpec)

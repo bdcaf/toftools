@@ -6,10 +6,10 @@ library(rhdf5)
 #' 
 #' @slot file.name holding the HDF5 data
 #' @slot n.scans number of scans in file for easy access
-#' @exportClass TofH5
+#' @exportClass tof_h5
 #' @name tofh5-class
 #' @rdname tofh5-class
-setClass("TofH5", 
+setClass("tof_h5", 
          representation(file.name='character',
          				n.scans='numeric', 
          				.meas.reader='H5IdComponent',

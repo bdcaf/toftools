@@ -33,7 +33,7 @@ TofRaw <- function(tof.h5){
   }
   
   structure(list(close = function() H5close(),
-				 readIndex = cr, 
+				 read_spec_index = cr, 
 				 sampleScans = sampleScans,
 				 num.scan = function() indexhelp$N,
 				 read.scan = read.scan,

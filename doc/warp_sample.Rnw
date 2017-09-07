@@ -1,7 +1,6 @@
 \subsection{Notes on warping between samples}
 
 <<setup, include=F>>=
-
 library("baseline")
 library("grDevices")
 library("nloptr")
@@ -11,12 +10,12 @@ source("R/tofSparse.R")
 
 tof_a.h5 <- "testdata/2017.06.22-11h13m23s ca valve open.h5"
 tof_b.h5 <- "testdata/2017.06.20-15h04m22s Aurelio valve off.h5"
-tof_a <- tofH5(tof_a.h5)
-tof_b <- tofH5(tof_b.h5)
-sum_spec_a <- (sumSpec.TofH5(tof_a))/tof_a$indexhelp$N
-sum_spec_b <- (sumSpec.TofH5(tof_b))/tof_b$indexhelp$N
+tof_a <- tof_h5(tof_a.h5)
+tof_b <- tof_h5(tof_b.h5)
+sum_spec_a <- (sum_spec.tof_h5(tof_a))/tof_a$indexhelp$N
+sum_spec_b <- (sum_spec.tof_h5(tof_b))/tof_b$indexhelp$N
 
-mcfun <- recMassCal.TofH5(tof_a)
+mcfun <- stored_mass_cal.tof_h5(tof_a)
 
 optim_generator <- function(reference_spec, generated_w, warp_fun){
   reference <- reference_spec/sqrt(sum(reference_spec^2))
@@ -37,9 +36,9 @@ plot_comp <- function(refspec, otherspec = NULL, from, to,
        ylab=ylab
        )
   if (!is.null(otherspec)) lines(otherspec, type="l", col="red")
-  mass_range <- pretty(with(mcfun, c( toMass(from), toMass(to))),
+  mass_range <- pretty(with(mcfun, c( to_mass(from), to_mass(to))),
                       n=10)
-  index_range <- with(mcfun, toIndex(mass_range))
+  index_range <- with(mcfun, to_index(mass_range))
   bad <- index_range < from | index_range > to
   mass_range <- mass_range[!bad]
   index_range <- index_range[!bad]
@@ -57,12 +56,12 @@ examined.  A subsection of the spectra are shown in \fref{fig:wssumspec}.
 
 Sum spectra are different to the spectra of individual scans in the
 sense that even in the range between molecular masses noise adds up to a
-smooth signal.  To keep alignment simple the baseline is cleaned useing
+smooth signal.  To keep alignment simple the baseline is cleaned using
 the baseline package from \citet{Lil2015}.  A regional plot is shown in
 \fref{fig:wsbaseline}.  Most algorithm in this package work
 sufficiently well.  Although the default \texttt{als} algorithm requires
-construction of a matrix with dimension of lenght sample $\times$ lenght
-sampl, which fails due to memory constraints as these spectra are
+construction of a matrix with dimension of length sample $\times$ length
+sample, which fails due to memory constraints as these spectra are
 typical \num{4e5} entries.
 
 <<wssumspec, cache=T, fig.cap='Comparing the unprocessed sum spectra of two samples, the shift corresponds to about 0.5 amu at m/z 60'>>=
@@ -78,7 +77,7 @@ generally not easy to find a sufficient number of peaks whose mass is
 known and are present in sufficient quality.  Usually this is a manual
 identification task which makes it hard to automate.  Typically these peaks are
 directly related to precursor ions and of low mass - generally it is
-hard to identify peaks at high masses.  In presented workflow we don't
+hard to identify peaks at high masses.  In presented work flow we don't
 identify peaks, but instead search for a warp that transforms the
 spectrum best.
 
@@ -146,11 +145,11 @@ An exemplary warping based on shifting the spectrum is shown in
 \fref{fig:wsshiftplot}.  There is an optimal warping shifting the
 spectrum around 500 indices to the left.  But it is also visible there
 are locale maxima shifting spectra to other full masses.  This makes
-finding the globaly best warping demanding.  Comparing with
+finding the globally best warping demanding.  Comparing with
 \fref{fig:wscleansum} we see that in this mass range there are around
 \num{1500} indices corresponding one amu step.  The neighbouring maxima
 therefore correspond shifting the peak comb by about one amu.  As the
-peaks are not regulary spaced in time axis these secondary peaks have
+peaks are not regularly spaced in time axis these secondary peaks have
 much poorer match.
 
 <<, include=F>>=
@@ -299,7 +298,7 @@ plot_match(small_scale)
 @
 
 
-\subsubsection{Algortithm Candidate}
+\subsubsection{Algorithm Candidate}
 
 In order to achieve any fit careful optimization is necessary.  The
 algorithms provided by \citet{JohNlopt} was used.  Two optimizations
@@ -440,9 +439,9 @@ res0 <- warp0(-500)
 orig <- seq(2e4, 2e5)
 rv0 <- res0(orig)
 rv <- res(orig)
-mv_orig <- mcfun$toMass(orig)
-mv_new <- mcfun$toMass(rv)
-mv_new0 <- mcfun$toMass(rv0)
+mv_orig <- mcfun$to_mass(orig)
+mv_new <- mcfun$to_mass(rv)
+mv_new0 <- mcfun$to_mass(rv0)
 md <- mv_new-mv_orig
 md0 <- mv_new0-mv_orig
 plot(mv_orig, md, type="l")

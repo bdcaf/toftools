@@ -10,7 +10,7 @@ setGeneric("open", function(object) {
 })
 
 #' @rdname open-methods
-setMethod('open', signature(object = 'TofH5'), function(object) {
+setMethod('open', signature(object = 'tof_h5'), function(object) {
 			object@.meas.reader <- H5Fopen(object@file.name)
 			object@.tofblock <- get.raw.tofblock(object@.meas.reader)
 			object@.indexhelp <- tof.indexhelp(object@.tofblock)
@@ -30,7 +30,7 @@ setGeneric("close", function(object) {
 })
 
 #' @rdname close-methods
-setMethod('close', signature(object = 'TofH5'), function(object) {
+setMethod('close', signature(object = 'tof_h5'), function(object) {
 			H5Fclose(object@.meas.reader)		
       
 			object

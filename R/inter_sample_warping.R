@@ -8,10 +8,10 @@ source('R/tofSparse.R')
 #tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
 tofA.h5 <- 'testdata/2017.06.22-11h13m23s ca valve open.h5'
 tofB.h5 <- 'testdata/2017.06.20-15h04m22s Aurelio valve off.h5'
-tofA <- tofH5(tofA.h5)
-tofB <- tofH5(tofB.h5)
-sumSpecA <- smooth(sumSpec.TofH5(tofA))
-sumSpecB <- smooth(sumSpec.TofH5(tofB))
+tofA <- tof_h5(tofA.h5)
+tofB <- tof_h5(tofB.h5)
+sum_specA <- smooth(sum_spec.tof_h5(tofA))
+sum_specB <- smooth(sum_spec.tof_h5(tofB))
 
 prep_spec <- function(sspec, atof, wid=30){
   refSpec <- baseline(matrix(sspec, nrow=1), method= 'rollingBall', wm=100, ws=100)@corrected[1,]
@@ -19,8 +19,8 @@ prep_spec <- function(sspec, atof, wid=30){
   s1 <- dense_remove_sat(sspec, sats)
 }
 
-clA <- prep_spec(sumSpecA, tofA)
-clB <- prep_spec(sumSpecB, tofB)
+clA <- prep_spec(sum_specA, tofA)
+clB <- prep_spec(sum_specB, tofB)
 
 orientSpec <- log1p(clA)
 toOrient <- log1p(clB)

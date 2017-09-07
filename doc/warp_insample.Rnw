@@ -11,24 +11,24 @@ source("R/tofReader.R")
 source("R/tofSparse.R")
 
 tof_a_h5 <- "testdata/2017.06.20-15h04m22s Aurelio valve off.h5"
-tof_a <- tofH5(tof_a_h5)
-sum_spec_a <- (sumSpec.TofH5(tof_a))/tof_a$indexhelp$N
+tof_a <- tof_h5(tof_a_h5)
+sum_spec_a <- (sum_spec.tof_h5(tof_a))/tof_a$indexhelp$N
 ntest <- 7
 scan_indices <- floor(seq(from=1, to=tof_a$indexhelp$N, length.out=ntest))
-specs <- lapply(scan_indices, function(i) readInd.TofH5(tof_a, i))
-mcfun <- recMassCal.TofH5(tof_a)
+specs <- lapply(scan_indices, function(i) read_spec_ind.tof_h5(tof_a, i))
+mcfun <- stored_mass_cal.tof_h5(tof_a)
 
 dt0 <- data.table(do.call(cbind, specs))
 colnames(dt0) <- paste(round( (scan_indices-1)/5), "s")
 dt0[, pos:=seq_along(`0 s`)]
-dt0[, mass:=mcfun$toMass(pos)]
+dt0[, mass:=mcfun$to_mass(pos)]
 dt1 <- melt(dt0, c("pos", "mass"))
 
 ref <- data.table(value=sum_spec_a,
                   pos = seq_along(sum_spec_a), variable="Sum Spec")
-ref[, mass:=mcfun$toMass(pos)]
+ref[, mass:=mcfun$to_mass(pos)]
 
-plotComp <- function(refspec, otherspec = NULL, from, to,
+plot_comp <- function(refspec, otherspec = NULL, from, to,
                      ylim=c(0, 1e2), ylab="signal"){
   plot(refspec, type="l",
        xlim=c(from, to),
@@ -37,8 +37,8 @@ plotComp <- function(refspec, otherspec = NULL, from, to,
        ylab=ylab
        )
   if (!is.null(otherspec)) lines(otherspec, type="l", col="red")
-  mass_range <- pretty(with(mcfun, c( toMass(from), toMass(to))),n=10)
-  ind_range <- with(mcfun, toIndex(mass_range))
+  mass_range <- pretty(with(mcfun, c( to_mass(from), to_mass(to))), n=10)
+  ind_range <- with(mcfun, to_index(mass_range))
   bad <- ind_range < from | ind_range > to
   mass_range <- mass_range[!bad]
   ind_range <- ind_range[!bad]
@@ -107,7 +107,7 @@ ggplot(rbind(ref, dt1) %>% filter(pos>from & pos<to),
         axis.text = element_text(size = 8, colour="black"))
 @
 
-<<searchFunctions, include=F>>=
+<<searchFunctions, include=F, cache=T>>=
 optim_generator0 <- function(reference_spec, generated_w, warp_fun){
   reference <- reference_spec/sqrt(sum(reference_spec^2))
   function(a){
@@ -145,7 +145,7 @@ abandoned.
 
 <<shiftfun, include=F, cache=T>>=
 matches <- function(i, sh_pos){
-  ss <- readInd.TofH5(tof_a, i)
+  ss <- read_spec_ind.tof_h5(tof_a, i)
   ss_spec <- ksmooth(seq_along(ss), ss, "normal", bandwidth=16)$y
   generated_w <- fast_warp0(log1p(ss_spec))
   og <- optim_generator(inner_reference, generated_w, warp0)
@@ -181,7 +181,6 @@ ggplot(md2, aes(x=x, y=ind, height=mv)) +
   theme(legend.position = "none",
         axis.text = element_text(size = 8, colour="black"))
 })
-#plot(sh_pos, -sh_data, type='l')
 @
 
 In \fref{fig:shiftmatchlocal} there is visible aliasing unless the
@@ -205,7 +204,7 @@ warp_search2 <- function(ref, new_spec){
 }
 n_calibs <- 100
 cal_indices <- unique(floor(seq(from=1, to=tof_a$indexhelp$N, length.out=n_calibs)))
-wfs <- lapply(cal_indices, function(i) warp_search2(inner_reference, readInd.TofH5(tof_a, i)))
+wfs <- lapply(cal_indices, function(i) warp_search2(inner_reference, read_spec_ind.tof_h5(tof_a, i)))
 @
 
 <<plotfits, fig.cap="Local warp parameter.", dependson="searchFits">>=
@@ -225,7 +224,7 @@ new_spec <- (specs[[2]])
 ss_spec <- ksmooth(seq_along(new_spec), new_spec, "normal", bandwidth=16)$y
 ss_log1 <- log1p(ss_spec)
 
-plot(sumSpecA, type="l", xlim=c(8e4, 8.2e4), ylim=c(0, 300))
+plot(sum_spec_a, type="l", xlim=c(8e4, 8.2e4), ylim=c(0, 300))
 lines(ss_spec, col="red")
 
 plot(inner_reference, type="l", xlim=c(8e4, 8.2e4))
@@ -250,7 +249,7 @@ warp_search1 <- function(ref, new){
 }
 n_calibs <- 50
 cal_indices <- unique(floor(seq(from=1, to=tof_a$indexhelp$N, length.out=n_calibs)))
-wfs1 <- lapply(cal_indices, function(i) warp_search1(inner_reference, readInd.TofH5(tof_a, i)))
+wfs1 <- lapply(cal_indices, function(i) warp_search1(inner_reference, read_spec_ind.tof_h5(tof_a, i)))
 @
 
 <<plotfit1, fig.cap="Local warp parameter just shift.", dependson="searchFits">>=

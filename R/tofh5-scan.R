@@ -9,7 +9,7 @@ setGeneric("read.raw.scan", function(object, index) {
 
 
 #' @rdname read.raw.scan-methods
-setMethod('read.raw.scan', signature(object = 'TofH5', index='numeric'), function(object, index) {
+setMethod('read.raw.scan', signature(object = 'tof_h5', index='numeric'), function(object, index) {
   read.spec.ind(object@.tofblock, object@.indexhelp, index)
 })
 
@@ -26,7 +26,7 @@ setGeneric("read.bins", function(object, ...) {
 
 #' @rdname read.bins-methods
 #' @useDynLib tofTools
-setMethod('read.bins', signature(object = 'TofH5'), 
+setMethod('read.bins', signature(object = 'tof_h5'), 
           function(object, mass.calibration, index, masses) {
   targets <- expand.grid(scan=index, ion=masses)  
   targets <- enrich.ions.block(targets)
@@ -52,7 +52,7 @@ setGeneric("read.prepared.bins", function(object, ...) {
 #' data(sample_ions)
 #' ions <- sample_ions
 #' 
-#' object <- new("TofH5", file.name=tof.h5)
+#' object <- new("tof_h5", file.name=tof.h5)
 #' object <- open(object)
 #' 
 #' scl <- sample.scans(object, n.samp=100)
@@ -73,7 +73,7 @@ setGeneric("read.prepared.bins", function(object, ...) {
 #' read.prepared.bins(object,targets=extr.data)
 #' }
 #' @useDynLib tofTools
-setMethod('read.prepared.bins', signature(object = 'TofH5'), 
+setMethod('read.prepared.bins', signature(object = 'tof_h5'), 
           function(object, targets) {
             one.scan <- function(ct){
               sc <- read.raw.scan(object,ct[[1,'scan']])
