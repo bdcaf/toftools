@@ -5,3 +5,5 @@
 *.dll
 *.sav
 man/
+data/ammonia
+data/etoh
