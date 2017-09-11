@@ -1,0 +1,50 @@
+<<setup, include=F>>=
+library("baseline")
+library("grDevices")
+library("nloptr")
+
+source("R/tofReader.R")
+source("R/tofSparse.R")
+
+tof_a.h5 <- "testdata/2017.06.22-11h13m23s ca valve open.h5"
+tof_b.h5 <- "testdata/2017.06.20-15h04m22s Aurelio valve off.h5"
+tof_a <- tof_h5(tof_a.h5)
+tof_b <- tof_h5(tof_b.h5)
+sum_spec_a <- (sum_spec.tof_h5(tof_a))/tof_a$indexhelp$N
+sum_spec_b <- (sum_spec.tof_h5(tof_b))/tof_b$indexhelp$N
+
+mcfun <- stored_mass_cal.tof_h5(tof_a)
+
+optim_generator <- function(reference_spec, generated_w, warp_fun){
+  reference <- reference_spec/sqrt(sum(reference_spec^2))
+  function(a){
+    warped <- generated_w(warp_fun(a),
+                          where=seq_along(reference))
+    nw <- sqrt(sum(warped^2))
+    -sum(reference * warped)/nw
+  }
+}
+
+plot_comp <- function(refspec, otherspec = NULL, from, to,
+                     ylim=c(0, 1e2), ylab="signal"){
+  plot(refspec, type="l",
+       xlim=c(from, to),
+       ylim=ylim,
+       xlab="index",
+       ylab=ylab
+       )
+  if (!is.null(otherspec)) lines(otherspec, type="l", col="red")
+  mass_range <- pretty(with(mcfun, c( to_mass(from), to_mass(to))),
+                      n=10)
+  index_range <- with(mcfun, to_index(mass_range))
+  bad <- index_range < from | index_range > to
+  mass_range <- mass_range[!bad]
+  index_range <- index_range[!bad]
+  axis(3, index_range, labels=mass_range, line=1,
+       col="red", col.ticks="red", col.axis="red")
+}
+
+@
+
+<<>>=
+@
