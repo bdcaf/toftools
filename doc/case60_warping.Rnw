@@ -7,24 +7,10 @@ library("nloptr")
 #source("R/tofReader.R")
 #source("R/tofSparse.R")
 
-data_files <- list.files("data/agcl_br", pattern="\\.h5$")
+data_files <- list.files("data/agcl_br", pattern="\\.h5$", full.names=T)
 
-tof_a <- tof_h5(tof_a.h5)
-tof_b <- tof_h5(tof_b.h5)
-sum_spec_a <- (sum_spec.tof_h5(tof_a))/tof_a$indexhelp$N
-sum_spec_b <- (sum_spec.tof_h5(tof_b))/tof_b$indexhelp$N
+sum_specs <- lapply(data_files, get_sum_spec)
 
-mcfun <- stored_mass_cal.tof_h5(tof_a)
-
-optim_generator <- function(reference_spec, generated_w, warp_fun){
-  reference <- reference_spec/sqrt(sum(reference_spec^2))
-  function(a){
-    warped <- generated_w(warp_fun(a),
-                          where=seq_along(reference))
-    nw <- sqrt(sum(warped^2))
-    -sum(reference * warped)/nw
-  }
-}
 
 plot_comp <- function(refspec, otherspec = NULL, from, to,
                      ylim=c(0, 1e2), ylab="signal"){
@@ -47,5 +33,11 @@ plot_comp <- function(refspec, otherspec = NULL, from, to,
 
 @
 
-<<>>=
+<<avspec, fig.cap="Average spectrum over all samples">>=
+rr <- do.call(rbind, sum_specs)
+
+me <- apply(log1p(rr),2,mean)
+me2 <- ksmooth(seq_along(me), me, kernel="normal", bandwidth=32)
+
+plot(me2, type="l", col="red")
 @
