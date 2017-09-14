@@ -4,15 +4,15 @@ library(tidyr)
 library(purrr)
 library(Matrix)
 
-#" reads integrated peaks as integrated by PTR-MS TOD-DAQ-Viewer.
-#"
-#" WARNING: these must be first integrated in the software otherwise and error
-#" will be thrown.
-#" @export
-#" @param tof.h5 filename of hdf5 file
-#" @return dataframe with structure: rows = scans, cols = counts + information
-#" @examples
-#" tof.h5 <- file.path("data","uncal.h5")
+#' reads integrated peaks as integrated by PTR-MS TOD-DAQ-Viewer.
+#'
+#' WARNING: these must be first integrated in the software otherwise and error
+#' will be thrown.
+#' @export
+#' @param tof.h5 filename of hdf5 file
+#' @return dataframe with structure: rows = scans, cols = counts + information
+#' @examples
+#' tof.h5 <- file.path("data","uncal.h5")
 read.tof.peaks <- function( tof.h5 ){
   fid <-H5Fopen(tof.h5)
   at <- H5Aopen(fid, "NbrWaveforms")
@@ -40,10 +40,10 @@ read.mass.cals <- function(fid){
   H5Dread(gr)
 }
 
-#" approximate mass calibration
+#' approximate mass calibration
 pars.approx <- list(intercept = 900,square_mass = 17600 )
 
-#" sample ions for TOF calibration
+#' sample ions for TOF calibration
 ions <- c(h3o = 21.0220875,
           no=29.99744,
           o2 = 31.989281,
@@ -53,10 +53,10 @@ ions <- c(h3o = 21.0220875,
           meth_formate = 61.028406,
           methacrolein = 71.04914)
 
-#" calculate mass from TOF index
+#' calculate mass from TOF index
 mass.calc <- function(pars, vec) {(( vec - pars[[1]] )/ pars[[2]] )^2 }
 
-#" find location of ion maximum in TOF spectrum
+#' find location of ion maximum in TOF spectrum
 find_ion_tof <- function (ion.mass = 21.0220875, preliminary.coeff, curr.spec.line, wid=0.3) {
   mass.range <- round(preliminary.coeff$intercept + preliminary.coeff$square_mass*sqrt(ion.mass+ wid*c(-1,1)))
   ig <- mass.range[1]:mass.range[2]
@@ -74,21 +74,21 @@ mass.calib.coeff.single <- function (ions, preliminary.coeff, curr.spec.line) {
   return(out)
 }
 
-#" calculates mass calibration coefficients for every scan in the flat tof array
-#" @note this thkes about 30s for a measurement containing 3000 scans
-#" @param tofblock from get.raw.tofblock
-#" @param indexhelp from tof.indexhelp
-#" @param preliminary.coeff some start values for coefficients
-#" @param n.ions ion list to be used for calibration
-#" @return data frame of calibration coefficients
-#" @examples
-#" tof.h5 <- file.path("data","Ac just breath after C (2014-10-23T11h34m53_#).h5")
-#" fid <-H5Fopen(tof.h5)
-#" tofblock <- get.raw.tofblock(fid)
-#" indexhelp <- tof.indexhelp(tofblock)
-#" cr <- make.curr.tofreader(tofblock, indexhelp)
-#" mc.table <- mass.calib.tof(tofblock, indexhelp)
-#" @export
+#' calculates mass calibration coefficients for every scan in the flat tof array
+#' @note this thkes about 30s for a measurement containing 3000 scans
+#' @param tofblock from get.raw.tofblock
+#' @param indexhelp from tof.indexhelp
+#' @param preliminary.coeff some start values for coefficients
+#' @param n.ions ion list to be used for calibration
+#' @return data frame of calibration coefficients
+#' @examples
+#' tof.h5 <- file.path("data","Ac just breath after C (2014-10-23T11h34m53_#).h5")
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' cr <- make.curr.tofreader(tofblock, indexhelp)
+#' mc.table <- mass.calib.tof(tofblock, indexhelp)
+#' @export
 mass.calib.tof <- function(tofblock, indexhelp,
                            preliminary.coeff=list(intercept = 900,square_mass = 17650 ),
                            n.ions = unlist(ions)){
@@ -99,12 +99,12 @@ mass.calib.tof <- function(tofblock, indexhelp,
   } )
 }
 
-#" smoothes the mass calibration to avoid local jumps
-#" @param mc.table raw mass calibration
-#" @return mass calibration table after smoothing
-#" @examples
-#" mc.table <- mass.calib.tof(tofblock, indexhelp)
-#" smooth.mc <- smooth.mass.cal(mc.table)
+#' smoothes the mass calibration to avoid local jumps
+#' @param mc.table raw mass calibration
+#' @return mass calibration table after smoothing
+#' @examples
+#' mc.table <- mass.calib.tof(tofblock, indexhelp)
+#' smooth.mc <- smooth.mass.cal(mc.table)
 smooth.mass.cal <- function (mc.table) {
   mc.fit <- mc.table
   mc.fit$ind <- 1:nrow(mc.fit)
@@ -112,22 +112,22 @@ smooth.mass.cal <- function (mc.table) {
   pv <- predict(cc,  data.frame(ind=1:nrow(mc.fit)))
 }
 
-#" first step of reading - get the tof block
-#" not export
-#" @examples
-#" fid <-H5Fopen(tof.h5)
-#" tofblock <- get.raw.tofblock(fid)
-#" H5close(fid)
+#' first step of reading - get the tof block
+#' not export
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' H5close(fid)
 get.raw.tofblock <- function(fid) {
   gr <- H5Gopen(fid,"FullSpectra")
   H5Dopen(gr,"TofData")}
 
-#" returns full block of tof spectra
-#"
-#" @descriptions reads the full block of tof spectra
-#" This can be very large!
-#" @param tofblock from get.raw.tofblock
-#" @return array, first dimenstion is timebin, second scan index
+#' returns full block of tof spectra
+#'
+#' @descriptions reads the full block of tof spectra
+#' This can be very large!
+#' @param tofblock from get.raw.tofblock
+#' @return array, first dimenstion is timebin, second scan index
 get.full.specblock <- function(tofblock){
   h5spaceFile <- H5Dget_space(tofblock)
   dims <- H5Sget_simple_extent_dims(h5spaceFile)
@@ -144,12 +144,12 @@ get.full.specblock <- function(tofblock){
   Matrix(ot, sparse=T)
 }
 
-#" pre calculates some values
-#" not export
-#" @examples
-#" fid <-H5Fopen(tof.h5)
-#" tofblock <- get.raw.tofblock(fid)
-#" indexhelp <- tof.indexhelp(tofblock)
+#' pre calculates some values
+#' not export
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
 tof.indexhelp <- function(tofblock){
   h5spaceFile <- H5Dget_space(tofblock)
   dims <- H5Sget_simple_extent_dims(h5spaceFile)
@@ -162,14 +162,14 @@ tof.indexhelp <- function(tofblock){
        dims=dims$size)
 }
 
-#" reads the spec of a single tof scan
-#" @export
-#" @examples
-#" fid <-H5Fopen(tof.h5)
-#" tofblock <- get.raw.tofblock(fid)
-#" indexhelp <- tof.indexhelp(tofblock)
-#" spec <- read.spec.ind(tofblock, indexhelp, 40)
-#" plot(spec,type="l")
+#' reads the spec of a single tof scan
+#' @export
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' spec <- read.spec.ind(tofblock, indexhelp, 40)
+#' plot(spec,type="l")
 read.spec.ind <- function(tofblock, indexhelp, i){
   pos <- indexhelp$calc.indices[i,]
   H5Sselect_hyperslab(indexhelp$h5spaceFile,
@@ -180,14 +180,14 @@ read.spec.ind <- function(tofblock, indexhelp, i){
           h5spaceMem = indexhelp$h5spaceMem )
 }
 
-#" helper to wrap reader call
-#" not export
-#" @examples
-#" fid <-H5Fopen(tof.h5)
-#" tofblock <- get.raw.tofblock(fid)
-#" indexhelp <- tof.indexhelp(tofblock)
-#" cr <- make.curr.tofreader(tofblock, indexhelp)
-#" spec5 <- cr(5)
+#' helper to wrap reader call
+#' not export
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' cr <- make.curr.tofreader(tofblock, indexhelp)
+#' spec5 <- cr(5)
 make.curr.tofreader <- function(tofblock, indexhelp){
   function(i){read.spec.ind(tofblock,indexhelp,i)}
 }
@@ -235,8 +235,8 @@ h5ToSqlite <- function(path, tof.h5){
 # S3 class for easier working #
 ###############################
 
-#" tof_h5 constructor for S3 class
-#" @export
+#' tof_h5 constructor for S3 class
+#' @export
 tof_h5 <- function(tof.h5){
   fid <-H5Fopen(tof.h5)
   tofblock <- get.raw.tofblock(fid)
@@ -248,8 +248,8 @@ tof_h5 <- function(tof.h5){
             class = "tof_h5")
 }
 
-#" print tof_h5 class
-#" @export
+#' print tof_h5 class
+#' @export
 print.tof_h5 <- function(th5){
   with(th5, cat(sep="\n",
                 "H5 TOF measurement",
@@ -259,14 +259,14 @@ print.tof_h5 <- function(th5){
 }
 
 
-#" reads the spec of a single tof scan from tof_h5
-#" @export
-#" @examples
-#" fid <-H5Fopen(tof.h5)
-#" tofblock <- get.raw.tofblock(fid)
-#" indexhelp <- tof.indexhelp(tofblock)
-#" spec <- read.spec.ind(tofblock, indexhelp, 40)
-#" plot(spec,type="l")
+#' reads the spec of a single tof scan from tof_h5
+#' @export
+#' @examples
+#' fid <-H5Fopen(tof.h5)
+#' tofblock <- get.raw.tofblock(fid)
+#' indexhelp <- tof.indexhelp(tofblock)
+#' spec <- read.spec.ind(tofblock, indexhelp, 40)
+#' plot(spec,type="l")
 read_spec_ind.tof_h5 <- function(tofH, i){
   with(tofH,{
   pos <- indexhelp$calc.indices[i,]

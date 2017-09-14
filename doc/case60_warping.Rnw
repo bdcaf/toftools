@@ -1,13 +1,14 @@
 <<setup, include=F>>=
+library("rawTof")
 library("baseline")
 library("grDevices")
 library("nloptr")
 
-source("R/tofReader.R")
-source("R/tofSparse.R")
+#source("R/tofReader.R")
+#source("R/tofSparse.R")
 
-tof_a.h5 <- "testdata/2017.06.22-11h13m23s ca valve open.h5"
-tof_b.h5 <- "testdata/2017.06.20-15h04m22s Aurelio valve off.h5"
+data_files <- list.files("data/agcl_br", pattern="\\.h5$")
+
 tof_a <- tof_h5(tof_a.h5)
 tof_b <- tof_h5(tof_b.h5)
 sum_spec_a <- (sum_spec.tof_h5(tof_a))/tof_a$indexhelp$N
