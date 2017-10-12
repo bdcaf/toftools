@@ -1,6 +1,3 @@
-library(MALDIquant)
-library(rhdf5)
-
 # object oriented approach for tof measurements
 
 #' Class TofMeasurement
@@ -9,6 +6,7 @@ library(rhdf5)
 #' 
 #' @slot file Name of the hdf5 file
 #' @slot metaDataScan some extra informations
+#' @import rhdf5
 #' @name tofmeasurement
 #' @exportClass TofMeasurement
 TofMeasurement <- setClass("TofMeasurement",
@@ -29,7 +27,7 @@ TofMeasurement <- setClass("TofMeasurement",
 #'  @export
 #'  @docType methods
 createTofMeasurement <- function(file){
-  .fid <-H5Fopen(tof.h5)
+  .fid <- H5Fopen(tof.h5)
   scan.attr <- h5readAttributes(.fid,'FullSpectra')
   
   .tofBlock <- get.raw.tofblock(.fid)

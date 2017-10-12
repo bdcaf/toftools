@@ -1,5 +1,3 @@
-library(MALDIquant)
-
 #' get just the individual scan (no mass axis included)
 #' 
 #' @description this uses a continous index instead of the buf-write notation
@@ -18,9 +16,9 @@ setGeneric("getJustScan",
 }
 #' @rdname tofmeasurement-methods
 #' @export
-setMethod(f="getJustScan", 
+setMethod(f = "getJustScan", 
           signature = signature("TofMeasurement","numeric"),
-          definition=function(object, index=1){
+          definition = function(object, index=1){
             spec <- read.spec.ind(object@.tofBlock, object@.indexHelp,  index)
           
             return(spec)

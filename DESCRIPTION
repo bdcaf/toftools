@@ -14,30 +14,31 @@ Description: Functions to work with the h5 files produced by the device. Most
 LinkingTo: Rcpp
 License: GPL (>= 2)
 Imports:
-    Rcpp
-Suggests:
-    OrgMassSpecR
-Depends:
+    Rcpp,
     MALDIquant,
     MASS,
     data.table,
     dplyr,
     rhdf5
-Collate:
+Suggests:
+    OrgMassSpecR
+Collate: 
     'RcppExports.R'
     'TofMeasurementClass.R'
-    'TofGetJustScan.R'
     'TofGetScan.R'
+    'TofRaw.R'
     'make_data.R'
     'massCalFunctions.R'
+    'massCalTools.R'
     'spec_tools.R'
-    'tofHolder.R'
     'tofIntegrations.R'
+    'tofInterp.R'
     'tofReader.R'
+    'tofSparse.R'
     'tofTools.R'
-    'tofh5-calib-ionblock.R'
     'tofh5-class.R'
     'tofh5-file.R'
     'tofh5-mass-calib.R'
     'tofh5-scan.R'
 LazyData: true
+RoxygenNote: 6.0.1

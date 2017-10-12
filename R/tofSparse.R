@@ -1,5 +1,3 @@
-library(data.table)
-
 #" create a sparse representation of the full TOF scan
 #"
 #" @description For many functions it seems helpful to use a sparse

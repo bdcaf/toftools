@@ -1,20 +1,15 @@
-library(rhdf5)
-library(dplyr)
-library(tidyr)
-library(purrr)
-library(Matrix)
-
 #' reads integrated peaks as integrated by PTR-MS TOD-DAQ-Viewer.
 #'
 #' WARNING: these must be first integrated in the software otherwise and error
 #' will be thrown.
 #' @export
+#' @useDynLib rhdf5
 #' @param tof.h5 filename of hdf5 file
 #' @return dataframe with structure: rows = scans, cols = counts + information
 #' @examples
 #' tof.h5 <- file.path("data","uncal.h5")
 read.tof.peaks <- function( tof.h5 ){
-  fid <-H5Fopen(tof.h5)
+  fid <- H5Fopen(tof.h5)
   at <- H5Aopen(fid, "NbrWaveforms")
   waveforms <- H5Aread(at)
   H5Aclose(at)
@@ -31,6 +26,8 @@ read.tof.peaks <- function( tof.h5 ){
   return(peak.frame)
 }
 
+#' @useDynLib rhdf5
+#' @import rhdf5
 read.sum.spec <- function(fid){
   gr <- H5Dopen(fid, "FullSpectra/SumSpectrum")
   H5Dread(gr)
@@ -41,28 +38,35 @@ read.mass.cals <- function(fid){
 }
 
 #' approximate mass calibration
-pars.approx <- list(intercept = 900,square_mass = 17600 )
+pars.approx <- list(intercept = 900, square_mass = 17600 )
 
 #' sample ions for TOF calibration
 ions <- c(h3o = 21.0220875,
-          no=29.99744,
+          no = 29.99744,
           o2 = 31.989281,
-          aceton=59.04914,
-          h5o2=39.03265,
-          h7o3=55.03897,
+          aceton = 59.04914,
+          h5o2 = 39.03265,
+          h7o3 = 55.03897,
           meth_formate = 61.028406,
           methacrolein = 71.04914)
 
 #' calculate mass from TOF index
-mass.calc <- function(pars, vec) {(( vec - pars[[1]] )/ pars[[2]] )^2 }
+mass.calc <- function(pars, vec) {
+  ( ( vec - pars[[1]] ) / pars[[2]] ) ^ 2
+}
 
 #' find location of ion maximum in TOF spectrum
-find_ion_tof <- function (ion.mass = 21.0220875, preliminary.coeff, curr.spec.line, wid=0.3) {
-  mass.range <- round(preliminary.coeff$intercept + preliminary.coeff$square_mass*sqrt(ion.mass+ wid*c(-1,1)))
-  ig <- mass.range[1]:mass.range[2]
-  # plot(curr.spec.line[ig], type="l")
-  pos <- ig[1]-1 + which.max(curr.spec.line[ig])
-  ifelse(curr.spec.line[pos] > 10 & curr.spec.line[pos] < 1e6, pos, NA) # NA if either saturated or not enough
+find_ion_tof <- function (ion_mass = 21.0220875,
+                          preliminary_coeff, curr_spec_line,
+                          wid=0.3) {
+  mass_range <- with(preliminary_coeff,
+                     intercept +
+                       square_mass * sqrt(ion_mass + wid * c(-1, 1))
+                     ) %>% round
+  ig <- mass_range[1]:mass_range[2]
+  pos <- ig[1] - 1 + which.max(curr_spec_line[ig])
+  ifelse(curr_spec_line[pos] > 10 & curr_spec_line[pos] < 1e6, pos, NA)
+  # NA if either saturated or not enough
 }
 
 mass.calib.coeff.single <- function (ions, preliminary.coeff, curr.spec.line) {
@@ -109,22 +113,24 @@ smooth.mass.cal <- function (mc.table) {
   mc.fit <- mc.table
   mc.fit$ind <- 1:nrow(mc.fit)
   cc <- lm(cbind(intercept, square_mass) ~ ind, mc.fit)
-  pv <- predict(cc,  data.frame(ind=1:nrow(mc.fit)))
+  predict(cc,  data.frame(ind = 1:nrow(mc.fit)))
 }
 
 #' first step of reading - get the tof block
 #' not export
+#' @useDynLib rhdf5
 #' @examples
 #' fid <-H5Fopen(tof.h5)
 #' tofblock <- get.raw.tofblock(fid)
 #' H5close(fid)
 get.raw.tofblock <- function(fid) {
-  gr <- H5Gopen(fid,"FullSpectra")
-  H5Dopen(gr,"TofData")}
+  gr <- H5Gopen(fid, "FullSpectra")
+  H5Dopen(gr, "TofData")
+}
 
 #' returns full block of tof spectra
 #'
-#' @descriptions reads the full block of tof spectra
+#' @description reads the full block of tof spectra
 #' This can be very large!
 #' @param tofblock from get.raw.tofblock
 #' @return array, first dimenstion is timebin, second scan index
@@ -192,45 +198,6 @@ make.curr.tofreader <- function(tofblock, indexhelp){
   function(i){read.spec.ind(tofblock,indexhelp,i)}
 }
 
-h5ToSqlite <- function(path, tof.h5){
-  src <- src_sqlite(path, create=T)
-  #sparse.table <- tbl("sparse", src)
-
-  fid <-H5Fopen(tof.h5)
-  tofblock <- get.raw.tofblock(fid)
-  indexhelp <- tof.indexhelp(tofblock)
-  aspec <- function(n) read.spec.ind(tofblock, indexhelp, n)
-
-  #db_drop_table(src$con, "sparse")
-
-  ind <- 4
-
-  osframe <- function(ind) {
-    as <- aspec(ind)
-    ss <- sparse_spec(as)
-    cbind(scan = ind, ss)
-  }
-
-    #ss2 <- ss %>%
-      #rowwise() %>%
-      #mutate(ser = list(serialize(v,NULL))) %>%
-      #select(-v)
-  system.time(
-  tmp <- data_frame(scan = seq_len(indexhelp$N)) %>%
-    rowwise() %>%
-    do( osframe(.$scan))
-    )
-
-  to_db <- tmp %>%
-      rowwise() %>%
-      mutate(ser = list(serialize(v,NULL))) %>%
-      select(-v)
-
-  copy_to(src, to_db, name="sparse", temporary=F)
-  #copy_to(src, tmp, name="sparse", temporary=F, indexes=list("scan","bin"))
-}
-
-
 ###############################
 # S3 class for easier working #
 ###############################
@@ -238,7 +205,7 @@ h5ToSqlite <- function(path, tof.h5){
 #' tof_h5 constructor for S3 class
 #' @export
 tof_h5 <- function(tof.h5){
-  fid <-H5Fopen(tof.h5)
+  fid <- H5Fopen(tof.h5)
   tofblock <- get.raw.tofblock(fid)
   indexhelp <- tof.indexhelp(tofblock)
   structure( list(filename = tof.h5,
@@ -267,28 +234,32 @@ print.tof_h5 <- function(th5){
 #' indexhelp <- tof.indexhelp(tofblock)
 #' spec <- read.spec.ind(tofblock, indexhelp, 40)
 #' plot(spec,type="l")
-read_spec_ind.tof_h5 <- function(tofH, i){
-  with(tofH,{
-  pos <- indexhelp$calc.indices[i,]
+read_spec_ind.tof_h5 <- function(tof_handle, i){
+  with(tof_handle, {
+  pos <- indexhelp$calc.indices[i, ]
   H5Sselect_hyperslab(indexhelp$h5spaceFile,
                       start = c(1,1,pos$buf,pos$write),
-                      count = c(indexhelp$dims[[1]],1,1,1) )
+                      count = c(indexhelp$dims[[1]], 1, 1, 1) )
   H5Dread(h5dataset = tofblock,
           h5spaceFile = indexhelp$h5spaceFile,
-          h5spaceMem = indexhelp$h5spaceMem ) }
+          h5spaceMem = indexhelp$h5spaceMem ) 
+            }
   )}
 
 
-sum_spec.tof_h5 <- function(tofH)
-  with(tofH, {
+sum_spec.tof_h5 <- function(tof_handle)
+  with(tof_handle, {
          gr <- H5Dopen(fid, "FullSpectra/SumSpectrum")
          H5Dread(gr)
   })
 
-stored_mass_cal.tof_h5 <- function(tofH){
-  gr <- h5readAttributes(tofH$fid, "FullSpectra")
+#' reads mass calibration from h5 file
+#' @useDynLib rhdf5
+stored_mass_cal.tof_h5 <- function(tof_handle){
+  gr <- h5readAttributes(tof_handle$fid, "FullSpectra")
   with(gr,
-       list( to_mass = Vectorize(function(i) ((i-`MassCalibration p2`)/`MassCalibration p1`)^2),
-             to_index = Vectorize(function(m) `MassCalibration p2` + `MassCalibration p1`*sqrt(m))
+       list( to_mass = Vectorize(function(i) ( (i - `MassCalibration p2`) / `MassCalibration p1`)^2),
+             to_index = Vectorize(function(m) `MassCalibration p2` +
+                                  `MassCalibration p1`*sqrt(m))
              ))
 }

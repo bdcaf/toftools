@@ -4,33 +4,34 @@ library("baseline")
 library("grDevices")
 library("nloptr")
 
-#source("R/tofReader.R")
-#source("R/tofSparse.R")
+devtools::load_all()
 
-data_files <- list.files("data/agcl_br", pattern="\\.h5$", full.names=T)
+data_files <- list.files("data/agcl_br",
+                         pattern = "\\.h5$", full.names = T)
 
 sum_specs <- lapply(data_files, get_sum_spec)
+
+#mcfun <- stored_mass_cal.tof_h5(data_files[[1]])
 
 
 plot_comp <- function(refspec, otherspec = NULL, from, to,
                      ylim=c(0, 1e2), ylab="signal"){
-  plot(refspec, type="l",
-       xlim=c(from, to),
-       ylim=ylim,
-       xlab="index",
-       ylab=ylab
+  plot(refspec, type = "l",
+       xlim = c(from, to),
+       ylim = ylim,
+       xlab = "index",
+       ylab = ylab
        )
-  if (!is.null(otherspec)) lines(otherspec, type="l", col="red")
+  if (!is.null(otherspec)) lines(otherspec, type = "l", col = "red")
   mass_range <- pretty(with(mcfun, c( to_mass(from), to_mass(to))),
-                      n=10)
+                      n = 10)
   index_range <- with(mcfun, to_index(mass_range))
   bad <- index_range < from | index_range > to
   mass_range <- mass_range[!bad]
   index_range <- index_range[!bad]
-  axis(3, index_range, labels=mass_range, line=1,
-       col="red", col.ticks="red", col.axis="red")
+  axis(3, index_range, labels = mass_range, line = 1,
+       col = "red", col.ticks = "red", col.axis = "red")
 }
-
 @
 
 <<avspec, fig.cap="Average spectrum over all samples">>=
@@ -41,3 +42,16 @@ me2 <- ksmooth(seq_along(me), me, kernel="normal", bandwidth=32)
 
 plot(me2, type="l", col="red", ylab="smoothed log1p intensity", xlab="index")
 @
+
+<<warpgen, include=F>>=
+optim_generator <- function(reference_spec, generated_w, warp_fun){
+  reference <- reference_spec/sqrt(sum(reference_spec^2))
+  function(a){
+    warped <- generated_w(warp_fun(a),
+                          where=seq_along(reference))
+    nw <- sqrt(sum(warped^2))
+    -sum(reference * warped)/nw
+  }
+}
+@
+

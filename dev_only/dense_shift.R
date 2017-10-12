@@ -1,6 +1,3 @@
-source('R/spec_tools.R')
-source('R/tofReader.R')
-source('R/massCalTools.R')
 library(ptw)
 library(dplyr)
 library(parallel)
@@ -71,16 +68,16 @@ op_spec <- function(aspec){
   spec.fun <- ap.spec( aspec)
   warper <- function(ll){ diff(c(0,spec.fun(re.index(ll)))) }
   optfun <- function(ll){ 
-  	wspc <- warper(ll) 
-  	ssw <- sqrt(sum(wspc^2))
-	-crossprod(tosum, wspc)/ssw/ssRef 
+        wspc <- warper(ll) 
+        ssw <- sqrt(sum(wspc^2))
+        -crossprod(tosum, wspc)/ssw/ssRef 
   }
 
   # see: http://ab-initio.mit.edu/wiki/index.php/NLopt_Algorithms
   #op.ra <- nloptr(c(0,0,1), optfun, 
-				  #opts = list("algorithm"="NLOPT_LN_COBYLA", 
-								#ftol_rel=1e-6, xtol_rel=1e-6, maxeval=1000),
-				  #lb=c(-1e6,-1e4,0), ub=c(1e6,1e4,2))
+                                  #opts = list("algorithm"="NLOPT_LN_COBYLA", 
+                                                                #ftol_rel=1e-6, xtol_rel=1e-6, maxeval=1000),
+                                  #lb=c(-1e6,-1e4,0), ub=c(1e6,1e4,2))
 
   op.rao <- optim(c(0,0,1), optfun) 
   ws <- warper(op.rao$par)
@@ -90,7 +87,7 @@ op_spec <- function(aspec){
 #lines(pr,ws[pr], col='blue')
 
   list(parameter = op.rao$par,
-  	   warped = ws)
+           warped = ws)
 }
 
 system.time(
@@ -119,8 +116,8 @@ plot(wf[,3])
 
 #global
 #op.ra <- nloptr(c(0,1,0), optfun, 
-				#opts = list("algorithm"="NLOPT_GN_DIRECT_L", ftol_rel=1e-4),
-				#lb=c(-1e6,0,0), ub=c(1e6,2,1e-3))
+                                #opts = list("algorithm"="NLOPT_GN_DIRECT_L", ftol_rel=1e-4),
+                                #lb=c(-1e6,0,0), ub=c(1e6,2,1e-3))
 
 # ---NLOPT_GN_DIRECT_L
 #split.at <- floor(ncol(tof.spectra)/2)
@@ -200,7 +197,7 @@ resampe <- function(ll){
 opt_shift <- function(n){ 
   sa <- as(tof.spectra[,n,drop=F], 'sparseVector')
   optim.fun <- function(ll){
-	-crossprod(sa*resampe(ll))[1]
+        -crossprod(sa*resampe(ll))[1]
   }
 
   best <- optim(c(0.,1,0.), optim.fun, control=list())
