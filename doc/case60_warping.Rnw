@@ -1,4 +1,4 @@
-<<setup, include=F>>=
+<<setup, include = F>>=
 library("rawTof")
 library("baseline")
 library("grDevices")
@@ -6,16 +6,21 @@ library("nloptr")
 
 devtools::load_all()
 
+
 data_files <- list.files("data/agcl_br",
                          pattern = "\\.h5$", full.names = T)
 
 sum_specs <- lapply(data_files, get_sum_spec)
 
-#mcfun <- stored_mass_cal.tof_h5(data_files[[1]])
+data_files <- list.files("data/agcl_br",
+                         pattern = "\\.h5$", full.names = T)
+
+
+mcfun <- stored_mass_cal.tof_h5( H5Fopen(data_files[[1]]))
 
 
 plot_comp <- function(refspec, otherspec = NULL, from, to,
-                     ylim=c(0, 1e2), ylab="signal"){
+                     ylim = c(0, 1e2), ylab = "signal"){
   plot(refspec, type = "l",
        xlim = c(from, to),
        ylim = ylim,
@@ -34,21 +39,21 @@ plot_comp <- function(refspec, otherspec = NULL, from, to,
 }
 @
 
-<<avspec, fig.cap="Average spectrum over all samples">>=
+<<avspec, fig.cap = "Average spectrum over all samples">>=
 rr <- do.call(rbind, sum_specs)
 
-me <- apply(log1p(rr),2,mean)
-me2 <- ksmooth(seq_along(me), me, kernel="normal", bandwidth=32)
+me <- apply(log1p(rr), 2, mean)
+me2 <- ksmooth(seq_along(me), me, kernel = "normal", bandwidth = 32)
 
-plot(me2, type="l", col="red", ylab="smoothed log1p intensity", xlab="index")
+plot(me2, type = "l", col = "red", ylab = "smoothed log1p intensity", xlab = "index")
 @
 
-<<warpgen, include=F>>=
+<<warpgen, include = F>>=
 optim_generator <- function(reference_spec, generated_w, warp_fun){
   reference <- reference_spec/sqrt(sum(reference_spec^2))
   function(a){
     warped <- generated_w(warp_fun(a),
-                          where=seq_along(reference))
+                          where = seq_along(reference))
     nw <- sqrt(sum(warped^2))
     -sum(reference * warped)/nw
   }

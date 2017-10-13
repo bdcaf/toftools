@@ -1,7 +1,5 @@
 ```{r}
-source('R/spec_tools.R')
-source('R/tofReader.R')
-source('R/massCalTools.R')
+load_all()
 library(dtw)
 library(dplyr)
 ```
@@ -10,16 +8,16 @@ library(dplyr)
 # load the data
 tof.h5 <- 'testdata/Ac just breath after C (2014-10-23T11h34m53_#).h5'
 fid <-H5Fopen(tof.h5)
-tofblock <- get.raw.tofblock(fid)
+tofblock <- raw_tofblock(fid)
 indexhelp <- tof.indexhelp(tofblock)
-spec0 <- read.spec.ind(tofblock, indexhelp, 1)
-spec1 <- read.spec.ind(tofblock, indexhelp, 700)
-spec2 <- read.spec.ind(tofblock, indexhelp, 800)
-spec3 <- read.spec.ind(tofblock, indexhelp, 900)
-spec4 <- read.spec.ind(tofblock, indexhelp, 901)
+spec0 <- read_spec_at(tofblock, indexhelp, 1)
+spec1 <- read_spec_at(tofblock, indexhelp, 700)
+spec2 <- read_spec_at(tofblock, indexhelp, 800)
+spec3 <- read_spec_at(tofblock, indexhelp, 900)
+spec4 <- read_spec_at(tofblock, indexhelp, 901)
 
 inds <- seq_len(indexhelp$N) 
-aspec <- function(n) read.spec.ind(tofblock, indexhelp, n)
+aspec <- function(n) read_spec_at(tofblock, indexhelp, n)
 #rf <- function(x,n) x + aspec(n)
 #ss <- Reduce(rf, inds, 0, accumulate=F)
 ss <- read.sum.spec(fid)
@@ -47,7 +45,7 @@ masscal_c1 <- function(fid, indexhelp,
 
 ```{r, fig.cap="original mass calibration jumps"}
 # mass calibration jumps
-legacy_masscal <- read.mass.cals(fid)
+legacy_masscal <- get_mass_calibs(fid)
 par(mfrow=c(2,1))
 plot(legacy_masscal[1,], type='l')
 plot(legacy_masscal[2,], type='l')
@@ -109,17 +107,16 @@ cal0 <- with(df, list(a=median(V1), b=median(V2)))
 spec0 <- spec2mav(ss,cal0, curr.mass.range)
 
 r0 <- peak_stat(spec0, curr.mass.range)
-#plot(curr.mass.range, spec0, type='l')
 ```
 
 ```{r, fig.cap="Acetone with only one calibration for whole measurement"}
 plot(curr.mass.range, spec0, type='l')
 ```
 
-#### Tof daq calibration
+#### TOF DAQ calibration
 
 ```{r}
-legacy_masscal <- read.mass.cals(fid)
+legacy_masscal <- get_mass_calibs(fid)
 
 ihc <- indexhelp$calc.indices %>% left_join(df, by='write')
 
@@ -144,7 +141,7 @@ plot(curr.mass.range, allSpec, type='l')
 #### smooth tof daq
 
 ```{r}
-legacy_masscal <- read.mass.cals(fid)
+legacy_masscal <- get_mass_calibs(fid)
 df <- as_data_frame(t(legacy_masscal)) %>% mutate(write = 1:nrow(.))
 a_smooth <- with(df, smooth.spline(write, V1))
 b_smooth <- with(df, smooth.spline(write, V2))
@@ -296,5 +293,4 @@ tmp2 <- ptw( upd.spec, curr.spec2,
 
 ```
 
-This isn't very fast either - and I'm unhappy that count rates are not
-preserved.
+This isn't very fast either - and I'm unhappy that count rates are not preserved.

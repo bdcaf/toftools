@@ -1,15 +1,15 @@
 \subsection{Unwarping}
 
-Unwarping a lengthy measurement is a complex task.  
+Unwarping a lengthy measurement is a complex task.
 
-A typical TOF spectrum is extremely sparse.  From the typical 398999 bins
-collected only less than 2500 contain numbers greater zero (obtained
-  from a breath sample).
+A typical TOF spectrum is extremely sparse.  From the typical
+398999 bins collected only less than 2500 contain numbers greater
+zero (obtained from a breath sample).
 
-The currently most widely used warping correction --- the dynamic time
-warp (dtw) performs in its original implementation under such conditions
-rather poorly and is easily confused as the traces of individual peaks
-are similar.
+The currently most widely used warping correction - - - the dynamic
+time warp (dtw) performs in its original implementation under such
+conditions rather poorly and is easily confused as the traces of
+individual peaks are similar.
 
 Here we consider two variants:
 \begin{itemize}
@@ -18,24 +18,24 @@ Here we consider two variants:
 \end{itemize}
 
 
-The initial intuition was to use sparse coding - but this proved more
-complex than it was worth.  May be revisited later.
+The initial intuition was to use sparse coding - but this proved
+more complex than it was worth.  May be revisited later.
 
 
 
 \paragraph{calculation}
 
-As measurement of agreement we consider correlation. i.e. the function
+As measurement of agreement we consider correlation. I.e. the function
 $\cor a b = \tfrac{ a \ldot b}{\norm{a}\norm{b}} is to be maximized.
 
 \subparagraph{resampling}
 
-We consider the warp function $ \tilde i = a + b \sqrt i + c i$.  For
-the further discussion we want the warped signal $\tilde v$ to have the
-same sum as the unwarped $v$.  This is easiest achieved when we use the
-cumulative $V$ of $v$ and locally interpolate to the new indexes to a
-warped cumulative $\tilde V$.  $\tilde v$ is the 2 point derivative of
-$\tilde V$.
+We consider the warp function $\tilde i = a + b \sqrt i + c i$.
+For the further discussion we want the warped signal $\tilde v$ to
+have the same sum as the unwarped $v$.  This is easiest achieved
+when we use the cumulative $V$ of $v$ and locally interpolate to
+the new indexes to a warped cumulative $\tilde V$.  $\tilde v$ is
+the 2 point derivative of $\tilde V$.
 
 \subparagraph{correlation}
 
@@ -43,249 +43,247 @@ The as the resampled vector is available as cumulative we can also
 rewrite it.
 
 \[
-  \cor v w 
-  &= \Sum_{i=1}^{N} v_i w_i \\
-  &= \Sum_{i=2}^{N} v_i (W_i - W_{i-1}) \\
-  &= \Sum_{i=2}^{N} v_i W_i -  \Sum_{i=1}^{N-1} v_{i+1} W_i \\
-  &= \Sum_{i=1}^{N-1} W_i (v_i - v_{i+1})
+  \cor v w
+  &= \Sum_{i = 1}^{N} v_i w_i \\
+  &= \Sum_{i = 2}^{N} v_i (W_i - W_{i - 1}) \\
+  &= \Sum_{i = 2}^{N} v_i W_i -  \Sum_{i = 1}^{N - 1} v_{i+1} W_i \\
+  &= \Sum_{i = 1}^{N - 1} W_i (v_i - v_{i+1})
 \]
 
 We use that the first and last entries of all spectra are $0$ to
 simplify the indices above.
 
 <<initialization>>=
-source('R/spec_tools.R')
-source('R/tofReader.R')
-source('R/massCalTools.R')
 library(dplyr)
+load_all()
 @
 
 <<>>=
 # load the data
-tof.h5 <- 'testdata/Ac just breath after C (2014-10-23T11h34m53_#).h5'
-fid <-H5Fopen(tof.h5)
-tofblock <- get.raw.tofblock(fid)
+tof.h5 <- "testdata/Ac just breath after C (2014 - 10 - 23T11h34m53_#).h5"
+fid <- H5Fopen(tof.h5)
+tofblock <- raw_tofblock(fid)
 indexhelp <- tof.indexhelp(tofblock)
-spec0 <- read.spec.ind(tofblock, indexhelp, 1)
-spec1 <- read.spec.ind(tofblock, indexhelp, 700)
-spec2 <- read.spec.ind(tofblock, indexhelp, 800)
-spec3 <- read.spec.ind(tofblock, indexhelp, 900)
-spec4 <- read.spec.ind(tofblock, indexhelp, 901)
+spec0 <- read_spec_at(tofblock, indexhelp, 1)
+spec1 <- read_spec_at(tofblock, indexhelp, 700)
+spec2 <- read_spec_at(tofblock, indexhelp, 800)
+spec3 <- read_spec_at(tofblock, indexhelp, 900)
+spec4 <- read_spec_at(tofblock, indexhelp, 901)
 
-inds <- seq_len(indexhelp$N) 
-aspec <- function(n) read.spec.ind(tofblock, indexhelp, n)
+inds <- seq_len(indexhelp$N)
+aspec <- function(n) read_spec_at(tofblock, indexhelp, n)
 spspec <- function(n) sparse_spec(aspec(n))
-#rf <- function(x,n) x + aspec(n)
-#ss <- Reduce(rf, inds, 0, accumulate=F)
-ss <- read.sum.spec(fid)
+ss <- read_sum_spec(fid)
 
-sss <- sparse_spec(spec0)
+#sss <- sparse_spec(spec0)
 
 
-df <- tibble( scan=seq_len(indexhelp$N))  %>% 
-  rowwise() %>%
-  do(spspec(.$scan))
+#df <- tibble( scan = seq_len(indexhelp$N))  %>%
+  #rowwise() %>%
+  #do(spspec(.$scan))
 @
 
-<<fig.cap="sum spectrum">>=
-plot(ss, type='l')
+<<fig.cap = "sum spectrum">>=
+plot(ss, type = "l")
 @
 
 <<>>=
 m2 <- masscal_legacy_smooth(fid, indexhelp)
 
-calib <- m2[1,]
+calib <- m2[1, ]
 spec <- aspec(1)
-ma <- with(calib, (seq_along(spec)-b)^2/a^2)
-plot(ma, spec, type='l')
+ma <- with(calib, (seq_along(spec) - b) ^ 2 / a ^ 2)
+plot(ma, spec, type = "l")
 
-masscal_c1 <- function(fid, indexhelp, 
-					   resolution=1e4,
-					   mass.low=10,
-					   mass.high=200){
-  mass_axis <- make_mass_axis(resolution=resolution, mass.low=mass.low, mass.high=mass.high)
+masscal_c1 <- function(fid, indexhelp,
+                                           resolution = 1e4,
+                                           mass.low = 10,
+                                           mass.high = 200){
+  mass_axis <- make_mass_axis(resolution = resolution,
+                              mass.low = mass.low,
+                              mass.high = mass.high)
 }
-
-
-<<fig.cap="original mass calibration jumps">>=
-# mass calibration jumps
-legacy_masscal <- read.mass.cals(fid)
-par(mfrow=c(2,1))
-plot(legacy_masscal[1,], type='l')
-plot(legacy_masscal[2,], type='l')
 @
 
-<<fig.cap="some smoothing may globally be more effective">>=
+
+<<fig.cap = "original mass calibration jumps">>=
+# mass calibration jumps
+legacy_masscal <- get_mass_calibs(fid)
+par(mfrow = c(2, 1))
+plot(legacy_masscal[1, ], type = "l")
+plot(legacy_masscal[2, ], type = "l")
+@
+
+<<fig.cap = "some smoothing may globally be more effective">>=
 # mass calibration a smooth one makes maybe sense
 df <- as_data_frame(t(legacy_masscal)) %>% mutate(write = 1:nrow(.))
 a_smooth <- with(df, smooth.spline(write, V1))
 b_smooth <- with(df, smooth.spline(write, V2))
 
-r <- with(indexhelp, 1/dims[[3]])
-ci <- indexhelp$calc.indices %>% 
-  mutate(x = write - 0.5 + r*buf,
-  		 a = predict(a_smooth, x=x)$y,
-  		 b = predict(b_smooth, x=x)$y
-  		 )
+r <- with(indexhelp, 1 / dims[[3]])
+ci <- indexhelp$calc.indices %>%
+  mutate(x = write - 0.5 + r * buf,
+                 a = predict(a_smooth, x = x)$y,
+                 b = predict(b_smooth, x = x)$y
+                 )
 
-par(mfrow=c(2,1))
+par(mfrow = c(2, 1))
 
-plot(df$write, df$V1, type='p')
-lines(ci$x, ci$a, col='red', lwd=3)
+plot(df$write, df$V1, type = "p")
+lines(ci$x, ci$a, col = "red", lwd = 3)
 
-plot(df$write, df$V2, type='p')
-lines(ci$x, ci$b, col='red', lwd=3)
+plot(df$write, df$V2, type = "p")
+lines(ci$x, ci$b, col = "red", lwd = 3)
 @
 
 ## try comparing the results
 
 <<>>=
 peak_stat <- function(spec0, maxis){
-  spec0[1]<-0
-  mom0 = sum(spec0)
-  mom1 = sum(spec0*maxis)
-  mom2 = sum(spec0*maxis^2)
-  mm = max(spec0)
+  spec0[1] <- 0
+  mom0 <- sum(spec0)
+  mom1 <- sum(spec0 * maxis)
+  mom2 <- sum(spec0 * maxis ^ 2)
+  mm <- max(spec0)
   im <- which.max(spec0)
-  ig = spec0 > (mm/2)
+  ig <- spec0 > (mm / 2)
   tmp <- maxis[ig]
-  fwhm <- tmp[length(tmp)]-tmp[1]
+  fwhm <- tmp[length(tmp)] - tmp[1]
 
-  list(mean = mom1/mom0,
-	  var = mom2/mom0 - (mom1/mom0)^2,
-	  fwhm = fwhm,
-	  max.mass = maxis[im])
+  list(mean = mom1 / mom0,
+          var = mom2 / mom0 - (mom1 / mom0) ^ 2,
+          fwhm = fwhm,
+          max.mass = maxis[im])
 }
 
 @
-### m/z 31
+### m/z 31,w
+
 
 #### only one mass calibration per measurement
 <<>>=
-base.mass <- 31
-curr.mass.range <- 
-  make_mass_axis( mass.low=base.mass-0.05, 
-				  mass.high=base.mass + 0.05)
+base_mass <- 31
+curr_mass_range <-
+  make_mass_axis( mass.low = base_mass - 0.05,
+                                  mass.high = base_mass + 0.05)
 
-cal0 <- with(df, list(a=median(V1), b=median(V2)))
-spec0 <- spec2mav(ss,cal0, curr.mass.range)
+cal0 <- with(df, list(a = median(V1), b = median(V2)))
+spec0 <- spec2mav(ss, cal0, curr_mass_range)
 
-r0 <- peak_stat(spec0, curr.mass.range)
-#plot(curr.mass.range, spec0, type='l')
+r0 <- peak_stat(spec0, curr_mass_range)
 @
 
-<<fig.cap="Acetone with only one calibration for whole measurement">>=
-plot(curr.mass.range, spec0, type='l')
+<<fig.cap = "Acetone with only one calibration for whole measurement">>=
+plot(curr_mass_range, spec0, type = "l")
 @
 
 #### Tof daq calibration
 
 <<>>=
-legacy_masscal <- read.mass.cals(fid)
+legacy_masscal <- get_mass_calibs(fid)
 
-ihc <- indexhelp$calc.indices %>% left_join(df, by='write')
+ihc <- indexhelp$calc.indices %>% left_join(df, by = "write")
 
 n <- 100
-n2spec <- function(ihc,n){
+n2spec <- function(ihc, n){
   sa <- aspec(n)
-  cala <- with(ihc[n,], list( a=V1, b=V2))
-  speca <- spec2mav(sa,cala, curr.mass.range)
+  cala <- with(ihc[n, ], list( a = V1, b = V2))
+  speca <- spec2mav(sa, cala, curr_mass_range)
 }
 
 rfun <- function(x, n){
-  x + n2spec(ihc,n)
+  x + n2spec(ihc, n)
 }
 
-allSpec <- Reduce(rfun, seq_len(indexhelp$N), 0)
+all_spec <- Reduce(rfun, seq_len(indexhelp$N), 0)
 
-plot(curr.mass.range, allSpec, type='l')
-#ra <- peak_stat(allSpec, curr.mass.range)
+plot(curr_mass_range, all_spec, type = "l")
 @
 
 
 #### smooth tof daq
 
 <<>>=
-legacy_masscal <- read.mass.cals(fid)
+legacy_masscal <- get_mass_calibs(fid)
 df <- as_data_frame(t(legacy_masscal)) %>% mutate(write = 1:nrow(.))
 a_smooth <- with(df, smooth.spline(write, V1))
 b_smooth <- with(df, smooth.spline(write, V2))
 
-r <- with(indexhelp, 1/dims[[3]])
-ci <- indexhelp$calc.indices %>% 
-  mutate(x = write - 0.5 + r*buf,
-  		 a = predict(a_smooth, x=x)$y,
-  		 b = predict(b_smooth, x=x)$y
-  		 )
+r <- with(indexhelp, 1 / dims[[3]])
+ci <- indexhelp$calc.indices %>%
+  mutate(x = write - 0.5 + r * buf,
+                 a = predict(a_smooth, x = x)$y,
+                 b = predict(b_smooth, x = x)$y
+                 )
 
 calfun <- function(n)
-  ci[n,]
+  ci[n, ]
 
-n2spec <- function(cf,n){
+n2spec <- function(cf, n){
   sa <- aspec(n)
   cala <- cf(n)
-  speca <- spec2mav(sa,cala, curr.mass.range)
+  speca <- spec2mav(sa, cala, curr_mass_range)
 }
 
 rfun <- function(x, n){
-  x + n2spec(calfun,n)
+  x + n2spec(calfun, n)
 }
 
-allSpecS <- Reduce(rfun, seq_len(indexhelp$N), 0)
+all_spec_s <- Reduce(rfun, seq_len(indexhelp$N), 0)
 
-plot(curr.mass.range, allSpecS, type='l')
-rS <- peak_stat(allSpecS, curr.mass.range)
+plot(curr_mass_range, all_spec_s, type = "l")
+sp_stats <- peak_stat(all_spec_s, curr_mass_range)
 @
 
 
-<<fig.cap="overlay tof daq calibrations">>=
-plot(curr.mass.range, spec0, type='l')
-lines(curr.mass.range, allSpec, col='red')
-lines(curr.mass.range, allSpecS, col='blue')
+<<fig.cap = "overlay tof daq calibrations">>=
+plot(curr_mass_range, spec0, type = "l")
+lines(curr_mass_range, all_spec_, col = "red")
+lines(curr_mass_range, all_spec_s, col = "blue")
 @
 
 
 ## realigning
 
 <<>>=
-n<- 1000
-cumspec <- read.sum.spec(fid)
+n <- 1000
+cumspec <- read_sum_spec(fid)
 sa <- aspec(n)
-ca <- cumspec-sa
+ca <- cumspec - sa
 
 css <- cumsum(sa)
 cca <- cumsum(ca)
 
 inds <- seq_along(cca)
-af <- approxfun(inds, css, rule=2)
+af <- approxfun(inds, css, rule = 2)
 
 
-scaled <- function(af,inds,d,e) {
-  i2 <- inds/d-e
-  c(0,diff(af(i2)))
+scaled <- function(af, inds, d, e) {
+  i2 <- inds / d - e
+  c(0, diff(af(i2)))
 }
 
 
 dist_fun <- function(af, d, e){
-  sas <- scaled(af,inds, d,e)
-  1 - cor(sas,ca)
+  sas <- scaled(af, inds, d, e)
+  1 - cor(sas, ca)
 }
 
 best_shift <-
-  optim(c(1,0), 
-	  function(x) dist_fun(af, x[[1]], x[[2]])
-	  )
+  optim(c(1, 0),
+          function(x) dist_fun(af, x[[1]], x[[2]])
+          )
 
-es <- seq(-0,0.7,length.out=50)
-ed <- sapply(es, function(x) dist_fun(af,best_shift$par[[1]],x))
+es <- seq( - 0, 0.7, length.out = 50)
+ed <- sapply(es, function(x) dist_fun(af, best_shift$par[[1]], x))
 
-ds <- seq(1- 2e-5,1.00002,length.out=50)
+ds <- seq(1 - 2e-5, 1.00002, length.out = 50)
 concfun <- function(x) ofun(dense, spa, x)
-of <- optim(c(0,1,0), concfun )
+of <- optim(c(0, 1, 0), concfun )
 
-par(mfrow=c(2,1))
-plot(es,ed, type='l')
-plot(ds,dd, type='l')
+par(mfrow = c(2, 1))
+plot(es, ed, type = "l")
+plot(ds, dd, type = "l")
 
 @
 
@@ -293,31 +291,28 @@ plot(ds,dd, type='l')
 <<>>=
 optim_shift <- function(n){
   curr.spec <- aspec(n)
-  other.specs <- cumspec-curr.spec
-  cum.cur.spec <- cumsum(curr.spec)
-  
+  other.specs <- cumspec - curr.spec
+  cum_cur_spec <- cumsum(curr.spec)
+
   work.indices <- seq_along(cumspec)
   inds <- seq_along(curr.spec)
-  interp.spec <- approxfun(inds, cum.cur.spec, rule=2)
+  interp.spec <- approxfun(inds, cum_cur_spec, rule = 2)
   shifted.spec <- function(x) {
-  	e <- x[[1]]
-  	d <- x[[2]]
-    i2 <- inds/d-e
-    c(0,diff(interp.spec(i2)))
+        e <- x[[1]]
+        d <- x[[2]]
+    i2 <- inds / d - e
+    c(0, diff(interp.spec(i2)))
   }
 
   dist2other <- function(x){
-	sas <- shifted.spec(x)
-	1 - cor(sas, other.specs)
+        sas <- shifted.spec(x)
+        1 - cor(sas, other.specs)
   }
 
-  spec.opt <- optim(c(0,1), dist2other) 
+  spec.opt <- optim(c(0, 1), dist2other)
   return(spec.opt$par)
 }
 
-#a <- optim_shift(4)
-
-#os <- lapply(seq_len(indexhelp$N), optim_shift)
 os <- lapply(seq_len(20), optim_shift)
 
 otl <- do.call(rbind, os)
@@ -327,37 +322,36 @@ otl <- do.call(rbind, os)
 <<>>=
 library(ptw)
 n <- 100
-  curr.spec <- matrix(aspec(n), nrow=1)
-  other.specs <- matrix(cumspec, nrow=1) - curr.spec
+curr.spec <- matrix(aspec(n), nrow = 1)
+other.specs <- matrix(cumspec, nrow = 1) - curr.spec
 
 system.time(
-tmp <- ptw(other.specs, curr.spec, 
-		   mode = "forward",
-           warp.type = "global", 
+tmp <- ptw(other.specs, curr.spec,
+                   mode = "forward",
+           warp.type = "global",
            trwdth = 10)
 )
 
 s2 <- tmp$warped.sample
 s2[is.na(s2)] <- 0
 sum(curr.spec)
-sum(s2, na.rm=T)
+sum(s2, na.rm = T)
 
-plot(x=inds, curr.spec, type='l')
-lines(x=inds, t(tmp$warped.sample), col='red')
+plot(x = inds, curr.spec, type = "l")
+lines(x = inds, t(tmp$warped.sample), col = "red")
 
 tmp$warp.coef
-curr.spec2 <- matrix(aspec(101), nrow=1)
+curr.spec2 <- matrix(aspec(101), nrow = 1)
 upd.spec <- other.specs - curr.spec2 + s2
 system.time(
-tmp2 <- ptw( upd.spec, curr.spec2, 
-		   mode = "forward",
-           warp.type = "global", 
-           smooth.param = 0, 
-           init.coef = tmp$warp.coef,
-           trwdth = 10)
-)
-
+    tmp2 <- ptw( upd.spec, curr.spec2,
+                mode = "forward",
+                warp.type = "global",
+                smooth.param = 0,
+                init.coef = tmp$warp.coef,
+                trwdth = 10)
+            )
 @
 
-This isn't very fast either - and I'm unhappy that count rates are not
-preserved.
+This isn't very fast either - and I'm unhappy that count rates are
+not preserved.

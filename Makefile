@@ -20,9 +20,6 @@ work/documented: $(wildcard *.R) attributes
 	R -e 'library(devtools);document()'
 	touch $@
 
-tofTools_0.2.tar.gz: $(wildcard *.R) tmp/documented 
-	R CMD build .
-
 attributes:
 	Rscript -e 'Rcpp::compileAttributes()'
 

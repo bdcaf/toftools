@@ -23,7 +23,7 @@ ap <- ptw(t(t2),t(b2), optim.crit='WCC', trwdth=5, verbose=T)
 #tof.h5 <- 'testdata/Ac just breath after C (2014-10-23T11h34m53_#).h5'
 tof.h5 <- 'testdata/2017.02.15-15h22m12s D6-EtOHbreathclemens.h5'
 fid <-H5Fopen(tof.h5)
-tofblock <- get.raw.tofblock(fid)
+tofblock <- raw_tofblock(fid)
 
 # takes 30 s and 9 GB in process - maybe can be accelerated
 # for the breath sample even 240 s = 4 min

@@ -19,7 +19,7 @@ setGeneric("getJustScan",
 setMethod(f = "getJustScan", 
           signature = signature("TofMeasurement","numeric"),
           definition = function(object, index=1){
-            spec <- read.spec.ind(object@.tofBlock, object@.indexHelp,  index)
+            spec <- read_spec_at(object@.tofBlock, object@.indexHelp,  index)
           
             return(spec)
           })

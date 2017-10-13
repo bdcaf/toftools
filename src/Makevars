@@ -1,3 +1,0 @@
-# created by rstan at Tue Nov 18 10:04:49 2014 
-CXXFLAGS = -O3 -Wall $(DEBUGFLAG) -mtune=core2  #set_by_rstan
-R_XTRA_CPPFLAGS = -I"$(R_HOME)/include"   #set_by_rstan
