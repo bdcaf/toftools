@@ -1,0 +1,39 @@
+## mass traces
+<<setup, include=F>>=
+library("baseline")
+library("ggridges")
+library("grDevices")
+library("magrittr")
+library("nloptr")
+library("rawTof")
+library("tidyr")
+library("dplyr")
+library("nloptr")
+
+#source("R/tofReader.R")
+#source("R/tofSparse.R")
+
+data_files <- list.files("data/agcl_br", pattern="\\.h5$", full.names=T)
+
+source("R/massCalFunctions.R")
+mcfun <- masscal_helper(data_files[[1]])
+
+mass_range <- c(21, 21.05)
+make_block <- function(mcfun, mass_range){
+  ind_range <- with(mcfun, to_index(mass_range))
+  seq(from= floor(ind_range[[1]]), to=ceiling(ind_range[[2]]))
+}
+
+df <- data_files[[4]]
+si <- 50
+one_int <- function(df, si, block){
+  ss <- get_single_scan(df, si)
+  pa <- sum(ss[block])
+}
+
+trace <- sapply(1:60, function(i) one_int(df,i,block))
+
+sum_specs <- lapply(data_files, get_sum_spec)
+
+@
+
