@@ -58,7 +58,7 @@ library(dplyr)
 load_all()
 @
 
-<<>>=
+<<loading>>=
 # load the data
 tof.h5 <- "testdata/Ac just breath after C (2014 - 10 - 23T11h34m53_#).h5"
 fid <- H5Fopen(tof.h5)
@@ -74,13 +74,6 @@ inds <- seq_len(indexhelp$N)
 aspec <- function(n) read_spec_at(tofblock, indexhelp, n)
 spspec <- function(n) sparse_spec(aspec(n))
 ss <- read_sum_spec(fid)
-
-#sss <- sparse_spec(spec0)
-
-
-#df <- tibble( scan = seq_len(indexhelp$N))  %>%
-  #rowwise() %>%
-  #do(spspec(.$scan))
 @
 
 <<fig.cap = "sum spectrum">>=
@@ -136,7 +129,7 @@ plot(df$write, df$V2, type = "p")
 lines(ci$x, ci$b, col = "red", lwd = 3)
 @
 
-## try comparing the results
+\subsection{try comparing the results}
 
 <<>>=
 peak_stat <- function(spec0, maxis){
@@ -157,10 +150,11 @@ peak_stat <- function(spec0, maxis){
 }
 
 @
-### m/z 31,w
+
+\subsubsection{m/z 31}
 
 
-#### only one mass calibration per measurement
+\paragraph{only one mass calibration per measurement}
 <<>>=
 base_mass <- 31
 curr_mass_range <-
@@ -177,7 +171,7 @@ r0 <- peak_stat(spec0, curr_mass_range)
 plot(curr_mass_range, spec0, type = "l")
 @
 
-#### Tof daq calibration
+\paragraph{Tof daq calibration}
 
 <<>>=
 legacy_masscal <- get_mass_calibs(fid)
@@ -201,7 +195,7 @@ plot(curr_mass_range, all_spec, type = "l")
 @
 
 
-#### smooth tof daq
+\paragraph{smooth tof daq}
 
 <<>>=
 legacy_masscal <- get_mass_calibs(fid)
@@ -243,7 +237,7 @@ lines(curr_mass_range, all_spec_s, col = "blue")
 @
 
 
-## realigning
+\subsection{realigning}
 
 <<>>=
 n <- 1000
@@ -318,7 +312,7 @@ os <- lapply(seq_len(20), optim_shift)
 otl <- do.call(rbind, os)
 @
 
-### ptw seems all the rage
+\subsubsection{ptw seems all the rage}
 <<>>=
 library(ptw)
 n <- 100

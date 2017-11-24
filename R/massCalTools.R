@@ -55,7 +55,7 @@ make_mass_axis <- function( resolution=1e4,
                                            to = log10(mass.high),
                                            length.out=((mass.high-mass.low)*resolution)
                                            )
-  mass_axis <- 10^log_mass_axis
+  mass_axis <- 10 ^ log_mass_axis
 }
 
 #" convert mass axis to indices in a specific spectrum
@@ -64,7 +64,7 @@ make_mass_axis <- function( resolution=1e4,
 #" @param mass_axis mass axis
 #" @return vector of indices (non integer!)
 massaxis2ind <- function(calib, mass_axis){
-  with( calib, a*sqrt(mass_axis) + b)
+  with( calib, a * sqrt(mass_axis) + b)
 }
 
 #" convert indices to local mass axis in a specific spectrum

@@ -45,18 +45,18 @@ rr <- do.call(rbind, sum_specs)
 me <- apply(log1p(rr), 2, mean)
 me2 <- ksmooth(seq_along(me), me, kernel = "normal", bandwidth = 32)
 
-plot(me2, type = "l", col = "red", ylab = "smoothed log1p intensity", xlab = "index")
+plot(me2, type = "l", col = "red",
+     ylab = "smoothed log1p intensity", xlab = "index")
 @
 
 <<warpgen, include = F>>=
 optim_generator <- function(reference_spec, generated_w, warp_fun){
-  reference <- reference_spec/sqrt(sum(reference_spec^2))
+  reference <- reference_spec / sqrt(sum(reference_spec ^ 2))
   function(a){
     warped <- generated_w(warp_fun(a),
                           where = seq_along(reference))
-    nw <- sqrt(sum(warped^2))
-    -sum(reference * warped)/nw
+    nw <- sqrt(sum(warped ^ 2))
+    -sum(reference * warped) / nw
   }
 }
 @
-
