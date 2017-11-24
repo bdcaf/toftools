@@ -14,8 +14,10 @@ Description: Functions to work with the h5 files produced by the device. Most
 LinkingTo: Rcpp
 License: GPL (>= 2)
 Imports: Rcpp, MALDIquant, MASS, data.table, dplyr, rhdf5
-Suggests: OrgMassSpecR
-Collate: 
+Suggests: OrgMassSpecR,
+    knitr,
+    rmarkdown
+Collate:
     'RcppExports.R'
     'TofMeasurementClass.R'
     'TofGetScan.R'
@@ -38,3 +40,4 @@ LazyData: true
 RoxygenNote: 6.0.1
 NeedsCompilation: yes
 Packaged: 2017-10-13 11:27:53 UTC; cle
+VignetteBuilder: vignetteEngineMake
