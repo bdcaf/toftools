@@ -1,0 +1,118 @@
+\section{Warping}
+<<setup, include = F>>=
+library("rawTof")
+library("baseline")
+library("grDevices")
+library("nloptr")
+@
+
+<<data>>=
+data_files <- list.files("acetone_data",
+                         pattern = "\\.h5$", full.names = T, recursive = T)
+
+sum_specs <- lapply(data_files, get_sum_spec)
+
+mcfun <- stored_mass_cal.tof_h5( H5Fopen(data_files[[1]]))
+
+len <- sapply(sum_specs, length) %>% min
+sum_specs <- lapply(sum_specs, function(x) x[1:len])
+
+plot_comp <- function(refspec, otherspec = NULL, from, to,
+                     ylim = c(0, 1e2), ylab = "signal"){
+  plot(refspec, type = "l",
+       xlim = c(from, to),
+       ylim = ylim,
+       xlab = "index",
+       ylab = ylab
+       )
+  if (!is.null(otherspec)) lines(otherspec, type = "l", col = "red")
+  mass_range <- pretty(with(mcfun, c( to_mass(from), to_mass(to))),
+                      n = 10)
+  index_range <- with(mcfun, to_index(mass_range))
+  bad <- index_range < from | index_range > to
+  mass_range <- mass_range[!bad]
+  index_range <- index_range[!bad]
+  axis(3, index_range, labels = mass_range, line = 1,
+       col = "red", col.ticks = "red", col.axis = "red")
+}
+@
+
+<<avspec, fig.cap = "Average spectrum over all samples">>=
+rr <- do.call(rbind, sum_specs)
+
+me <- apply(log1p(rr), 2, mean)
+me2 <- ksmooth(seq_along(me), me, kernel = "normal", bandwidth = 16)
+
+plot(me2, type = "l", col = "red",
+     ylab = "smoothed log1p intensity", xlab = "index")
+@
+
+<<warpgen, include = F, cache = T>>=
+optim_generator <- function(reference_spec, generated_w, warp_fun){
+  reference <- reference_spec / sqrt(sum(reference_spec ^ 2))
+  function(a){
+    warped <- generated_w(warp_fun(a),
+                          where = seq_along(reference))
+    nw <- sqrt(sum(warped ^ 2))
+    -sum(reference * warped) / nw
+  }
+}
+
+warp0 <- function(a) function(x) a[[1]] + x
+
+warp1 <- function(a) function(x) a[[1]] + a[[2]] * x
+
+generated_w <- make_densewarp(me2$y, me2$x)
+normalize <- function(x) x / sqrt( sum(x ^ 2))
+w_fun <- function(x) optim_generator(x, generated_w, warp0)
+o_fun <- function(o)
+  nloptr(x0 = c(0), eval_f = o,
+         lb = c(-30), ub = c(30),
+         opts = list("algorithm" = "NLOPT_LN_BOBYQA",
+                     "xtol_abs" = c(0.0001),
+                     "maxeval" = 200))
+@
+
+
+As we see in \fref{fig:warp1} the best overlap is at \num{0} shift.  So warp correction is not necessary.
+
+<<wide_warp1, fig.cap = "Match factor of first spectrum under shift, showing wider range.", cached = T, dependson = c("warpgen")>>=
+cur <- log1p(rr[1, ])
+cur_norm <- cur %>% normalize
+og <- optim_generator(cur_norm, generated_w, warp0)
+
+xw <- seq(-1500, 1500, length.out = 99)
+v <- sapply(xw, og)
+plot(xw, -v, type = "l", xlab = "Shift", ylab = "Match")
+@
+
+<<warp1, fig.cap = "Match factor of first spectrum under shift.", cached = T, dependson = c("warpgen")>>=
+cur <- log1p(rr[1, ])
+cur_norm <- cur %>% normalize
+og <- optim_generator(cur_norm, generated_w, warp0)
+
+xw <- seq(-15, 15, length.out = 99)
+v <- sapply(xw, og)
+plot(xw, -v, type = "l", xlab = "Shift", ylab = "Match")
+@
+
+<<warp6, fig.cap = "Match factor of sixth spectrum under shift.", cached = T, dependson = c("warpgen")>>=
+cur <- log1p(rr[6, ])
+cur_norm <- cur %>% normalize
+og <- optim_generator(cur_norm, generated_w, warp0)
+
+xw <- seq(-30, 15, length.out = 99)
+v <- sapply(xw, og)
+plot(xw, -v, type = "l", xlab = "Shift", ylab = "Match")
+@
+
+<<warpall, dependson=c("warpgen"), cached = T>>=
+all_warps <- apply(rr, 1, function(x) w_fun(x) %>% o_fun)
+opts <- sapply(all_warps, function(x) x$solution)
+@
+
+<<showwarps, fig.cap = "actual warps when compared to sum spectrum.", cache = T, dependson = c("warpall")>>=
+plot(opts)
+@
+
+The required shifts are tiny -- probably just related with the saturated peaks.

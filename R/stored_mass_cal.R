@@ -15,6 +15,8 @@ stored_mass_cal.tof_h5 <- function(fid){
   to_mass = Vectorize(function(i) (
    (i - `MassCalibration p2`) / `MassCalibration p1`) ^ 2),
   to_index = Vectorize(function(m)
-   `MassCalibration p2` + `MassCalibration p1` * sqrt(m))
+   `MassCalibration p2` + `MassCalibration p1` * sqrt(m)),
+            coefs = c(p1 = `MassCalibration p1`,
+                      p2 = `MassCalibration p2`)
              ))
 }

@@ -1,0 +1,110 @@
+\section{Mass calibration}
+
+As good alignment has been assured beforehand now mass calibration can be performed on the sum spectrum.
+
+<<setup, include = F>>=
+library("magrittr")
+library("rawTof")
+library("baseline")
+library("grDevices")
+library("nloptr")
+library("OrgMassSpecR")
+options(digits = 3)
+@
+
+<<data>>=
+data_files <- list.files("acetone_data",
+                         pattern = "\\.h5$", full.names = T, recursive = T)
+
+mcfun <- read_stored_masscal(data_files[[1]])
+
+sum_specs <- read_all_sum_spec(data_files)
+agg_spec <- build_sum_spec(data_files) %>%
+  ksmooth(seq_along(.), ., kernel = "normal", bandwidth = 4)
+@
+
+<<avspecmass, fig.cap = "Average spectrum over all samples">>=
+mass_ax0 <- mcfun$to_mass(agg_spec$x)
+sig <- agg_spec$y
+
+plot(mass_ax0, sig, type = "l", col = "red",
+     ylab = "signal", xlab = "mass")
+@
+
+<<calcions, include = F>>=
+m_el <- 5.485799090e-4
+proton <- MonoisotopicMass(formula = list(H = 1)) - m_el
+masses <- list(
+   h3o = MonoisotopicMass(formula = list(H = 3, O = 1),
+                          isotopes = list( O = 17.999161)) - m_el,
+   acetone = MonoisotopicMass(formula = list(C = 3, O = 1, H = 7)) - m_el,
+   d6acetone = MonoisotopicMass(formula = list(C = 3, O = 1, H = 1, x = 6),
+                                isotopes = list(x = 2.01410178)) -m_el,
+   isoprene = MonoisotopicMass(formula = list(C = 5, H = 9)) - m_el,
+   ethanol = MonoisotopicMass(formula = list(C = 2, O = 1, H = 7)) - m_el,
+   acetaldehyde = MonoisotopicMass(formula = list(C = 2, O = 1, H = 5)) - m_el
+   )
+@
+
+
+At least three ions are required to perform proper mass calibration.  The
+selected ions are \ce{H3O+}(mz=\num{\Sexpr{masses$h3o}}),
+acetone(mz=\num{\Sexpr{masses$acetone}}), D6
+acetone(mz=\num{\Sexpr{masses$d6acetone}}),
+isoprene(mz=\num{\Sexpr{masses$isoprene}}),
+ethanol(mz=\num{\Sexpr{masses$ethanol}}) and
+acetaldehyde(mz=\num{\Sexpr{masses$acetaldehyde}}).
+
+
+\Fref{fig:plotuncorrected} shows there is only a minor deviation between the old mass calibration and observed signals.
+
+<<plotuncorrected, fig.cap = "uncorrected masses", cache = T >>=
+pfun <- function(m_cur, wid = 0.05){
+  range <- m_cur + c(-wid, wid)
+  wind <- mass_ax0 > range[[1]] & mass_ax0 < range[[2]]
+  plot(mass_ax0[wind], sig[wind], type = "l",
+       xlab = "m/z", ylab = "")
+  abline(v = m_cur, col = "red")
+}
+par(mfrow = c(3, 2),
+    mar = c(2, 1, 0.1, 0.1),
+    bty = "n",
+    lab = c(5, 1, 5),
+    yaxt = "n")
+tmp <- lapply(masses, pfun)
+@
+
+<<maxdata>>=
+# note this does not care whether a  peak is present!!!
+max_fun <- function(m_cur, wid = 0.06){
+  range <- m_cur + c(-wid, wid)
+  ind_range <- mcfun$to_index(range)
+  loc_sig <- sig[ ind_range[[1]]:ind_range[[2]]]
+  c(mass = m_cur, index = which.max(loc_sig) - 1 + ind_range[[1]])
+}
+
+max_locations <- locate_matching_maxima(masses, sig, mcfun$to_index)
+fitm <- lm(index ~ I(sqrt(mass)), data = max_locations)
+@
+
+In \fref{fig:masscalibs} the resulting mass calibration curve is shown.
+On this scale the difference to the stored one is not recognisable.  The
+stored curve is plotted in blue but completely overlapped be the newer fit.
+However the difference can be seen when looking at the difference of points
+on the calibrated lines to their theoretical values shown in \fref{fig:mcdiffs}.
+
+<<masscalibs, fig.cap = "Mass calibration curve through predetermined masses.  Stored curve in red, new fit in blue -- but they almost completely overlap.">>=
+plot_masses <- seq(1, 100, length.out = 30)
+plot_inds <- predict(fitm, newdata = data.frame(mass = plot_masses))
+orig_cal_indexes <- mcfun$to_index(plot_masses)
+with(max_locations, plot(mass, index))
+lines(plot_masses, orig_cal_indexes, col = "blue")
+lines(plot_masses, plot_inds, col = "red")
+@
+
+<<mcdiffs, fig.cap = "differences of mass calibration to observation. New curve is red, stored in blue" >>=
+pi2 <- predict(fitm, newdata = data.frame(mass = unlist(masses)))
+pio <- mcfun$to_index(masses)
+plot(masses, pio - max_locations$index, col="blue", ylab = "difference")
+points(masses, pi2 - max_locations$index, col="red")
+@

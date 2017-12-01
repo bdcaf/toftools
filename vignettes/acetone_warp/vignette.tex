@@ -8,7 +8,7 @@
 \DeclareSIUnit\ppmv{ppm\textsubscript{V} }
 \DeclareSIUnit\ppbv{ppb\textsubscript{V} }
 
-\title{Example for data set of real time breaths}
+\title{Adjusting Acetone Real Time Measurements}
 \author{Clemens~Ager}
 \date{\today}
 
@@ -18,22 +18,17 @@
 \maketitle
 
 \begin{abstract}
-  This document shows evaluation for a short series of breath
-  measurments each \si{60}{s} long.
-  Ionicon \ac{PTR-TOF-MS} data.  
+  This is about the acetone measurements from \printdate{2017-11-20}.
 \end{abstract}
 
 
 \setcounter{tocdepth}{2}
 \tableofcontents
 
-%\input{doc/case60_introduction.tex}
-
-\section{Data}
-%\input{doc/case60_data.tex}
-
-\section{Warping}
-%\input{work/report/case60_warping.tex}
+\input{render_data.tex}
+\input{render_warping.tex}
+\input{render_mass_calibration.tex}
+\input{render_peak_integration.tex}
 
 \appendix 
 \section{Acronyms}

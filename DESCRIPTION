@@ -17,14 +17,19 @@ Imports: Rcpp, MALDIquant, MASS, data.table, dplyr, rhdf5
 Suggests: OrgMassSpecR,
     knitr,
     rmarkdown
-Collate:
+Collate: 
     'RcppExports.R'
     'TofMeasurementClass.R'
     'TofGetScan.R'
     'TofRaw.R'
+    'build_sum_spec.R'
+    'locate_matching_maxima.R'
     'make_data.R'
+    'make_densewarp.R'
     'massCalFunctions.R'
     'massCalTools.R'
+    'read_all_sum_spec.R'
+    'read_stored_masscal.R'
     'spec_tools.R'
     'stored_mass_cal.R'
     'tofIntegrations.R'
