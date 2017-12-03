@@ -1,4 +1,5 @@
-<<setup, include=F>>=
+<<setup, include = F>>=
+library("rawTof")
 library("baseline")
 library("ggridges")
 library("grDevices")
@@ -9,182 +10,59 @@ library("tidyr")
 library("dplyr")
 library("nloptr")
 
-#source("R/tofReader.R")
-#source("R/tofSparse.R")
+devtools::load_all()
 
-data_files <- list.files("data/agcl_br", pattern="\\.h5$", full.names=T)
+
+data_files <- list.files("data/agcl_br",
+                         pattern = "\\.h5$", full.names = T)
 
 sum_specs <- lapply(data_files, get_sum_spec)
 
+data_files <- list.files("data/agcl_br",
+                         pattern = "\\.h5$", full.names = T)
+
+
+mcfun <- stored_mass_cal.tof_h5( H5Fopen(data_files[[1]]))
+
 
 plot_comp <- function(refspec, otherspec = NULL, from, to,
-                     ylim=c(0, 1e2), ylab="signal"){
-  plot(refspec, type="l",
-       xlim=c(from, to),
-       ylim=ylim,
-       xlab="index",
-       ylab=ylab
+                     ylim = c(0, 1e2), ylab = "signal"){
+  plot(refspec, type = "l",
+       xlim = c(from, to),
+       ylim = ylim,
+       xlab = "index",
+       ylab = ylab
        )
-  if (!is.null(otherspec)) lines(otherspec, type="l", col="red")
+  if (!is.null(otherspec)) lines(otherspec, type = "l", col = "red")
   mass_range <- pretty(with(mcfun, c( to_mass(from), to_mass(to))),
-                      n=10)
+                      n = 10)
   index_range <- with(mcfun, to_index(mass_range))
   bad <- index_range < from | index_range > to
   mass_range <- mass_range[!bad]
   index_range <- index_range[!bad]
-  axis(3, index_range, labels=mass_range, line=1,
-       col="red", col.ticks="red", col.axis="red")
+  axis(3, index_range, labels = mass_range, line = 1,
+       col = "red", col.ticks = "red", col.axis = "red")
 }
-
 @
 
-<<avspec, fig.cap="Average spectrum over all samples">>=
+<<avspec, fig.cap = "Average spectrum over all samples">>=
 rr <- do.call(rbind, sum_specs)
 
-me <- apply(log1p(rr),2,mean)
-me2 <- ksmooth(seq_along(me), me, kernel="normal", bandwidth=32)
+me <- apply(log1p(rr), 2, mean)
+me2 <- ksmooth(seq_along(me), me, kernel = "normal", bandwidth = 32)
 
+plot(me2, type = "l", col = "red",
+     ylab = "smoothed log1p intensity", xlab = "index")
 @
 
-<<functions, include=F>>=
-prep_spec <- function(sspec, wid=30, wm=200, ws=200)
-  sspec %>%
-    ksmooth(seq_along(.), ., kernel="normal", bandwidth=16) %>%
-    `[[`("y") %>%
-    matrix(., nrow=1) %>%
-    baseline(spectra = ., method= "rollingBall", wm=wm, ws=ws) %>%
-    slot("corrected") %>% t %>%
-    pmax(0) %>%
-    log1p %>%
-    zapsmall(digits=3) 
-
+<<warpgen, include = F>>=
 optim_generator <- function(reference_spec, generated_w, warp_fun){
-  reference <- reference_spec/sqrt(sum(reference_spec^2))
+  reference <- reference_spec / sqrt(sum(reference_spec ^ 2))
   function(a){
     warped <- generated_w(warp_fun(a),
-                          where=seq_along(reference))
-    -sum(reference * warped)
+                          where = seq_along(reference))
+    nw <- sqrt(sum(warped ^ 2))
+    -sum(reference * warped) / nw
   }
 }
-@
-
-<<readSpec, cache=T, include=F>>=
-spec_df <- function(afile){
-  get_sum_spec(afile) %>%
-    data.frame(index = seq_along(.), counts=., file=afile)
-}
-
-sum_specs <- lapply(data_files, spec_df)
-spec_long <- do.call(rbind, sum_specs) %>%
-  mutate(lab = sub("^.*/AgCl *", "", file)) %>%
-  mutate(lab = sub("0?\\(.*\\.h5$","",lab)) %>%
-  mutate(lab = sub("(.).*","\\1",lab))
-
-source("R/massCalFunctions.R")
-mcfun <- masscal_helper(data_files[[1]])
-@
-
-<<plot21>>=
-mass_range <- c(21.0, 21.05)
-ind_range <- mcfun$to_index(mass_range)
-
-
-plot_long <- spec_long %>% 
-  dplyr::filter(index>ind_range[[1]], index<ind_range[[2]]) %>%
-  mutate(lab = sub("^.*/AgCl *", "", file)) %>%
-  mutate(lab = sub("0?\\(.*\\.h5$","",lab)) %>%
-  mutate(lab = sub("(.).*","\\1",lab))
-
-plot_sum <- plot_long %>% group_by(lab, index) %>% 
-  summarise(sig = median(counts)) %>%
-  mutate(mz = with(mcfun, to_mass(index)))
-
-spec_indices <- seq(from = floor(ind_range[[1]]), to = ceiling(ind_range[[2]]))
-mass_axis <- with(mcfun, to_mass(spec_indices))
-
-ggplot(data=plot_sum, aes(y=lab, x=mz, height=sig)) + 
-       geom_ridgeline(stat="identity", scale = 3e-4) +
-       theme_ridges()
-
-@
-
-
-<<plot59>>=
-mass_range <- c(59, 59.1)
-ind_range <- mcfun$to_index(mass_range)
-
-
-plot_long <- spec_long %>% 
-  dplyr::filter(index>ind_range[[1]], index<ind_range[[2]]) 
-plot_sum <- plot_long %>% group_by(lab, index) %>% 
-  summarise(sig = median(counts)) %>%
-  mutate(mz = with(mcfun, to_mass(index)))
-
-spec_indices <- seq(from = floor(ind_range[[1]]), to = ceiling(ind_range[[2]]))
-mass_axis <- with(mcfun, to_mass(spec_indices))
-
-ggplot(data=plot_sum, aes(y=lab, x=mz, height=sig)) + 
-       geom_ridgeline(stat="identity", scale = 5e-5) +
-       theme_ridges()
-
-@
-
-<<cleaned_spec, cache = T>>=
-
-ssig <- spec_long %>% group_by(file) %>% 
-mutate(smooth = ksmooth(index, log1p(counts), kernel="normal", bandwidth=16)$y)  %>% 
-mutate(base=baseline(spectra = matrix(smooth, nrow=1), method= "rollingBall", wm=100, ws=100)@corrected) %>% 
-mutate(base = pmax(base,0))
-
-ind_range <- mcfun$to_index(c(18.8, 22.2))
-master_spec <- ssig %>% group_by(index) %>% summarise(b0 = mean(base)) %>% 
-  mutate(sig = ksmooth(index, b0, kernel="normal", bandwidth=32)$y)
-# plot(master_spec$sig[ind_range[[1]]:ind_range[[2]]], type='l')
-
-# plot_long <- ssig %>% 
-#   dplyr::filter(index>ind_range[[1]], index<ind_range[[2]]) %>% 
-#   mutate(l2 = sub("^.* T ","",file), l2 = sub("\\).*$","", l2))
-# ggplot(data=filter(plot_long, lab=="M"), aes(y=l2, x=index, height=base)) + 
-#        geom_ridgeline(stat="identity", scale = 1e-1) +
-#        theme_ridges()
-# 
-# plot_sum <- plot_long %>% group_by(lab, index) %>% 
-#   summarise(sig = median(fin)) %>%
-#   mutate(mz = with(mcfun, to_mass(index)))
-# ggplot(data=plot_sum, aes(y=lab, x=mz, height=sig)) + 
-#        geom_ridgeline(stat="identity", scale = 1e-1) +
-#        theme_ridges()
-@
-
-<<warpdef1, cache=T>>=
-warp0 <- function(a)
-  function(x) a[[1]]+x
-
-ssb <- filter(ssig, file=="data/agcl_br/AgCl MO(2017-09-11 T 11h20m55) _#.h5")$base
-
-source("R/tofSparse.R")
-generated_w <- make_densewarp(ssb)
-og <- optim_generator(master_spec$sig, generated_w, warp0)
-
-
-shifts <- seq(from=-100, to=100)
-val <- sapply(shifts, og)
-@
-
-<<simple_shifts>>=
-plot(x=shifts,-val,type='l')
-@
-
-<<calcIndividShifts>>=
-get_shift <- function(ssb){
-  generated_w <- make_densewarp(ssb)
-  og <- optim_generator(master_spec$sig, generated_w, warp0)
-  res2 <- nloptr(x0=c(0), eval_f=og, lb=c(-100), ub=c(100),
-                 opts = list("algorithm" = "NLOPT_LN_NELDERMEAD",
-                             "xtol_abs" = 0.1))
-  res2$solution
-}
-
-shiftlist <- ssig %>% group_by(file, lab) %>% summarise(shift = get_shift(base))
-
 @

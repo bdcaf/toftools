@@ -1,6 +1,6 @@
 \subsection{Notes on warping between samples}
 
-<<setup, include=F>>=
+<<setup, includ = >>=
 library("baseline")
 library("grDevices")
 library("nloptr")
@@ -21,29 +21,29 @@ optim_generator <- function(reference_spec, generated_w, warp_fun){
   reference <- reference_spec/sqrt(sum(reference_spec^2))
   function(a){
     warped <- generated_w(warp_fun(a),
-                          where=seq_along(reference))
+                          wher = eq_along(reference))
     nw <- sqrt(sum(warped^2))
     -sum(reference * warped)/nw
   }
 }
 
 plot_comp <- function(refspec, otherspec = NULL, from, to,
-                     ylim=c(0, 1e2), ylab="signal"){
-  plot(refspec, type="l",
-       xlim=c(from, to),
-       ylim=ylim,
-       xlab="index",
-       ylab=ylab
+                      yli = c(0, 1e2), yla = signal"){
+  plot(refspec, typ = l",
+       xli = (from, to),
+       yli = lim,
+       xla = index",
+       yla = lab
        )
-  if (!is.null(otherspec)) lines(otherspec, type="l", col="red")
+  if (!is.null(otherspec)) lines(otherspec, typ = l", co = red")
   mass_range <- pretty(with(mcfun, c( to_mass(from), to_mass(to))),
-                      n=10)
+                       = 0)
   index_range <- with(mcfun, to_index(mass_range))
   bad <- index_range < from | index_range > to
   mass_range <- mass_range[!bad]
   index_range <- index_range[!bad]
-  axis(3, index_range, labels=mass_range, line=1,
-       col="red", col.ticks="red", col.axis="red")
+  axis(3, index_range, label = ass_range, lin = ,
+       co = red", col.tick = red", col.axi = red")
 }
 
 @
@@ -64,8 +64,8 @@ construction of a matrix with dimension of length sample $\times$ length
 sample, which fails due to memory constraints as these spectra are
 typical \num{4e5} entries.
 
-<<wssumspec, cache=T, fig.cap='Comparing the unprocessed sum spectra of two samples, the shift corresponds to about 0.5 amu at m/z 60'>>=
-plot_comp(sum_spec_a, sum_spec_b, from=11.5e4, to=13.5e4)
+<<wssumspec, cach = , fig.ca = Comparing the unprocessed sum spectra of two samples, the shift corresponds to about 0.5 amu at m/z 60'>>=
+plot_comp(sum_spec_a, sum_spec_b, fro = 1.5e4, t = 3.5e4)
 @
 
 
@@ -101,43 +101,43 @@ The spectra are also dominated by large peaks.  In order to reduce their
 influence the signal is \texttt{log1p} transformed.  An exemplary
 presentation is shown in \fref{fig:wscleansum}.
 
-<<wsbaseline, fig.cap='baseline correction in sum spectrum.', cache=T>>=
-reference_spectrum <- matrix(sum_spec_a, nrow=1) %>%
+<<wsbaseline, fig.ca = baseline correction in sum spectrum.', cach = >>=
+reference_spectrum <- matrix(sum_spec_a, nro = ) %>%
   baseline(spectra = ., method= "rollingBall",
-           wm=200, ws=200) %>%
+           w = 00, w = 00) %>%
   slot("corrected") %>% t %>%
   pmax(0)
 
-plot_comp(sum_spec_a, reference_spectrum, from=12.0e4, to=13.0e4,
-          ylim=c(0, 2))
+plot_comp(sum_spec_a, reference_spectrum, fro = 2.0e4, t = 3.0e4,
+          yli = (0, 2))
 @
 
-<<wssat, cache=F, depends=c("wsbaseline"), fig.cap="saturated peaks">>=
-par(mfrow=c(1, 2))
-plot_comp(reference_spectrum, from=7.99e4, to=8.02e4)
-plot_comp(reference_spectrum, from=9.96e4, to=9.98e4)
+<<wssat, cach = , depend = ("wsbaseline"), fig.ca = saturated peaks">>=
+par(mfro = (1, 2))
+plot_comp(reference_spectrum, fro = .99e4, t = .02e4)
+plot_comp(reference_spectrum, fro = .96e4, t = .98e4)
 @
 
 <<prep_function, include = F>>=
-prep_spec <- function(sspec, wid=30, wm=200, ws=200)
-  matrix(sspec, nrow=1) %>%
-    baseline(spectra = ., method= "rollingBall", wm=wm, ws=ws) %>%
+prep_spec <- function(sspec, wi = 0, w = 00, w = 00)
+  matrix(sspec, nro = ) %>%
+    baseline(spectra = ., method= "rollingBall", w = m, w = s) %>%
     slot("corrected") %>% t %>%
     pmax(0) %>%
     log1p %>%
-    zapsmall(digits=6) %>%
-    ksmooth(seq_along(.), ., kernel="normal", bandwidth=16) %>%
+    zapsmall(digit = ) %>%
+    ksmooth(seq_along(.), ., kerne = normal", bandwidt = 6) %>%
     `[[`("y")
 @
 
-<<calc_preps, include=F, cache=T>>=
+<<calc_preps, includ = , cach = >>=
 ssa <- prep_spec(sum_spec_a)
 ssb <- prep_spec(sum_spec_b)
 @
 
-<<wscleansum, cache=T, fig.cap='peak log1p profile of two measurements'>>=
-plot_comp(ssa, ssb, from=12.0e4, to=13.0e4,
-          ylim=c(0, 4), ylab="log1p signal")
+<<wscleansum, cach = , fig.ca = peak log1p profile of two measurements'>>=
+plot_comp(ssa, ssb, fro = 2.0e4, t = 3.0e4,
+          yli = (0, 4), yla = log1p signal")
 @
 
 
@@ -152,7 +152,7 @@ therefore correspond shifting the peak comb by about one amu.  As the
 peaks are not regularly spaced in time axis these secondary peaks have
 much poorer match.
 
-<<, include=F>>=
+<<, includ = >>=
 warp0 <- function(a)
   function(x) a[[1]]+x
 
@@ -164,39 +164,39 @@ og <- local({
 })
 @
 
-<<wscalcshifts, include=F, cache=T>>=
-shifts <- seq(from=-6000, to=3000, length.out=99)
+<<wscalcshifts, includ = , cach = >>=
+shifts <- seq(fro = 6000, t = 000, length.ou = 9)
 val <- sapply(shifts, og)
 @
 
-<<wscalcoptshift, include=F, cache=T>>=
+<<wscalcoptshift, includ = , cach = >>=
 best_shift <- local({
   first_shift <- nloptr( x0 = 0,
                         eval_f = og,
                         lb =-3000,
                         ub = 3000,
-                        opts = list(algorithm="NLOPT_GN_DIRECT_L",
+                        opts = list(algorith = NLOPT_GN_DIRECT_L",
                                     maxeval = 100)
                         )
 
   nloptr( x0 = first_shift$solution,
          eval_f = og,
-         lb=-3000,
+         l = 3000,
          ub = 3000,
-         opts = list(algorithm="NLOPT_LN_BOBYQA", xtol_abs=0.01)
+         opts = list(algorith = NLOPT_LN_BOBYQA", xtol_ab = .01)
          )
 })
 @
 
-<<wsshiftplot, cache=T, fig.cap="distance to reference measurement on shifted spectrum", dependson="wscalcshifts">>=
-plot(shifts, -val, type="l", xlab="shift", ylab="agreement")
-abline(v=best_shift$solution, lty=2)
-text(x=best_shift$solution, y=0.5,
-     sprintf("%3.1f", best_shift$solution), pos=4)
+<<wsshiftplot, cach = , fig.ca = distance to reference measurement on shifted spectrum", dependso = wscalcshifts">>=
+plot(shifts, -val, typ = l", xla = shift", yla = agreement")
+abline( = est_shift$solution, lt = )
+text( = est_shift$solution,  = .5,
+     sprintf("%3.1f", best_shift$solution), po = )
 @
 
 
-<<wshift_opt2, cache=T, include=F>>=
+<<wshift_opt2, cach = , includ = >>=
 og1 <- optim_generator(ssa, make_densewarp(ssb), warp1)
 wif1 <- Vectorize(function(a, b) og1(c(a, b)))
 
@@ -205,51 +205,51 @@ best_shift <- local({
                         eval_f = og1,
                         lb = c(-1000, 0.95),
                         ub = c(1000, 1.05),
-                        opts = list(algorithm="NLOPT_GN_DIRECT_L",
+                        opts = list(algorith = NLOPT_GN_DIRECT_L",
                                     maxeval = 100)
                         )
   nloptr( x0 = first_shift$solution,
          eval_f = og1,
          lb = c(-1000, 0.95),
          ub = c(1000, 1.05),
-         opts = list(algorithm="NLOPT_LN_BOBYQA",
-                     xtol_abs=c(0.001, 1e-9))
+         opts = list(algorith = NLOPT_LN_BOBYQA",
+                     xtol_ab = (0.001, 1e-9))
          )
 })
 
 make_match_surf <- function(xs, ys) {
   xsc <- sort(unique(c(best_shift$solution[[1]], xs)))
   ysc <- sort(unique(c(best_shift$solution[[2]], ys)))
-  vals <- outer(xsc, ysc, FUN=wif1 )
-  list(xs=xsc, ys=ysc, vals=vals)
+  vals <- outer(xsc, ysc, FU = if1 )
+  list(x = sc, y = sc, val = als)
 }
 
 @
 
 
-<<plotfunc, cache=T, include=F>>=
+<<plotfunc, cach = , includ = >>=
 plot_match <- function(match_surf) {
   with(match_surf, {
-         par(mar=c(1, 0, 0, 0))
-         pm <- persp(x=xs, y=ys, z=-vals,
-                     xlab="shift",
-                     ylab="scale",
-                     zlab="agreement",
-                     phi=30,
-                     theta=30,
-                     d=2,
-                     xaxs="i",
-                     yaxs="i",
-                     ticktype="detailed"
+         par(ma = (1, 0, 0, 0))
+         pm <- persp( = s,  = s,  = vals,
+                     xla = shift",
+                     yla = scale",
+                     zla = agreement",
+                     ph = 0,
+                     thet = 0,
+                     = ,
+                     xax = i",
+                     yax = i",
+                     ticktyp = detailed"
                      )
          with(best_shift, {
-                nc <- trans3d(x=solution[[1]], y=solution[[2]], z=-objective, pm)
-                points(nc, col="red")
-                text(x=nc$x, y=nc$y, sprintf("cor %1.2f\n(%3.1f, %1.5f)",
-                                             -objective, solution[[1]], solution[[2]]-1),
-                     pos=4, col="red")
+                nc <- trans3d( = olution[[1]],  = olution[[2]],  = objective, pm)
+                points(nc, co = red")
+                       text( = c$x,  = c$y, sprintf("cor %1.2f\n(%3.1f, %1.5f)",
+                                                    -objective, solution[[1]], solution[[2]]-1),
+                            po = , co = red")
                      })
-                      })
+})
 }
 @
 
@@ -269,31 +269,31 @@ maximum.  This is faster than using the genetic algorithm
 exclusively as it only slowly converges to the maximum.
 
 
-<<wscalcshift2, include=F, dependson="wshift_opt2", cache=T>>=
+<<wscalcshift2, includ = , dependso = wshift_opt2", cach = >>=
 large_scale <- make_match_surf(
-  xs = seq(from=-800, to=-200, length.out=31),
-  ys = seq(from=0.98, to=1.02, length.out=31)
+  xs = seq(fro = 800, t = 200, length.ou = 1),
+  ys = seq(fro = .98, t = .02, length.ou = 1)
 )
 @
 
-<<wsshiftplot2, cache=T, dependson=c("wscalcshift2",'wshift_opt2', "plotfunc"), fig.cap="distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+<<wsshiftplot2, cach = , dependso = ("wscalcshift2",'wshift_opt2', "plotfunc"), fig.ca = distance matrix to reference measurement on shifted and compressed spectrum", dependso = wscalcshift2">>=
 plot_match(large_scale)
 @
 
-<<wscalcshift2local, include=F, cache=T>>=
-medium_scale <- make_match_surf( xs = seq(from=-700, to=-300, length.out=31),
-                                 ys = seq(from=0.995, to=1.005, length.out=31))
+<<wscalcshift2local, includ = , cach = >>=
+medium_scale <- make_match_surf( xs = seq(fro = 700, t = 300, length.ou = 1),
+                                 ys = seq(fro = .995, t = .005, length.ou = 1))
 @
 
-<<wsshiftplot2local, cache=T, dependson=c("wscalcshift2local",'wshift_opt2', "plotfunc"), fig.cap="local distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+<<wsshiftplot2local, cach = , dependso = ("wscalcshift2local",'wshift_opt2', "plotfunc"), fig.ca = local distance matrix to reference measurement on shifted and compressed spectrum", dependso = wscalcshift2">>=
 plot_match(medium_scale)
 @
 
-<<wscalcshift2locallocal, include=F, cache=T>>=
-small_scale <- make_match_surf(xs = seq(from=-550, to=-450, length.out=31),
-                               ys=seq(from=0.999, to=1.001, length.out=31))
+<<wscalcshift2locallocal, includ = , cach = >>=
+small_scale <- make_match_surf(xs = seq(fro = 550, t = 450, length.ou = 1),
+                               y = eq(fro = .999, t = .001, length.ou = 1))
 @
-<<wsshiftplot2locallocal, cache=T, dependson=c("wscalcshift2locallocal",'wshift_opt2', "plotfunc"), fig.cap="direct environment around maximum of distance matrix to reference measurement on shifted and compressed spectrum", dependson="wscalcshift2">>=
+<<wsshiftplot2locallocal, cach = , dependso = ("wscalcshift2locallocal",'wshift_opt2', "plotfunc"), fig.ca = direct environment around maximum of distance matrix to reference measurement on shifted and compressed spectrum", dependso = wscalcshift2">>=
 plot_match(small_scale)
 @
 
@@ -315,9 +315,9 @@ set by considering step size, as the data is provided in steps
 optimizing for steps smaller than \num{1e-2} is not necessary.
 
 
-<<wscalcshift1f, include=F, cache=T>>=
+<<wscalcshift1f, includ = , cach = >>=
 vander <- function(xs, nmax)
-  outer(xs, seq(from=0, to=nmax), function(x, i) x^i)
+  outer(xs, seq(fro = , t = max), function(x, i) x^i)
 
 reference_spec <- ssb
 tofit <- ssa
@@ -327,7 +327,7 @@ optim_generator <- function(reference_spec, generated_w, warp_fun){
   reference <- reference_spec/sqrt(sum(reference_spec^2))
   function(a){
     warped <- generated_w(warp_fun(a),
-                          where=seq_along(reference))
+                          wher = eq_along(reference))
     nw <- sqrt(sum(warped^2))
     -sum(reference * warped)/nw
   }
@@ -340,7 +340,7 @@ warp0 <- function(a) function(x) a[[1]]+x
 
 ni <- 2
 ni_fit <- function(ni, pre){
-  starta <- c(pre, ifelse(ni==1, 1, 0))
+  starta <- c(pre, ifelse(n = 1, 1, 0))
   ubs <- 10^ (10-7 * seq(ni+1))
   lbs <- -ubs
   lbs[2:(ni+1)]  <- 0
@@ -360,7 +360,7 @@ ni_fit <- function(ni, pre){
                         eval_f = og_fin,
                         lb = lbs,
                         ub = ubs,
-                        opts = list(algorithm="NLOPT_GN_DIRECT_L",
+                        opts = list(algorith = NLOPT_GN_DIRECT_L",
                                     maxeval = 100)
                         )
 
@@ -368,13 +368,13 @@ ni_fit <- function(ni, pre){
                        eval_f = og_fin,
                        lb = lbs,
                        ub = ubs,
-                       opts = list(algorithm="NLOPT_LN_BOBYQA",
-                                   xtol_rel=1e-5)
+                       opts = list(algorith = NLOPT_LN_BOBYQA",
+                                   xtol_re = e-5)
                        )
 }
 @
 
-<<calc_orders, include=F, cache=T>>=
+<<calc_orders, includ = , cach = >>=
 warp_orders <- local({
   pre <- 0
   warp_orders <- list()
@@ -393,23 +393,23 @@ there are two problems: 1) numeric accuracy as powers like \num{4e5}
 need to be taken to this power and 2) to guarantee the warp function is
 monotonic.
 
-<<wsqualdim, dependson=c('wscalcshift1f',"calc_orders"), cache=T, fig.cap="improvent in distance by increasing warp polynomial.  Lower is a better match.">>=
+<<wsqualdim, dependso = ('wscalcshift1f',"calc_orders"), cach = , fig.ca = improvent in distance by increasing warp polynomial.  Lower is a better match.">>=
 local({
 qs <- -sapply(warp_orders, function(x) x$objective)
 lik <- qs/ (1-qs)
 ll <- log(lik)
 
-plot(seq_along(qs), log(1-qs), xlab="poly order", ylab="log cosine distance", type="p")
+plot(seq_along(qs), log(1-qs), xla = poly order", yla = log cosine distance", typ = p")
 })
 @
 
-<<, dependson=c("calc_orders")>>=
+<<, dependso = ("calc_orders")>>=
 local({
 pars <- lapply(warp_orders, function(x) x$solution)
 })
 @
 
-<<, eval=F, include=F>>=
+<<, eva = , includ = >>=
 res <- warp3(bestbest$par)
 res(1)
 res(length(ssa)) - length(ssa)
@@ -432,7 +432,7 @@ bestbest <- optim(startv, og_fin2)
 res <- warp3(bestbest$par)
 rv <- res(seq_along(ssa))
 dif <- rv - seq_along(ssa)
-plot(dif, type="l")
+plot(dif, typ = l")
 
 res0 <- warp0(-500)
 
@@ -444,22 +444,22 @@ mv_new <- mcfun$to_mass(rv)
 mv_new0 <- mcfun$to_mass(rv0)
 md <- mv_new-mv_orig
 md0 <- mv_new0-mv_orig
-plot(mv_orig, md, type="l")
-lines(mv_orig, md0, type="l", col="green")
+plot(mv_orig, md, typ = l")
+lines(mv_orig, md0, typ = l", co = green")
 
-plot(mv_orig, mv_new-mv_new0, type="l")
-plot(mv_orig, (mv_new-mv_new0)/mv_orig, type="l")
-plot(mv_orig, ssa, type="l")
+plot(mv_orig, mv_new-mv_new0, typ = l")
+plot(mv_orig, (mv_new-mv_new0)/mv_orig, typ = l")
+plot(mv_orig, ssa, typ = l")
 @
 
-<<, eval=F, include=F>>=
+<<, eva = , includ = >>=
 warp_searcher <- function(ref, new, warper){
   generated_w <- make_densewarp(new)
   og <- optim_generator(ref, generated_w, warp0)
   est.shi <- DEoptim(og,
-                     lower=-3000,
+                     lowe = 3000,
                      upper = 3000,
-                     control=list(VTR=-0.7)
+                     contro = ist(VT = 0.7)
                      )
 
   startv <- c(est.shi$optim$bestmem, 1, 0)

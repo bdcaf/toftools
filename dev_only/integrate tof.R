@@ -1,5 +1,5 @@
 fid <-H5Fopen(tof.h5)
-tofblock <- get.raw.tofblock(fid)
+tofblock <- raw_tofblock(fid)
 indexhelp <- tof.indexhelp(tofblock)
 cr <- make.curr.tofreader(tofblock, indexhelp)
 mc.table <- mass.calib.tof(tofblock, indexhelp)

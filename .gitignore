@@ -2,6 +2,10 @@
 .Rhistory
 .RData
 *.bak
+*.ini
 *.dll
 *.sav
 man/
+data/ammonia
+data/etoh
+inst/doc

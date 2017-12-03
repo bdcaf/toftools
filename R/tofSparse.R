@@ -1,5 +1,3 @@
-library(data.table)
-
 #" create a sparse representation of the full TOF scan
 #"
 #" @description For many functions it seems helpful to use a sparse
@@ -71,22 +69,6 @@ fast_warp0 <- function(v) {
   }
 }
 
-make_densewarp <- function(v,  starts=1,  ends=starts+length(v)-1){
-  vc <- local({
-    cuv <- cumsum(v)
-    lastcu <- last(cuv)
-    c(0,  cuv,  lastcu)
-  })
-  index_along <- seq(from=starts-1, to=ends+1)
-  function(warp_fun, where){
-    i_trans <- warp_fun(index_along)
-    i_new <- c(where[[1]]-1, where)
-    v_new <- diff( approx(i_trans,  vc,  i_new,
-                          yleft = 0,
-                          yright = last(vc))$y)
-    v_new
-  }
-}
 #" helper function for warping a single semisparse spectrum line
 warp_line <- function(warp_fun,  starts,  ends,  v,  check=T){
   i_trans <- warp_fun( (starts - 1):(ends + 1))

@@ -1,0 +1,19 @@
+Von: "Mochalski, Pawel" <Pawel.Mochalski@uibk.ac.at>
+Betreff: calibration
+Datum: 14. November 2017 um 16:52:19 MEZ
+An: "Ager, Clemens" <Clemens.Ager@uibk.ac.at>
+
+Acetone
+49.83
+99.66
+249.15
+498.30
+996.60
+1993.19
+d6 Acetone
+50.17
+100.34
+250.85
+501.70
+1003.40
+2006.81

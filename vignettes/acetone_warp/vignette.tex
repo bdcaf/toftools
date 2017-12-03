@@ -1,0 +1,39 @@
+\documentclass[twocolumn]{article}
+
+\usepackage{draftwatermark}
+\SetWatermarkText{DRAFT}
+
+\input{knitr_preamble.tex}
+
+\DeclareSIUnit\ppmv{ppm\textsubscript{V} }
+\DeclareSIUnit\ppbv{ppb\textsubscript{V} }
+
+\title{Adjusting Acetone Real Time Measurements}
+\author{Clemens~Ager}
+\date{\today}
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  This is about the acetone measurements from \printdate{2017-11-20}.
+\end{abstract}
+
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\input{render_data.tex}
+\input{render_warping.tex}
+\input{render_mass_calibration.tex}
+\input{render_peak_integration.tex}
+
+\appendix 
+\section{Acronyms}
+\input{acronyms.tex}
+
+\printbibliography{}
+
+\end{document}

@@ -1,0 +1,10 @@
+\section{Data}
+
+<<setup, include = F>>=
+@
+
+<<files>>=
+fl <- list.files("acetone_data/", pattern = "\\.h5$", recursive = T)
+@
+
+In total there were \Sexpr{length(fl)} hdf5 files recorded.

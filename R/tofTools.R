@@ -1,6 +1,6 @@
 #' Tools to work with PTR-TOF data
-#' 
-#' The data produced by Ionicon PTR-TOF-MS is 
+#'
+#' The data produced by Ionicon PTR-TOF-MS is
 #' in a hdf5 file.  This package aims to provide tools
 #' to directly use this data in R
 #' ...

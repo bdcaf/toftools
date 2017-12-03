@@ -9,7 +9,7 @@ LMK=latexmk -pdf -f --interaction=nonstopmode -outdir=$(REPORT_DIR)
 
 all: reports
 
--include dependencies.makefile
+include dependencies.makefile
 
 $(REPORT_DIR): 
 	mkdir -p $@
@@ -19,9 +19,6 @@ $(REPORT_DIR)/%: | $(REPORT_DIR)
 work/documented: $(wildcard *.R) attributes
 	R -e 'library(devtools);document()'
 	touch $@
-
-tofTools_0.2.tar.gz: $(wildcard *.R) tmp/documented 
-	R CMD build .
 
 attributes:
 	Rscript -e 'Rcpp::compileAttributes()'
@@ -64,4 +61,3 @@ almost_clean:
 	find work -iname "*.tex" -delete
 	find work -iname "*.aux" -delete
 	find work -iname "*.bib" -delete
-

@@ -1,0 +1,88 @@
+\section{Integration of peaks}
+
+As good alignment has been assured beforehand now mass calibration can be performed on the sum spectrum.
+
+<<setup, include = F>>=
+library("magrittr")
+library("dplyr")
+library("tibble")
+library("rawTof")
+library("baseline")
+library("grDevices")
+library("nloptr")
+library("OrgMassSpecR")
+library("xtable")
+devtools::load_all()
+options(digits = 8)
+@
+
+<<data>>=
+data_files <- list.files("acetone_data",
+                         pattern = "\\.h5$", full.names = T, recursive = T)
+
+mcfun <- read_stored_masscal(data_files[[1]])
+
+sum_specs <- read_all_sum_spec(data_files)
+agg_spec <- build_sum_spec(data_files) %>%
+  ksmooth(seq_along(.), ., kernel = "normal", bandwidth = 4)
+mass_ax0 <- mcfun$to_mass(agg_spec$x)
+sig <- agg_spec$y
+@
+
+<<calcions, include = F>>=
+m_el <- 5.485799090e-4
+proton <- MonoisotopicMass(formula = list(H = 1)) - m_el
+masses <- list(
+   h3o = MonoisotopicMass(formula = list(H = 3, O = 1),
+                          isotopes = list( O = 17.999161)) - m_el,
+   acetone = MonoisotopicMass(formula = list(C = 3, O = 1, H = 7)) - m_el,
+   d6acetone = MonoisotopicMass(formula = list(C = 3, O = 1, H = 1, x = 6),
+                                isotopes = list(x = 2.01410178)) - m_el,
+   isoprene = MonoisotopicMass(formula = list(C = 5, H = 9)) - m_el
+   )
+
+max_locations <- locate_matching_maxima(masses, sig, mcfun$to_index)
+fitm <- lm(index ~ I(sqrt(mass)), data = max_locations)
+
+peak_list <- tibble(name = names(masses), mass = unlist(masses)) %>%
+  mutate(wid = sqrt(mass) / 300, low = mass - wid, high = mass + wid,
+         left_ind = predict(fitm, newdata = data.frame(mass = low)) %>% floor,
+         right_ind = predict(fitm, newdata = data.frame(mass = high))
+                       %>% ceiling,
+         wid_ind = right_ind - left_ind)
+@
+
+The example peaks to be integrated are shown in \fref{tab:integrpeaks}
+
+<<intpeaktable>>=
+xtable(peak_list %>% dplyr::select(-left_ind, -right_ind, -wid_ind), digits = 2,
+       label = "tab:integrpeaks",
+       caption = "parameter for peak integration")
+@
+
+
+
+<<onePeak, include = F>>=
+tof_file <- data_files[[6]]
+comp <- peak_list[3, ]
+tof_ob <- new("TofClass", filename = tof_file)
+block_request <- with(comp, c(left_ind, wid_ind))
+
+block <- scan_block(tof_ob, ind = block_request)
+finalize(tof_ob)
+@
+
+To show how integration works first consider a single file.
+And \Sexpr{comp[[1]]} was integrated.
+
+<<plotSpec65, fig.cap = "peak spectrum of D6 in example measurment">>=
+plot(rowSums(block), type = "l")
+@
+
+<<plotProf65, fig.cap = "slice of time profile of D6 in example measurment">>=
+indv <- 5800:5860
+timev <- indv / 4
+plot(timev, colSums(block)[indv], type = "l",
+     xlab = "running time [s]",
+     ylab = "counts")
+@

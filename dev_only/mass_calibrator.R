@@ -11,7 +11,7 @@ r.path <- file.path('R')
 sl <- file.path(r.path,list.files(r.path, pattern='.*\\.R$'))
 lapply(sl, source)
 
-# consider: 
+# consider:
 #Improved Calibration of Time-of-Flight Mass Spectra by Simplex Optimization of Electrostatic Ion Calculations
 
 #Noah P. Christian ,† Randy J. Arnold ,‡ and James P. Reilly *
@@ -23,20 +23,20 @@ tof.h5 <- file.path('testdata/',"2015.07.17-10h40m34 Ethanol deurated Karl .h5")
 
 h5.holder <- function(tof.h5){
   fid <-H5Fopen(tof.h5)
-  tofblock <- get.raw.tofblock(fid)
+  tofblock <- raw_tofblock(fid)
   indexhelp <- tof.indexhelp(tofblock)
   cr <- make.curr.tofreader(tofblock, indexhelp)
 
   list(close = function() H5close(),
-	   readIndex = cr, 
-	   sampleScans = function(n=100) {
-		 with(indexhelp, 
-		 	  if(N > 2*n) { floor(seq(from=1,to=N, length.out=n))}
-			  else {	seq(from=1,to=N)}
-					)},
-	   read.scan = function (i) read.spec.ind(tofblock, indexhelp, i)
-	   )
-	  
+           readIndex = cr,
+           sampleScans = function(n=100) {
+                 with(indexhelp,
+                          if(N > 2*n) { floor(seq(from=1,to=N, length.out=n))}
+                          else {        seq(from=1,to=N)}
+                                        )},
+           read.scan = function (i) read_spec_at(tofblock, indexhelp, i)
+           )
+        
 }
 
 curr.h5 <- h5.holder(tof.h5)
@@ -49,29 +49,29 @@ locate.ions.block <- function(df.ion,curr.h5,
   n.samp=100 ) {
   scl <- curr.h5$sampleScans(n.samp)
   pos.block <- expand.grid(scan=scl , ion=df.ion$ions)
-  pp <- apply(pos.block, 1,function (dd) { 
-				curr.spec.line <- curr.h5$read.scan( dd[['scan']])
-				pos <- find_ion_tof(dd[['ion']], preliminary.coeff, curr.spec.line)
+  pp <- apply(pos.block, 1,function (dd) {
+                                curr.spec.line <- curr.h5$read.scan( dd[['scan']])
+                                pos <- find_ion_tof(dd[['ion']], preliminary.coeff, curr.spec.line)
   })
 
   pos.block$pos <- pp
   pos.block <- pos.block[!is.na(pos.block$pos),]
-  
+
   pos.block
 }
 
 # TODO: Massen suchen die *eindeutig* sind für die Kalibration
 
-pos.block <- locate.ions.block(df.ion,curr.h5, 
-							   preliminary.coeff=list(intercept=1850, square_mass=17500))
+pos.block <- locate.ions.block(df.ion,curr.h5,
+                                                           preliminary.coeff=list(intercept=1850, square_mass=17500))
 
 
 
-pos.add.data <- function(pos.block) 
+pos.add.data <- function(pos.block)
   within(pos.block,{
-		 sq.mass <- sqrt(ion)
-		 sq3.mass <- sq.mass*ion
-		 sq5.mass <- sq3.mass*ion
+                 sq.mass <- sqrt(ion)
+                 sq3.mass <- sq.mass*ion
+                 sq5.mass <- sq3.mass*ion
   })
 
 pos.block <- pos.add.data(pos.block)
@@ -90,11 +90,6 @@ ggplot(pos.block) + geom_line(mapping=aes(x=scan,y=pos,color=as.factor(ion))) + 
 
 
 ggplot(pos.block) + geom_point(mapping=aes(x=pos,y=pred,color=as.factor(ion))) + facet_wrap(~ion, scales='free')
-
-  #data.frame(scan = (1:indexhelp$N) ) %>% rowwise() %>% do( {
-    #curr.spec.line <- read.spec.ind(tofblock, indexhelp, .$scan)
-    #mc <- mass.calib.coeff.single(ions, preliminary.coeff=pars.approx, curr.spec.line)
-    #data.frame(scan=.$scan, intercept=mc[['intercept']], square_mass=mc[['square_mass']])
 
 
 ind <- 50
@@ -117,17 +112,17 @@ x <- filter(read.block, scan==10)
 
 read.scan.data.sync <- function(curr.h5, rmod, masslist,n.scans=50){
   with(curr.h5,{
-		 streaming.scan <- function(x){
-		   sc <- read.scan( x[[1,'scan']])
-		   rs <- readScales(sc,x$inds)
-		   x$cr <- rs
-		   return(x)
-		 }
-  		 scan.ind <- sampleScans(n.scans)
-		 dfm <- expand.grid(ion=masslist, scan=scan.ind)
-		 read.block <- pos.add.data(dfm)
-		 read.block$inds <- predict(rmod, newdata=read.block)
-		 read.scans <- read.block %>% group_by(scan) %>% do( streaming.scan(.))
+                 streaming.scan <- function(x){
+                   sc <- read.scan( x[[1,'scan']])
+                   rs <- readScales(sc,x$inds)
+                   x$cr <- rs
+                   return(x)
+                 }
+                 scan.ind <- sampleScans(n.scans)
+                 dfm <- expand.grid(ion=masslist, scan=scan.ind)
+                 read.block <- pos.add.data(dfm)
+                 read.block$inds <- predict(rmod, newdata=read.block)
+                 read.scans <- read.block %>% group_by(scan) %>% do( streaming.scan(.))
   })
 }
 dark.side.plot <- function(read.scans) {
@@ -135,12 +130,12 @@ dark.side.plot <- function(read.scans) {
   vs <- max(read.scans$cr, na.rm=TRUE)/3/nsc
   hs <- (max(read.scans$ion)- min(read.scans$ion))/nsc/5
   pd <- read.scans %>% mutate(x.plot=ion + scan*hs, y.plot=cr + scan*vs)
-  ggplot(pd) + 
-	geom_line(mapping=aes(x=x.plot, y=y.plot, group=as.factor(scan), 
-  							color=scan), alpha=0.3) + 
-  	  theme_bw() + 
-  	  	scale_y_continuous('counts') + scale_x_continuous('mass')+
-  	  	  scale_color_gradient(guide=FALSE, low='red', high='blue')
+  ggplot(pd) +
+        geom_line(mapping=aes(x=x.plot, y=y.plot, group=as.factor(scan),
+                                                        color=scan), alpha=0.3) +
+          theme_bw() +
+                scale_y_continuous('counts') + scale_x_continuous('mass')+
+                  scale_color_gradient(guide=FALSE, low='red', high='blue')
 }
 
 #ggplot(pd) + geom_line(mapping=aes(x=x.plot, y=y.plot, color=as.factor(scan)), alpha=0.3) + theme_bw()
@@ -179,7 +174,7 @@ masslist <- seq(63.9,64.2, by=0.001)
 rsd <- read.scan.data.sync(curr.h5, rmod, masslist, n.scans=20)
 dark.side.plot(rsd)
 
-# isopren 
+# isopren
 MonoisotopicMass(formula=list(C=5,H=8),charge=1)
 masslist <- seq(68.9,69.2, by=0.001)
 rsd <- read.scan.data.sync(curr.h5, rmod, masslist, n.scans=20)

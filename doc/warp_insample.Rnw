@@ -1,60 +1,60 @@
 \subsection{Notes on warping in sample}
 
-<<setup, include=F>>=
+<<setup, include = F>>=
 library("baseline")
 library("grDevices")
 library("ggjoy")
 library("nloptr")
 library("rawTof")
+library("data.table")
 
-source("R/tofReader.R")
-source("R/tofSparse.R")
+devtools::load_all()
 
 tof_a_h5 <- "testdata/2017.06.20-15h04m22s Aurelio valve off.h5"
 tof_a <- tof_h5(tof_a_h5)
-sum_spec_a <- (sum_spec.tof_h5(tof_a))/tof_a$indexhelp$N
+sum_spec_a <- (sum_spec.tof_h5(tof_a)) / tof_a$indexhelp$N
 ntest <- 7
-scan_indices <- floor(seq(from=1, to=tof_a$indexhelp$N, length.out=ntest))
+scan_indices <- floor(seq(from = 1, to = tof_a$indexhelp$N, length.out = ntest))
 specs <- lapply(scan_indices, function(i) read_spec_ind.tof_h5(tof_a, i))
-mcfun <- stored_mass_cal.tof_h5(tof_a)
+mcfun <- stored_mass_cal.tof_h5(tof_a$fid)
 
 dt0 <- data.table(do.call(cbind, specs))
-colnames(dt0) <- paste(round( (scan_indices-1)/5), "s")
-dt0[, pos:=seq_along(`0 s`)]
-dt0[, mass:=mcfun$to_mass(pos)]
+colnames(dt0) <- paste(round( (scan_indices - 1) / 5), "s")
+dt0[, pos := seq_along(`0 s`)]
+dt0[, mass := mcfun$to_mass(pos)]
 dt1 <- melt(dt0, c("pos", "mass"))
 
-ref <- data.table(value=sum_spec_a,
-                  pos = seq_along(sum_spec_a), variable="Sum Spec")
-ref[, mass:=mcfun$to_mass(pos)]
+ref <- data.table(value = sum_spec_a,
+                  pos = seq_along(sum_spec_a), variable = "Sum Spec")
+ref[, mass := mcfun$to_mass(pos)]
 
 plot_comp <- function(refspec, otherspec = NULL, from, to,
-                     ylim=c(0, 1e2), ylab="signal"){
-  plot(refspec, type="l",
-       xlim=c(from, to),
-       ylim=ylim,
-       xlab="index",
-       ylab=ylab
+                     ylim = c(0, 1e2), ylab = "signal"){
+  plot(refspec, type = "l",
+       xlim = c(from, to),
+       ylim = ylim,
+       xlab = "index",
+       ylab = ylab
        )
-  if (!is.null(otherspec)) lines(otherspec, type="l", col="red")
-  mass_range <- pretty(with(mcfun, c( to_mass(from), to_mass(to))), n=10)
+  if (!is.null(otherspec)) lines(otherspec, type = "l", col = "red")
+  mass_range <- pretty(with(mcfun, c( to_mass(from), to_mass(to))), n = 10)
   ind_range <- with(mcfun, to_index(mass_range))
   bad <- ind_range < from | ind_range > to
   mass_range <- mass_range[!bad]
   ind_range <- ind_range[!bad]
-  axis(3, ind_range, labels=mass_range, line=1, col="red",
-       col.ticks="red", col.axis="red")
+  axis(3, ind_range, labels = mass_range, line = 1, col = "red",
+       col.ticks = "red", col.axis = "red")
 }
 
 
-prep_spec <- function(sspec, wid=30, wm=200, ws=200)
-  matrix(sspec, nrow=1) %>%
-    baseline(spectra = ., method= "rollingBall", wm=wm, ws=ws) %>%
+prep_spec <- function(sspec, wid = 30, wm = 200, ws = 200)
+  matrix(sspec, nrow = 1) %>%
+    baseline(spectra = ., method = "rollingBall", wm = wm, ws = ws) %>%
     slot("corrected") %>% t %>%
     pmax(0) %>%
     log1p %>%
-    zapsmall(digits=6) %>%
-    ksmooth(seq_along(.), ., kernel="normal", bandwidth=16) %>%
+    zapsmall(digits = 6) %>%
+    ksmooth(seq_along(.), ., kernel = "normal", bandwidth = 16) %>%
     `[[`("y")
 
 inner_reference <- prep_spec(sum_spec_a)
@@ -68,16 +68,16 @@ other hand it is plausible that from one spectrum to the next the shift
 should be small.  Figures \ref{fig:plotoverw45} and
 \ref{fig:plotoverw34} shows a sum spectrum together with seven equally
 spaced spectra along the measurement that compromise it.  Although the
-individual scans are noisy it is noticable that the center of the first
+individual scans are noisy it is noticeable that the center of the first
 spectrum is to the left of the sum spectrum while the later are not so
 clear right of the sum spectrum.  For the \si{300}{s} and \si{900}{s}
 spectrum finding the peak is not pronounced so aligning them with their
 maximum is error prone.  The shifts seem small -- visually maybe 1/30
 amu at maximum.  However the peaks are notable less resolved than the
 peak in sum spectrum.  Considering the \ac{FWHM} it seems that the sum
-spec has about half the width of individual specs.  Approximatel we are
+spec has about half the width of individual specs.  Approximately we are
 looking in the sum spec at \ac{FWHM} resolution of 1/10000 where for
-individual peaks it's aroung 3/10000.  The correction for drift is also
+individual peaks it's around 3/10000.  The correction for drift is also
 around 1/10000.
 
 The sum spectrum makes a natural reference to which the individual
@@ -85,52 +85,49 @@ spectra should be aligned.  Although it may be useful to recalculate the
 sum spectrum after alignment.
 
 
-<<plotoverw45, fig.cap="Spectrum of a peak at m/z 45 in sum spectrum as well as in seven individual scans.  A slight drift to the right is noticable">>=
+<<plotoverw45, fig.cap = "Spectrum of a peak at m/z 45 in sum spectrum as well as in seven individual scans.  A slight drift to the right is noticable">>=
 from <- 12.1969e4
 to <- 12.2005e4
-ggplot(rbind(ref, dt1) %>% filter(pos>from & pos<to),
-       aes(x=mass, y=variable, height=value)) +
-  geom_joy(stat="identity", alpha=0.3) + theme_joy()  +
+ggplot(rbind(ref, dt1) %>% filter(pos > from & pos < to),
+       aes(x = mass, y = variable, height = value)) +
+  geom_joy(stat = "identity", alpha = 0.3) + theme_joy()  +
   theme(legend.position = "none",
-        axis.text = element_text(size = 8, colour="black"))
-
-
+        axis.text = element_text(size = 8, colour = "black"))
 @
 
-<<plotoverw34, fig.cap="Spectrum of peak at m/z 34 in sum spectrum as well as in seven individual scans.  A slight drift to the right is noticable">>=
+<<plotoverw34, fig.cap = "Spectrum of peak at m/z 34 in sum spectrum as well as in seven individual scans.  A slight drift to the right is noticable">>=
 from <- 10.6435e4
 to <- 10.6465e4
-ggplot(rbind(ref, dt1) %>% filter(pos>from & pos<to),
-       aes(x=mass, y=variable, height=value)) +
-  geom_joy(stat="identity", alpha=0.3) + theme_joy()  +
+ggplot(rbind(ref, dt1) %>% filter(pos > from & pos < to),
+       aes(x = mass, y = variable, height = value)) +
+  geom_joy(stat = "identity", alpha = 0.3) + theme_joy()  +
   theme(legend.position = "none",
-        axis.text = element_text(size = 8, colour="black"))
+        axis.text = element_text(size = 8, colour = "black"))
 @
 
-<<searchFunctions, include=F, cache=T>>=
+<<searchFunctions, include = F, cache = T>>=
 optim_generator0 <- function(reference_spec, generated_w, warp_fun){
-  reference <- reference_spec/sqrt(sum(reference_spec^2))
+  reference <- reference_spec / sqrt(sum(reference_spec ^ 2))
   function(a){
     warped <- generated_w(warp_fun(a),
-                          where=seq_along(reference))
-    -sum(reference * warped)/nw
+                          where = seq_along(reference))
+    -sum(reference * warped) / nw
   }
 }
 
 optim_generator <- function(reference_spec, generated_w, warp_fun){
-  reference <- reference_spec/sqrt(sum(reference_spec^2))
+  reference <- reference_spec / sqrt(sum(reference_spec ^ 2))
   function(a){
     warped <- generated_w(warp_fun(a),
-                          where=seq_along(reference))
-    nw <- sqrt(sum(warped^2))
-    -sum(reference * warped)/nw
+                          where = seq_along(reference))
+    nw <- sqrt(sum(warped ^ 2))
+    -sum(reference * warped) / nw
   }
 }
 
-warp0 <- function(a) function(x) a[[1]]+x
+warp0 <- function(a) function(x) a[[1]] + x
 
-warp1 <- function(a) function(x) a[[1]]+ a[[2]]*x
-
+warp1 <- function(a) function(x) a[[1]] + a[[2]] * x
 @
 
 
@@ -143,119 +140,127 @@ should have at least one good match with itself in this region.
 For the search this this means the global derivative free step can be
 abandoned.
 
-<<shiftfun, include=F, cache=T>>=
+<<shiftfun, include = F, cache = T>>=
 matches <- function(i, sh_pos){
   ss <- read_spec_ind.tof_h5(tof_a, i)
-  ss_spec <- ksmooth(seq_along(ss), ss, "normal", bandwidth=16)$y
+  ss_spec <- ksmooth(seq_along(ss), ss, "normal", bandwidth = 16)$y
   generated_w <- fast_warp0(log1p(ss_spec))
   og <- optim_generator(inner_reference, generated_w, warp0)
   sh_data <- sapply(sh_pos, Vectorize(og))
-  data.frame(ind=i/5, x=sh_pos, mv=-sh_data)
+  data.frame(ind = i / 5, x = sh_pos, mv = -sh_data)
 }
 @
 
-<<shiftmatch, cache=T, fig.cap="Maximum of shift along the measurement.", dependson=c("shiftfun")>>=
+<<shiftmatch, cache = T, fig.cap = "Maximum of shift along the measurement.", dependson = c("shiftfun")>>=
 local({
-sh_pos <- seq(-1200, 1200, length.out= 91)
+sh_pos <- seq(-1200, 1200, length.out = 91)
 md <- lapply(scan_indices, function(i) matches(i, sh_pos))
 md2 <- do.call(rbind, md)
 md2$ind <- as.factor(md2$ind)
 
-ggplot(md2, aes(x=x, y=ind, height=mv)) +
-  geom_joy(stat="identity", alpha=0.3) + theme_joy()  +
+ggplot(md2, aes(x = x, y = ind, height = mv)) +
+  geom_joy(stat = "identity", alpha = 0.3) + theme_joy()  +
   theme(legend.position = "none",
-        axis.text = element_text(size = 8, colour="black"))
+        axis.text = element_text(size = 8, colour = "black"))
 })
 @
 
-<<shiftmatchlocal, cache=T, fig.cap="local of shift along the measurement.", dependson=c("shiftfun")>>=
+<<shiftmatchlocal, cache = T, fig.cap = "local of shift along the measurement.", dependson = c("shiftfun")>>=
 local({
-sh_pos <- seq(-50, 50, length.out= 91)
+sh_pos <- seq(-50, 50, length.out = 91)
 md <- lapply(scan_indices, function(i) matches(i, sh_pos))
 md2 <- do.call(rbind, md)
 md2$ind <- as.factor(md2$ind)
 md2$mv <- md2$mv - min(md2$mv)
 
-ggplot(md2, aes(x=x, y=ind, height=mv)) +
-  geom_joy(stat="identity", alpha=0.3) + theme_joy()  +
+ggplot(md2, aes(x = x, y = ind, height = mv)) +
+  geom_joy(stat = "identity", alpha = 0.3) + theme_joy()  +
   theme(legend.position = "none",
-        axis.text = element_text(size = 8, colour="black"))
+        axis.text = element_text(size = 8, colour = "black"))
 })
 @
 
 In \fref{fig:shiftmatchlocal} there is visible aliasing unless the
 spectrum is smoothed.  The culprit is the norm of the warped spectrum,
 which is lower when warped.  However an optimization would be to
-precalculate the norm, and use it although it's not exactly correct.
+recalculate the norm, and use it although it's not exactly correct.
 
-<<searchFits, include=F, eval=T, dependson='searchFunctions', cache=T>>=
+<<searchFits, include = F, eval = T, dependson = 'searchFunctions', cache = T>>=
 warp_search2 <- function(ref, new_spec){
-  ss_spec <- ksmooth(seq_along(new_spec), new_spec, "normal", bandwidth=16)$y
+  ss_spec <- ksmooth(seq_along(new_spec), new_spec, "normal", bandwidth = 16)$y
   generated_w <- make_densewarp(log1p(new_spec))
   og_fin <- optim_generator(ref, generated_w, warp1)
 
   # Note author advises against using ftol or xtol for global
-  res2 <- nloptr(x0=c(0, 1), eval_f=og_fin,
-                 lb=c(-100, 0.99), ub=c(100, 1.01),
+  res2 <- nloptr(x0 = c(0, 1), eval_f = og_fin,
+                 lb = c(-100, 0.99), ub = c(100, 1.01),
                 opts = list("algorithm" = "NLOPT_LN_BOBYQA",
                               "xtol_abs" = c(0.1, 1e-8),
                               "maxeval" = 200))
   with(res2, c(objective, solution))
 }
 n_calibs <- 100
-cal_indices <- unique(floor(seq(from=1, to=tof_a$indexhelp$N, length.out=n_calibs)))
-wfs <- lapply(cal_indices, function(i) warp_search2(inner_reference, read_spec_ind.tof_h5(tof_a, i)))
+cal_indices <- unique(floor(seq(from = 1, to = tof_a$indexhelp$N,
+                                length.out = n_calibs)))
+wfs <- lapply(cal_indices,
+              function(i) warp_search2(inner_reference,
+                                       read_spec_ind.tof_h5(tof_a, i)))
 @
 
-<<plotfits, fig.cap="Local warp parameter.", dependson="searchFits">>=
-par(mfrow=c(1, 2))
-ti <- cal_indices/5
-plot(x = ti, y=sapply(wfs, function(x) x[[2]]),
-     xlab="time", ylab="shift")
-plot(x = ti, y=sapply(wfs, function(x) x[[3]]),
-     xlab="time", ylab="slope")
+<<plotfits, fig.cap = "Local warp parameter.", dependson = "searchFits">>=
+par(mfrow = c(1, 2))
+ti <- cal_indices / 5
+plot(x = ti, y = sapply(wfs, function(x) x[[2]]),
+     xlab = "time", ylab = "shift")
+plot(x = ti, y = sapply(wfs, function(x) x[[3]]),
+     xlab = "time", ylab = "slope")
 @
 
-In \fref{fig:plotfits} we see a how the warp parameter change during the measurement.
-The slope does not seem significantly different from \num{1.0}.  There doesn't apper to be a structure.  So maybe even just a plain shift will be enough.
+In \fref{fig:plotfits} we see a how the warp parameter change during the
+measurement.  The slope does not seem significantly different from \num{1.0}.
+There doesn't appear to be a structure.  So maybe even just a plain shift will
+be enough.
 
-<<, include = F, eval=F>>=
+<<, include = F, eval = F>>=
 new_spec <- (specs[[2]])
-ss_spec <- ksmooth(seq_along(new_spec), new_spec, "normal", bandwidth=16)$y
+ss_spec <- ksmooth(seq_along(new_spec), new_spec, "normal", bandwidth = 16)$y
 ss_log1 <- log1p(ss_spec)
 
-plot(sum_spec_a, type="l", xlim=c(8e4, 8.2e4), ylim=c(0, 300))
-lines(ss_spec, col="red")
+plot(sum_spec_a, type = "l", xlim = c(8e4, 8.2e4), ylim = c(0, 300))
+lines(ss_spec, col = "red")
 
-plot(inner_reference, type="l", xlim=c(8e4, 8.2e4))
-lines(ss_log1, col="red")
+plot(inner_reference, type = "l", xlim = c(8e4, 8.2e4))
+lines(ss_log1, col = "red")
 
 
 generated_w <- fast_warp0(log1p(new_spec))
-plot(inner_reference, type="l", xlim=c(8e4, 8.2e4))
-lines(new_spec, col="red")
+plot(inner_reference, type = "l", xlim = c(8e4, 8.2e4))
+lines(new_spec, col = "red")
 @
 
-<<searchFit1, include=F, eval=T, dependson='searchFunctions', cache=T>>=
+<<searchFit1, include = F, eval = T, dependson = 'searchFunctions', cache = T>>=
 warp_search1 <- function(ref, new){
   generated_w <- fast_warp0(log1p(new))
   og_fin <- optim_generator(ref, generated_w, warp0)
 
   # Note author advises against using ftol or xtol for global!
-  res2 <- nloptr(x0=c(0), eval_f=og_fin, lb=c(-100), ub=c(100),
+  res2 <- nloptr(x0 = c(0), eval_f = og_fin, lb = c(-100), ub = c(100),
                 opts = list("algorithm" = "NLOPT_LN_NELDERMEAD",
                               "xtol_abs" = 0.1))
   with(res2, c(objective, solution))
 }
 n_calibs <- 50
-cal_indices <- unique(floor(seq(from=1, to=tof_a$indexhelp$N, length.out=n_calibs)))
-wfs1 <- lapply(cal_indices, function(i) warp_search1(inner_reference, read_spec_ind.tof_h5(tof_a, i)))
+cal_indices <- unique(floor(seq(from = 1, to = tof_a$indexhelp$N,
+                                length.out = n_calibs)))
+wfs1 <- lapply(cal_indices,
+               function(i) warp_search1(inner_reference,
+                                        read_spec_ind.tof_h5(tof_a, i)))
 @
 
-<<plotfit1, fig.cap="Local warp parameter just shift.", dependson="searchFits">>=
-ti <- cal_indices/5
-plot(x = ti, y=sapply(wfs1, function(x) x[[2]]),
-     xlab="time", ylab="shift")
+<<plotfit1, fig.cap = "Local warp parameter just shift.", dependson = "searchFits">>=
+ti <- cal_indices / 5
+plot(x = ti, y = sapply(wfs1, function(x) x[[2]]),
+     xlab = "time", ylab = "shift")
 @
 
 Even applying all these techniques the warp seems to depend on the
@@ -264,17 +269,18 @@ to the \ac{TOF-MS} coincides with a change in warp.  A good indicator is
 to trace m/z 59 as shown in \fref{fig:plot59}.  Maybe this has to
 do with the significantly increased humidity.
 
-<<plot59, fig.cap="Trace of preintegrated peak at m/z 59, smoothed over a 16 index window.", cache = T>>=
+<<plot59, fig.cap = "Trace of preintegrated peak at m/z 59, smoothed over a 16 index window.", cache = T>>=
 local({
   tmp <- H5Gopen(tof_a$fid, "PeakData")
   pt <- H5Dread(H5Dopen(tof_a$fid, "PeakData/PeakTable"))
   loc <- which(pt$mass == 59)
 
   pl <- H5Dread(H5Dopen(tof_a$fid, "PeakData/PeakData"))
-  pm <- matrix(pl, nrow=dim(pl)[[1]])
+  pm <- matrix(pl, nrow = dim(pl)[[1]])
   pint <- pm[loc, ]
-  ptime <- seq_along(pint)/5
-ss_pint <- ksmooth(ptime, pint, "normal", bandwidth=16)$y
-  plot(x=ptime, y=ss_pint, type="l", xlab="time [s]", ylab = "signal 59")
+  ptime <- seq_along(pint) / 5
+ss_pint <- ksmooth(ptime, pint, "normal", bandwidth = 16)$y
+  plot(x = ptime, y = ss_pint, type = "l",
+       xlab = "time [s]", ylab = "signal 59")
 })
 @
