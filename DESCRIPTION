@@ -29,7 +29,6 @@ Collate:
     'massCalFunctions.R'
     'massCalTools.R'
     'read_all_sum_spec.R'
-    'read_stored_masscal.R'
     'spec_tools.R'
     'stored_mass_cal.R'
     'tofIntegrations.R'

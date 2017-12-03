@@ -3,7 +3,6 @@
 #' WARNING: these must be first integrated in the software otherwise and error
 #' will be thrown.
 #' @export
-#' @useDynLib rhdf5
 #' @param tof.h5 filename of hdf5 file
 #' @return dataframe with structure: rows = scans, cols = counts + information
 #' @examples
@@ -26,7 +25,6 @@ read.tof.peaks <- function( tof.h5 ){
   return(peak.frame)
 }
 
-#' @useDynLib rhdf5
 #' @import rhdf5
 read_sum_spec <- function(fid){
   gr <- H5Dopen(fid, "FullSpectra/SumSpectrum")
@@ -118,7 +116,6 @@ smooth.mass.cal <- function (mc.table) {
 
 #' first step of reading - get the tof block
 #' not export
-#' @useDynLib rhdf5
 #' @examples
 #' fid <-H5Fopen(tof.h5)
 #' tofblock <- raw_tofblock(fid)
