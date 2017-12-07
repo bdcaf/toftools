@@ -1,7 +1,13 @@
 <<setup, include = F>>=
 library("rawTof")
 library("baseline")
+library("ggridges")
 library("grDevices")
+library("magrittr")
+library("nloptr")
+library("rawTof")
+library("tidyr")
+library("dplyr")
 library("nloptr")
 
 devtools::load_all()
