@@ -18,7 +18,6 @@ Suggests: OrgMassSpecR,
     knitr,
     rmarkdown
 Collate: 
-    'RcppExports.R'
     'TofMeasurementClass.R'
     'TofGetScan.R'
     'TofRaw.R'
@@ -30,7 +29,6 @@ Collate:
     'massCalTools.R'
     'read_all_sum_spec.R'
     'spec_tools.R'
-    'stored_mass_cal.R'
     'tofIntegrations.R'
     'tofInterp.R'
     'tofReader.R'
