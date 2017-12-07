@@ -1,4 +1,5 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 .*\.h5$
-^vignettes/.*/.*data/
+^vignettes/.*/.*_data/
+^vignettes/acetone_warp/acetone_data/$
