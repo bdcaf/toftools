@@ -1,4 +1,5 @@
 #' helper function to create a reusable function for warping
+#' @export
 #' @param v spectrum
 #' @param ind position of v
 #' @return warp function that recalculates the spectrum
