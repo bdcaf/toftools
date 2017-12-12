@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 .*\.h5$
 .*\.rdx$
+.*\.rdb$
+dev_only/.*/render.*$

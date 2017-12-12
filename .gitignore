@@ -10,3 +10,4 @@ data/ammonia
 data/etoh
 inst/doc
 vignettes/*/render
+dev_only/*/render
