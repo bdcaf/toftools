@@ -9,3 +9,4 @@ man/
 data/ammonia
 data/etoh
 inst/doc
+vignettes/*/render

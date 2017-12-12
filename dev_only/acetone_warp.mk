@@ -18,4 +18,5 @@ $(THIS).pdf:
 	cd $(THIS); latexmk vignette.tex
 	cp $(THIS)/vignette.pdf $@
 
-include Makefile
+$(THIS).R:
+	echo NULL > $@

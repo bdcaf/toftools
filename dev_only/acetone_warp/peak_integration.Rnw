@@ -18,13 +18,14 @@ options(digits = 8)
 
 <<data>>=
 data_files <- list.files("acetone_data",
-                         pattern = "\\.h5$", full.names = T, recursive = T)
+                         pattern = "\\.h5$",
+                         full.names = T, recursive = T)
 
 mcfun <- read_stored_masscal(data_files[[1]])
 
 sum_specs <- read_all_sum_spec(data_files)
 agg_spec <- build_sum_spec(data_files) %>%
-  ksmooth(seq_along(.), ., kernel = "normal", bandwidth = 4
+  ksmooth(seq_along(.), ., kernel = "normal", bandwidth = 4)
 mass_ax0 <- mcfun$to_mass(agg_spec$x)
 sig <- agg_spec$y
 @

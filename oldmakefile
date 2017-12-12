@@ -7,7 +7,7 @@ LMK=latexmk -pdf -f --interaction=nonstopmode -outdir=$(REPORT_DIR)
 
 .DEFAULT_GOAL := all
 
-all: reports
+all:
 
 include dependencies.makefile
 
