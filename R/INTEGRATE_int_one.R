@@ -47,16 +47,15 @@ extract_tof <- function(tof_ob, peak_list) {
 }
 
 
-#' extract one measurement from file
+#' integrate one measurement from file
 #' @param in_file hdf5 file
 #' @param request list as created by
 #' @export
 #' @import dplyr
 #'
-integrate_masses <-
-  function(in_file, request){
+integrate_masses <- function(in_file, request){
     tof_ob <- new("TofClass", filename = in_file)
-    on.exit( finalize(tof_ob))
+    on.exit( finalize(tof_ob) )
 
     extract_tof(tof_ob, request)
   }
