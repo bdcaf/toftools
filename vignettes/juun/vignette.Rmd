@@ -1,0 +1,105 @@
+---
+title: "JuUn Example"
+subtitle: "A vignette."
+author: "Clemens Ager"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+link-citations: yes
+---
+
+## example from session in April 2018
+
+```{r, setup}
+library(rawTof)
+```
+
+### mass calibration
+
+#### setup masses for mass calibration
+
+```{r calc_cal_masses}
+library("OrgMassSpecR")
+
+m_el <- 5.485799090e-4
+proton <- MonoisotopicMass(formula = list(H = 1)) - m_el
+mc_masses <- list(
+		  h3o = MonoisotopicMass(
+					 formula = list(H = 3, O = 1),
+					 isotopes = list(O = 17.999161)
+					 ) - m_el,
+		  acetone = MonoisotopicMass(formula = list(C = 3, O = 1, H = 7)) - m_el,
+		  isoprene = MonoisotopicMass(formula = list(C = 5, H = 9)) - m_el,
+		  acetaldehyde = MonoisotopicMass(formula = list(C = 2, O = 1, H = 5)) - m_el
+		  )
+```
+
+#### fast calibration for file
+
+```{r mass_calibration}
+in_file <- "raw/2018.04.20-09h17m18s kuun.h5"
+
+(mc_fast <- mass_cal_fast(in_file, mc_masses))
+```
+
+```{r}
+  peak_list <- data_frame(center = unlist(mc_masses),
+			  name = names(mc_masses) ) %>%
+  mutate(
+	 low = center - 0.1,
+	 high = center + 0.1,
+	 left_ind  = floor( predict(mc_fast, newdata = list(mass=low))),
+	 right_ind = ceiling( predict(mc_fast, newdata = list(mass=high))),
+	 wid_ind = right_ind - left_ind
+	 )
+
+  integration <- integrate_masses(in_file, peak_list)
+```
+
+In the following figures the exact center of mass is shown, obviously
+there is some small pattern over time. 
+
+However there is no discernible pattern obvious for acetone.  Maybe
+there is a second peak appearing.
+
+```{r, fig.cap = "center of mass of the H3O+ peak"}
+with(dplyr::filter(integration, id == "h3o"),
+     plot(time, center_of_mass)
+     )
+```
+
+```{r, fig.cap = "center of mass of the isoprene peak"}
+with(dplyr::filter(integration, id == "isoprene"),
+     plot(time, center_of_mass)
+     )
+```
+
+```{r, fig.cap = "center of mass of the acetone peak"}
+with(dplyr::filter(integration, id == "acetone"),
+     plot(time, signal)
+     )
+```
+
+### Suggested peaks
+
+```{r}
+ss <- directSumSpec(in_file)
+ps <- peak_suggestions(ss, mc_fast, min_sig = 1e4, start_mass = 20.5)
+```
+
+```{r, values = 'asis'}
+library(pander)
+pander(ps[, c('name', 'low', 'high')])
+```
+
+```{r}
+  integration_full <- integrate_masses(in_file, ps)
+```
+
+
+
+
+

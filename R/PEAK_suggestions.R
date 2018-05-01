@@ -1,4 +1,4 @@
-
+#' clean run length encoded peak areas
 rle_clean_step <- function(rl, min_l, dir){
   bad <- with(rl, lengths < min_l & values == dir)
   rl$values[bad] <- !rl$values[bad]
@@ -62,7 +62,10 @@ peak_suggestions <- function(sumspec, masscal,
   rowwise() %>%
   mutate(center_ind = com(ss, left_ind, right_ind)) %>%
   ungroup() %>%
-  mutate(center = inv_mc(center_ind),
+  mutate(
+         center = inv_mc(center_ind),
+         low = inv_mc(left_ind),
+         high = inv_mc(right_ind),
          name = sprintf("m/z %.2f", center)
          )
 }
