@@ -1,0 +1,79 @@
+\section{Mass calibration}
+
+As good alignment has been assured beforehand now mass calibration can be performed on the sum spectrum.
+
+
+
+\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in data\_files[[1]]: Indizierung außerhalb der Grenzen}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in min(.): ungültiger 'type' (list) des Argumentes}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in min(.): ungültiger 'type' (list) des Argumentes}}\end{kframe}
+
+\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): Objekt 'mcfun' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): Objekt 'agg\_spec' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in plot(mass\_ax0, sig, type = "{}l"{}, col = "{}red"{}, ylab = "{}signal"{}, : Objekt 'mass\_ax0' nicht gefunden}}\end{kframe}
+
+
+
+
+At least three ions are required to perform proper mass calibration.  The
+selected ions are \ce{H3O+}(mz=\num{21.022}),
+acetone(mz=\num{59.049}), D6
+acetone(mz=\num{65.087}),
+isoprene(mz=\num{69.07}),
+ethanol(mz=\num{47.049}) and
+acetaldehyde(mz=\num{45.033}).
+
+
+\Fref{fig:plotuncorrected} shows there is only a minor deviation between the old mass calibration and observed signals.
+
+\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in FUN(X[[i]], ...): Objekt 'mass\_ax0' nicht gefunden}}\end{kframe}
+
+\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in FUN(X[[i]], ...): Objekt 'mcfun' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in is.data.frame(data): Objekt 'max\_locations' nicht gefunden}}\end{kframe}
+
+In \fref{fig:masscalibs} the resulting mass calibration curve is shown.
+On this scale the difference to the stored one is not recognisable.  The
+stored curve is plotted in blue but completely overlapped be the newer fit.
+However the difference can be seen when looking at the difference of points
+on the calibrated lines to their theoretical values shown in \fref{fig:mcdiffs}.
+
+\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in predict(fitm, newdata = data.frame(mass = plot\_masses)): Objekt 'fitm' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): Objekt 'mcfun' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in with(max\_locations, plot(mass, index)): Objekt 'max\_locations' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in xy.coords(x, y): Objekt 'orig\_cal\_indexes' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in xy.coords(x, y): Objekt 'plot\_inds' nicht gefunden}}\end{kframe}
+
+\begin{kframe}
+
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in predict(fitm, newdata = data.frame(mass = unlist(masses))): Objekt 'fitm' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in eval(expr, envir, enclos): Objekt 'mcfun' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in plot(masses, pio - max\_locations\$index, col = "{}blue"{}, ylab = "{}difference"{}): Objekt 'pio' nicht gefunden}}
+
+{\ttfamily\noindent\bfseries\color{errorcolor}{\#\# Error in xy.coords(x, y): Objekt 'pi2' nicht gefunden}}\end{kframe}
