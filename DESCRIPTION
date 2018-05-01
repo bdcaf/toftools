@@ -29,6 +29,7 @@ Collate:
     'make_densewarp.R'
     'massCalFunctions.R'
     'massCalTools.R'
+    'mass_cal.R'
     'read_all_sum_spec.R'
     'spec_tools.R'
     'tofIntegrations.R'
