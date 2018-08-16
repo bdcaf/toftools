@@ -4,4 +4,6 @@
 .*\.rdx$
 .*\.rdb$
 dev_only/.*/render.*$
-^\.git
+\.git$
+plotuncorrected_.*\.RData$
+
