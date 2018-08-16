@@ -3,7 +3,14 @@
 #' @param peak_list list as created by
 #' @export
 #' @import dplyr
+#' @import rawTof
 #'
+#' @examples
+#'
+#' \dontrun{
+#' tof_ob <- new("TofClass", filename = "raw/2018.04.20-09h17m18s_kuun.h5")
+#' }
+
 extract_tof <- function(tof_ob, peak_list) {
   timing <- get_timing(tof_ob@.datafile)
 
@@ -53,4 +60,4 @@ extract_tof <- function(tof_ob, peak_list) {
 #' @export
 #'
 integrate_masses <- function(in_file, request)
-  tof_wrap(in_file, extract_tof , request)
+  tof_wrap(in_file, extract_tof, request)

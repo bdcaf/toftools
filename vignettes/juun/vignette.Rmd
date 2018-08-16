@@ -13,7 +13,7 @@ link-citations: yes
 
 ## example from session in April 2018
 
-```{r, setup}
+```{r setup, include = F}
 devtools::load_all()
 library(rawTof)
 ```
@@ -56,9 +56,12 @@ in_file <- "raw/2018.04.20-09h17m18s_kuun.h5"
 	 right_ind = ceiling( predict(mc_fast, newdata = list(mass=high))),
 	 wid_ind = right_ind - left_ind
 	 )
+```
 
+```{r integration}
   integration <- integrate_masses(in_file, peak_list)
 ```
+
 
 In the following figures the exact center of mass is shown, obviously
 there is some small pattern over time. 
