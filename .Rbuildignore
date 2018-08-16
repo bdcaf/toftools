@@ -4,4 +4,4 @@
 .*\.rdx$
 .*\.rdb$
 dev_only/.*/render.*$
-^\.git
+^\.git$
