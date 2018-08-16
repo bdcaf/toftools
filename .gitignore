@@ -11,3 +11,5 @@ data/etoh
 inst/doc
 vignettes/*/render
 dev_only/*/render
+dev_only/*.pdf
+vignette.pdf

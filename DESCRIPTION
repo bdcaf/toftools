@@ -13,11 +13,12 @@ Description: Functions to work with the h5 files produced by the device. Most
     parallelize and use dplyr for most table tasks.
 LinkingTo: Rcpp
 License: GPL (>= 2)
-Imports: Rcpp, MALDIquant, MASS, data.table, dplyr, rhdf5
+Imports: Rcpp, MALDIquant, MASS, data.table, dplyr, rhdf5,
+    rawTof
 Suggests: OrgMassSpecR,
     knitr,
     rmarkdown
-Collate: 
+Collate:
     'INTEGRATE_int_one.R'
     'PEAK_suggestions.R'
     'TofMeasurementClass.R'

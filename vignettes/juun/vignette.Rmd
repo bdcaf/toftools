@@ -14,6 +14,7 @@ link-citations: yes
 ## example from session in April 2018
 
 ```{r, setup}
+devtools::load_all()
 library(rawTof)
 ```
 
@@ -40,7 +41,7 @@ mc_masses <- list(
 #### fast calibration for file
 
 ```{r mass_calibration}
-in_file <- "raw/2018.04.20-09h17m18s kuun.h5"
+in_file <- "raw/2018.04.20-09h17m18s_kuun.h5"
 
 (mc_fast <- mass_cal_fast(in_file, mc_masses))
 ```
