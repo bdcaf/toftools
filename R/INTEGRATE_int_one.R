@@ -12,7 +12,7 @@
 #' }
 
 extract_tof <- function(tof_ob, peak_list) {
-  timing <- get_timing(tof_ob@.datafile)
+  timing <- rawTof::get_timing(tof_ob@.datafile)
 
   scan_row <- function(request) {
     w <- with(request, high - low) / 2

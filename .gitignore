@@ -4,6 +4,7 @@
 *.bak
 *.ini
 *.dll
+*.pdf
 *.sav
 man/
 data/ammonia
