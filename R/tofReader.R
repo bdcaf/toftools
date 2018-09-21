@@ -8,19 +8,24 @@
 #' @examples
 #' tof.h5 <- file.path("data", "uncal.h5")
 read.tof.peaks <- function( tof.h5 ){
-  fid <- H5Fopen(tof.h5)
-  at <- H5Aopen(fid, "NbrWaveforms")
+  tof_wrap(tof.h5, read.tof.peaks.h5)
+}
+
+tof_ob <- new("TofClass",filename="testdata/2015.07.17-10h40m34 Ethanol deurated Karl .h5")
+
+read.tof.peaks.h5 <- function(tof_ob){
+  at <- H5Aopen(tof_ob@.datafile, "NbrWaveforms")
   waveforms <- H5Aread(at)
   H5Aclose(at)
-  pd1 <- H5Dopen(fid, "PeakData/PeakTable")
+  pd1 <- H5Dopen(tof_ob@.datafile, "PeakData/PeakTable")
   peak.data <- H5Dread(pd1)
-  pd2 <- H5Dopen(fid, "PeakData/PeakData") # peak value in counts per extractions
+  pd2 <- H5Dopen(tof_ob@.datafile, "PeakData/PeakData") # peak value in counts per extractions
   peak.value <- H5Dread(pd2)
 
   peak.counts <- peak.value * waveforms[[1]]
   tmp <- apply(peak.counts, 1, as.vector)
   peak.frame <- as.data.frame(tmp)
-  colnames(peak.frame) <- peak.data$label
+  colnames(peak.frame) <- with(peak.data, paste(label, mass))
   peak.frame$file <- tof.h5
   return(peak.frame)
 }

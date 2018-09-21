@@ -1,12 +1,3 @@
-library(dplyr)
-library(rhdf5)
-library(devtools)
-
-r.path <- file.path("..","..","R")
-
-sl <- file.path(r.path,list.files(r.path, pattern="*.R"))
-lapply(sl, source)
-
 context("read full spectrum")
 
 # cleanup -----------------------------------------------------------------
@@ -28,13 +19,12 @@ base_path <-file.path("..","..","testdata")
 # h5ls(tof.h5)
 
 test_that("open simple measurement successfully",{
-  tof.h5 <- file.path(base_path,"Ac just exhale (2014-10-23T10h43m42_#).h5")
+  tof.h5 <- file.path("../../testdata/2015.07.17-10h40m34 Ethanol deurated Karl .h5")
   fid <-H5Fopen(tof.h5)
   tofblock <- raw_tofblock(fid)
   indexhelp <- tof.indexhelp(tofblock)
   curr.spec.line <- read_spec_at(tofblock, indexhelp, 40)
 
-  expect_equal(dim(curr.spec.line),398999, label= "length should always be 398999")
   expect_equal(curr.spec.line[1:10], as.array(rep(0,10)), label ="first 10 values are always 0")
 
   mc <- mass.calib.coeff.single(ions, preliminary.coeff=pars.approx, curr.spec.line)

@@ -1,7 +1,7 @@
 Package: tofTools
 Type: Package
 Title: Helper functions to read Tofwerk PTR-TOF-MS HDF5 files.
-Version: 0.2.3.000
+Version: 0.2.3.002
 Date: 2018-05-01
 Author: Clemens Ager
 Maintainer: Clemens Ager <clemens.ager@uibk.ac.at>
@@ -13,7 +13,8 @@ Description: Functions to work with the h5 files produced by the device. Most
     parallelize and use dplyr for most table tasks.
 LinkingTo: Rcpp
 License: GPL (>= 2)
-Imports: Rcpp, dplyr, rhdf5, rawTof
+Imports: Rcpp, dplyr, rhdf5, rawTof,
+    testthat
 Suggests: OrgMassSpecR,
     knitr, MALDIquant, MASS, data.table, 
     rmarkdown
@@ -47,3 +48,4 @@ RoxygenNote: 6.1.0
 NeedsCompilation: yes
 Packaged: 2017-10-13 11:27:53 UTC; cle
 VignetteBuilder: vignetteEngineMake
+Encoding: UTF-8
