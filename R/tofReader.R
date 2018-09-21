@@ -11,7 +11,7 @@ read.tof.peaks <- function( tof.h5 ){
   tof_wrap(tof.h5, read.tof.peaks.h5)
 }
 
-tof_ob <- new("TofClass",filename="testdata/2015.07.17-10h40m34 Ethanol deurated Karl .h5")
+# tof_ob <- new("TofClass",filename="testdata/2015.07.17-10h40m34 Ethanol deurated Karl .h5")
 
 read.tof.peaks.h5 <- function(tof_ob){
   at <- H5Aopen(tof_ob@.datafile, "NbrWaveforms")
