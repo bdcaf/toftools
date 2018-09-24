@@ -8,7 +8,9 @@
 #' @examples
 #'
 #' \dontrun{
-#' tof_ob <- new("TofClass", filename = "raw/2018.04.20-09h17m18s_kuun.h5")
+#' tof_ob <- new("TofClass", filename = "data/agcl_br/AgCl MO(2017-09-11 T 11h20m55) _#.h5")
+#' load("data/sample_ions.Rdata")
+#' peak_list <- request_list(sample_ions, fitm)
 #' }
 
 extract_tof <- function(tof_ob, peak_list) {

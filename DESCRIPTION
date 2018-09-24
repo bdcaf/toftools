@@ -25,6 +25,7 @@ Collate:
     'TofGetScan.R'
     'TofRaw.R'
     'build_sum_spec.R'
+    'int_request.R'
     'locate_matching_maxima.R'
     'make_data.R'
     'make_densewarp.R'
