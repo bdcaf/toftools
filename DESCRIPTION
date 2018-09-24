@@ -1,7 +1,7 @@
 Package: tofTools
 Type: Package
 Title: Helper functions to read Tofwerk PTR-TOF-MS HDF5 files.
-Version: 0.2.3.002
+Version: 0.2.3.003
 Date: 2018-05-01
 Author: Clemens Ager
 Maintainer: Clemens Ager <clemens.ager@uibk.ac.at>
