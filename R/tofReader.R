@@ -26,7 +26,7 @@ read.tof.peaks.h5 <- function(tof_ob){
   tmp <- apply(peak.counts, 1, as.vector)
   peak.frame <- as.data.frame(tmp)
   colnames(peak.frame) <- with(peak.data, paste(label, mass))
-  peak.frame$file <- tof.h5
+  peak.frame$file <- tof_ob@filename
   return(peak.frame)
 }
 
